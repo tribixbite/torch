@@ -75,10 +75,10 @@ body {
 	background: var(--text-muted);
 }
 
-/* content-visibility for result items */
-.result-item {
+/* content-visibility for result items — applied as wrapper, not on flex container */
+.result-item-wrap {
 	content-visibility: auto;
-	contain-intrinsic-size: 0 120px;
+	contain-intrinsic-size: 0 90px;
 }
 
 /* Double-thumb range slider styles */
