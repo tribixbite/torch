@@ -103,34 +103,29 @@ function testItem(
 				break;
 			}
 			case 'boolean': {
+				const field = normalizeToStringArray(data);
 				if (filter.mode === 'all') {
-					const field = normalizeToStringArray(data);
-					// All no-checked: if item found then hide (unless ~item found)
-					for (const noItem of filter.no) {
-						if (field.indexOf(noItem) !== -1) {
-							if (field.indexOf('~' + noItem) !== -1) continue;
-							return false;
-						}
-					}
-					// All yes-checked: if item not found then hide
+					// ALL yes-checked must be present in data
 					for (const yesItem of filter.yes) {
 						if (field.indexOf(yesItem) === -1) return false;
 					}
-				} else {
-					// any mode
-					if (filter.yes.length === 0 && filter.no.length === 0) continue;
-					const field = normalizeToStringArray(data);
-					let anyFound = false;
+					// ALL no-checked must be absent from data
 					for (const noItem of filter.no) {
-						if (field.indexOf(noItem) === -1) { anyFound = true; break; }
-						if (field.indexOf('~' + noItem) !== -1) { anyFound = true; break; }
+						if (field.indexOf(noItem) !== -1) return false;
 					}
-					if (!anyFound) {
-						for (const yesItem of filter.yes) {
-							if (field.indexOf(yesItem) !== -1) { anyFound = true; break; }
+				} else {
+					// any mode: at least one yes found OR at least one no absent
+					if (filter.yes.length === 0 && filter.no.length === 0) continue;
+					let match = false;
+					for (const yesItem of filter.yes) {
+						if (field.indexOf(yesItem) !== -1) { match = true; break; }
+					}
+					if (!match) {
+						for (const noItem of filter.no) {
+							if (field.indexOf(noItem) === -1) { match = true; break; }
 						}
 					}
-					if (!anyFound) return false;
+					if (!match) return false;
 				}
 				break;
 			}
