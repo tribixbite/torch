@@ -128,8 +128,9 @@
 	}
 </script>
 
+<div class="result-item-wrap">
 <div
-	class="result-item card-row"
+	class="card-row"
 >
 	<!-- Sprite thumbnail -->
 	<div class="card-thumb">
@@ -188,6 +189,7 @@
 			</div>
 		{/if}
 	</div>
+</div>
 </div>
 
 <style>
