@@ -53,12 +53,12 @@
 
 		if (Array.isArray(value)) {
 			if (col.filterType === 'boolean') {
-				const filtered = (value as string[]).filter(
-					(x) => !x.startsWith('~') && !x.startsWith('//')
+				const filtered = value.filter(
+					(x) => typeof x !== 'string' || (!x.startsWith('~') && !x.startsWith('//'))
 				);
 				return filtered.length > 0 ? filtered.join('  ') : 'none';
 			}
-			const filtered = (value as string[]).filter((x) => !x.startsWith('//'));
+			const filtered = value.filter((x) => typeof x !== 'string' || !x.startsWith('//'));
 			return filtered.join('  ');
 		}
 
