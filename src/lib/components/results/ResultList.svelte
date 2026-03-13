@@ -13,11 +13,52 @@
 
 	let { indices, db, columns }: Props = $props();
 
+	// Initial render limit for performance — progressively loads more
+	const INITIAL_BATCH = 50;
+	const LOAD_MORE_BATCH = 100;
+	let visibleCount = $state(INITIAL_BATCH);
+
 	let displayIndices = $derived(
 		starredState.showStarredOnly
 			? indices.filter((i) => starredState.isStarred(i))
 			: indices
 	);
+
+	// Reset visible count when indices change (new filter result)
+	$effect(() => {
+		// Track displayIndices length to reset on filter changes
+		const _len = displayIndices.length;
+		visibleCount = INITIAL_BATCH;
+	});
+
+	let visibleItems = $derived(displayIndices.slice(0, visibleCount));
+	let remaining = $derived(displayIndices.length - visibleCount);
+	let hasMore = $derived(remaining > 0);
+
+	function showMore() {
+		visibleCount = Math.min(visibleCount + LOAD_MORE_BATCH, displayIndices.length);
+	}
+
+	function showAll() {
+		visibleCount = displayIndices.length;
+	}
+
+	// Intersection observer for auto-load on scroll
+	let sentinelEl: HTMLDivElement | undefined = $state();
+
+	$effect(() => {
+		if (!sentinelEl || !hasMore) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting) {
+					showMore();
+				}
+			},
+			{ rootMargin: '400px' }
+		);
+		observer.observe(sentinelEl);
+		return () => observer.disconnect();
+	});
 </script>
 
 <div class="space-y-1 p-2">
@@ -35,13 +76,38 @@
 		</div>
 	{/if}
 
-	{#each displayIndices as idx (idx)}
+	{#each visibleItems as idx (idx)}
 		{#if preferences.viewMode === 'card'}
 			<FlashlightCard index={idx} {db} {columns} />
 		{:else}
 			<FlashlightTable index={idx} {db} {columns} />
 		{/if}
 	{/each}
+
+	{#if hasMore}
+		<!-- Scroll sentinel for auto-loading -->
+		<div bind:this={sentinelEl}></div>
+
+		<div class="text-center py-4">
+			<span class="text-sm mr-2" style="color: var(--text-muted);">
+				{remaining} more match{remaining !== 1 ? 'es' : ''}
+			</span>
+			<button
+				class="text-sm px-3 py-1 rounded border cursor-pointer"
+				style="background: var(--bg-tertiary); color: var(--accent); border-color: var(--accent);"
+				onclick={showMore}
+			>
+				Show more
+			</button>
+			<button
+				class="text-sm px-3 py-1 rounded border cursor-pointer ml-2"
+				style="background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border);"
+				onclick={showAll}
+			>
+				Show all
+			</button>
+		</div>
+	{/if}
 
 	{#if displayIndices.length === 0}
 		<div class="text-center py-12" style="color: var(--text-muted);">
