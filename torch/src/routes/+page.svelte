@@ -19,6 +19,8 @@
 	let resultTiming = $state(0);
 	let loading = $state(true);
 	let workerClient: FilterWorkerClient | null = null;
+	// Keep a non-reactive reference to the raw DB for worker init
+	let plainDb: FlashlightDB | null = null;
 
 	// Debounce timers
 	let filterTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -29,15 +31,16 @@
 		(async () => {
 			const res = await fetch('/flashlights.now.json');
 			const rawDb: FlashlightDB = await res.json();
+			plainDb = rawDb;
 			db = rawDb;
 			columns = buildColumns(rawDb);
 
 			// Initialize URL state from current URL
 			urlState.init(columns);
 
-			// Initialize web worker
+			// Initialize web worker — pass plain object, not Svelte proxy
 			workerClient = new FilterWorkerClient();
-			await workerClient.init(rawDb);
+			await workerClient.init(plainDb);
 
 			loading = false;
 
@@ -73,9 +76,11 @@
 	async function runFilter() {
 		if (!workerClient) return;
 		const serialized = serializeFilters(urlState.filters);
+		// Unwrap Svelte 5 proxies — postMessage requires plain objects
+		const sort = { column: urlState.sort.column, direction: urlState.sort.direction };
 		const result = await workerClient.filter(
-			serialized,
-			urlState.sort,
+			JSON.parse(JSON.stringify(serialized)),
+			sort,
 			urlState.searchQuery || undefined
 		);
 		resultIndices = result.indices;

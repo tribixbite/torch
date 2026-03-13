@@ -129,69 +129,185 @@
 </script>
 
 <div
-	class="result-item flex gap-3 p-3 rounded-lg border transition-colors"
-	style="background: var(--bg-secondary); border-color: var(--border);"
+	class="result-item card-row"
 >
 	<!-- Sprite thumbnail -->
-	<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={db.sprite} />
+	<div class="card-thumb">
+		<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={db.sprite} />
+	</div>
 
 	<!-- Content -->
-	<div class="flex-1 min-w-0">
-		<!-- Header: model, brand, info links -->
-		<div class="flex items-start gap-2">
-			<div class="flex-1 min-w-0">
-				<div class="flex items-center gap-1 flex-wrap">
-					<button
-						class="text-sm cursor-pointer select-none"
-						style="color: var(--text-muted);"
-						onclick={() => (expanded = !expanded)}
-						title="Toggle details"
-					>±</button>
-					<span class="font-medium text-sm truncate" style="color: var(--text-primary);">{model}</span>
-					<span class="text-xs" style="color: var(--text-secondary);">by&nbsp;{brand}</span>
-					{#if getInfoLinks()}
-						<span class="text-xs">({@html getInfoLinks()})</span>
-					{/if}
-				</div>
-			</div>
-			<!-- Star button -->
+	<div class="card-body">
+		<!-- Header row: expand toggle, model name, brand, star, price -->
+		<div class="card-header">
 			<button
-				class="flex-shrink-0 text-lg cursor-pointer select-none"
-				style="color: {isStarred ? 'var(--star)' : 'var(--text-muted)'};"
+				class="card-expand"
+				onclick={() => (expanded = !expanded)}
+				title="Toggle details"
+			>±</button>
+			<span class="card-model">{model}</span>
+			<span class="card-brand">by {brand}</span>
+			{#if getInfoLinks()}
+				<span class="card-info">({@html getInfoLinks()})</span>
+			{/if}
+			<span class="card-spacer"></span>
+			<button
+				class="card-star"
+				class:starred={isStarred}
 				onclick={() => starredState.toggle(index)}
 				title={isStarred ? 'Remove from favorites' : 'Add to favorites'}
 			>
 				{isStarred ? '★' : '☆'}
 			</button>
+			{#if getPrice()}
+				<span class="card-price">{getPrice()}</span>
+			{/if}
 		</div>
 
 		<!-- Detail rows -->
-		<ul class="mt-1 space-y-0">
+		<div class="card-details">
 			{#each columns as col}
 				{#if shouldShowDetail(col)}
-					<li class="text-xs flex gap-1" style="color: var(--text-secondary);">
-						<span class="font-medium flex-shrink-0" style="color: var(--text-muted);">
-							{@html col.display}:
-						</span>
-						<span>{@html formatWithUnit(col, data[col.index])}</span>
-					</li>
+					<span class="card-detail">
+						<span class="detail-label">{@html col.display}:</span>
+						{@html formatWithUnit(col, data[col.index])}
+					</span>
 				{/if}
 			{/each}
-		</ul>
-	</div>
+		</div>
 
-	<!-- Price & purchase (right column) -->
-	<div class="flex-shrink-0 text-right">
-		{#if getPrice()}
-			<div class="font-medium text-sm" style="color: var(--text-primary);">{getPrice()}</div>
-		{/if}
-		{#if getPurchaseLinks()}
-			<div class="text-xs mt-0.5">{@html getPurchaseLinks()}</div>
-		{/if}
-		{#if reviewsCol >= 0 && data[reviewsCol] && Number(data[reviewsCol]) > 0}
-			<div class="text-xs mt-0.5" style="color: var(--text-muted);">
-				({data[reviewsCol]} review{Number(data[reviewsCol]) > 1 ? 's' : ''})
+		<!-- Purchase links -->
+		{#if getPurchaseLinks() || (reviewsCol >= 0 && data[reviewsCol] && Number(data[reviewsCol]) > 0)}
+			<div class="card-purchase">
+				{#if getPurchaseLinks()}
+					<span>{@html getPurchaseLinks()}</span>
+				{/if}
+				{#if reviewsCol >= 0 && data[reviewsCol] && Number(data[reviewsCol]) > 0}
+					<span class="card-reviews">({data[reviewsCol]} review{Number(data[reviewsCol]) > 1 ? 's' : ''})</span>
+				{/if}
 			</div>
 		{/if}
 	</div>
 </div>
+
+<style>
+	.card-row {
+		display: flex;
+		gap: 0.75rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 0.5rem;
+		border: 1px solid var(--border);
+		background: var(--bg-secondary);
+		transition: border-color 0.15s;
+	}
+	.card-row:hover {
+		border-color: var(--border-hover);
+	}
+
+	.card-thumb {
+		flex-shrink: 0;
+	}
+
+	.card-body {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.card-header {
+		display: flex;
+		align-items: baseline;
+		gap: 0.375rem;
+		flex-wrap: wrap;
+	}
+
+	.card-expand {
+		font-size: 0.8rem;
+		cursor: pointer;
+		color: var(--text-muted);
+		background: none;
+		border: none;
+		padding: 0;
+		user-select: none;
+	}
+
+	.card-model {
+		font-weight: 600;
+		font-size: 0.875rem;
+		color: var(--text-primary);
+		white-space: nowrap;
+	}
+
+	.card-brand {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		white-space: nowrap;
+	}
+
+	.card-info {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+	}
+
+	.card-spacer {
+		flex: 1;
+	}
+
+	.card-star {
+		font-size: 1rem;
+		cursor: pointer;
+		color: var(--text-muted);
+		background: none;
+		border: none;
+		padding: 0;
+		user-select: none;
+		flex-shrink: 0;
+	}
+	.card-star.starred {
+		color: var(--star);
+	}
+
+	.card-price {
+		font-weight: 600;
+		font-size: 0.875rem;
+		color: var(--text-primary);
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.card-details {
+		margin-top: 0.125rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.125rem 0.75rem;
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.4;
+	}
+
+	.detail-label {
+		color: var(--text-muted);
+		font-weight: 500;
+		margin-right: 0.2rem;
+	}
+
+	.card-purchase {
+		margin-top: 0.25rem;
+		font-size: 0.7rem;
+		display: flex;
+		gap: 0.5rem;
+		align-items: baseline;
+		flex-wrap: wrap;
+	}
+
+	.card-reviews {
+		color: var(--text-muted);
+	}
+
+	/* Mobile: smaller thumb, tighter spacing */
+	@media (max-width: 640px) {
+		.card-row {
+			padding: 0.375rem 0.5rem;
+			gap: 0.5rem;
+		}
+	}
+</style>
