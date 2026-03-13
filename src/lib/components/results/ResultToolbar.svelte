@@ -13,8 +13,11 @@
 	let { columns, count, timing }: Props = $props();
 
 	let sortableColumns = $derived(columns.filter((c) => c.sortable));
-	let currentSortCol = $derived(columns[urlState.sort.column]);
-	let currentSortDir = $derived(urlState.sort.direction);
+
+	/** Strip HTML entities from display names for use in <option> text */
+	function cleanDisplay(html: string): string {
+		return html.replace(/&nbsp;/g, ' ').replace(/<[^>]*>/g, '');
+	}
 
 	function handleSortChange(e: Event) {
 		const select = e.target as HTMLSelectElement;
@@ -57,8 +60,8 @@
 		onchange={handleSortChange}
 	>
 		{#each sortableColumns as col}
-			<option value="{col.index}:inc">{@html col.display} ▲</option>
-			<option value="{col.index}:dec">{@html col.display} ▼</option>
+			<option value="{col.index}:inc">{cleanDisplay(col.display)} ▲</option>
+			<option value="{col.index}:dec">{cleanDisplay(col.display)} ▼</option>
 		{/each}
 	</select>
 
