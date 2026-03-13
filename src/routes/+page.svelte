@@ -115,6 +115,13 @@
 			<main class="flex-1 min-w-0">
 				<ResultToolbar {columns} count={resultCount} timing={resultTiming} />
 				<ResultList indices={resultIndices} {db} {columns} />
+
+				<!-- Attribution footer -->
+				<footer class="px-4 py-3 text-center text-xs" style="color: var(--text-muted); border-top: 1px solid var(--border);">
+					Data from <a href="http://flashlights.parametrek.com" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">flashlights.parametrek.com</a>
+					&middot; Built by <a href="https://github.com/tribixbite" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">tribixbite</a>
+					&middot; <a href="https://github.com/tribixbite/torch" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">Source</a>
+				</footer>
 			</main>
 		</div>
 	</div>
