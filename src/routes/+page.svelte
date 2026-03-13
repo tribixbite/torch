@@ -24,24 +24,26 @@
 	let filterTimeout: ReturnType<typeof setTimeout> | undefined;
 	let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	onMount(async () => {
-		// Load the dataset
-		const res = await fetch('/flashlights.now.json');
-		const rawDb: FlashlightDB = await res.json();
-		db = rawDb;
-		columns = buildColumns(rawDb);
+	onMount(() => {
+		// Load data and init worker asynchronously
+		(async () => {
+			const res = await fetch('/flashlights.now.json');
+			const rawDb: FlashlightDB = await res.json();
+			db = rawDb;
+			columns = buildColumns(rawDb);
 
-		// Initialize URL state from current URL
-		urlState.init(columns);
+			// Initialize URL state from current URL
+			urlState.init(columns);
 
-		// Initialize web worker
-		workerClient = new FilterWorkerClient();
-		await workerClient.init(rawDb);
+			// Initialize web worker
+			workerClient = new FilterWorkerClient();
+			await workerClient.init(rawDb);
 
-		loading = false;
+			loading = false;
 
-		// Run initial filter
-		runFilter();
+			// Run initial filter
+			runFilter();
+		})();
 
 		return () => {
 			workerClient?.destroy();
