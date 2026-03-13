@@ -3,8 +3,7 @@
  * URL search params are the single source of truth.
  */
 
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import { replaceState } from '$app/navigation';
 import type { ColumnDef } from '../schema/columns.js';
 import type { ActiveFilter, SortState, LogicMode } from '../schema/filter-schema.js';
 import { deserializeUrl, serializeUrl } from '../schema/url-codec.js';
@@ -42,7 +41,7 @@ class UrlState {
 	syncToUrl() {
 		const urlStr = serializeUrl(this.filters, this.sort, this.columns);
 		const newUrl = window.location.pathname + urlStr;
-		history.replaceState(null, '', newUrl);
+		replaceState(newUrl, {});
 	}
 
 	/** Set a multi/mega-multi filter */

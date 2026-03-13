@@ -28,6 +28,12 @@ export function deserializeUrl(
 			case 'multi':
 			case 'mega-multi': {
 				const filter: MultiFilter = { type: 'multi', selected: new Set(), mode: col.modes[0] as LogicMode };
+				// Check for embedded sort as last element
+				const lastPart = parts[parts.length - 1];
+				if (lastPart === 'inc' || lastPart === 'dec') {
+					sort = { column: col.index, direction: lastPart };
+					parts.pop();
+				}
 				for (const part of parts) {
 					if (['any', 'all', 'only', 'none'].includes(part)) {
 						filter.mode = part as LogicMode;
@@ -37,13 +43,6 @@ export function deserializeUrl(
 				}
 				if (filter.selected.size > 0) {
 					filters.set(col.index, filter);
-				}
-				// Check for embedded sort (3rd element pattern: _,_,dec)
-				if (parts.length >= 3 && parts[0] === '_' && parts[1] === '_') {
-					const dir = parts[2];
-					if (dir === 'inc' || dir === 'dec') {
-						sort = { column: col.index, direction: dir };
-					}
 				}
 				break;
 			}
@@ -130,11 +129,11 @@ export function serializeUrl(
 				if (!isDefaultMode) {
 					encoded.unshift(encodeURIComponent(f.mode));
 				}
-				let val = `${col.id}=${encoded.join(',')}`;
+				// Embed sort direction as last element when sorting by this column
 				if (isSortCol && !defaultSort) {
-					// Can't embed sort in multi easily, add separate
+					encoded.push(sort.direction);
 				}
-				parts.push(val);
+				parts.push(`${col.id}=${encoded.join(',')}`);
 				break;
 			}
 			case 'boolean': {
