@@ -143,14 +143,27 @@ function testItem(
 	return true;
 }
 
-/** Build text search index from model + brand columns */
+/** Build text search index from all searchable columns.
+ *  Includes model, brand, and all string/array option values so that
+ *  searching "Pink" matches flashlights with color=Pink, etc. */
 function buildSearchIndex(): void {
-	const modelCol = db.head.indexOf('model');
-	const brandCol = db.head.indexOf('brand');
 	searchIndex = db.data.map((item) => {
-		const model = modelCol >= 0 ? String(item[modelCol] ?? '') : '';
-		const brand = brandCol >= 0 ? String(item[brandCol] ?? '') : '';
-		return (model + ' ' + brand).toLowerCase();
+		const parts: string[] = [];
+		for (let col = 0; col < item.length; col++) {
+			const val = item[col];
+			if (val === null || val === undefined || val === '') continue;
+			if (typeof val === 'string') {
+				parts.push(val);
+			} else if (Array.isArray(val)) {
+				for (const v of val) {
+					if (typeof v === 'string' && !v.startsWith('//') && !v.startsWith('~') && !v.startsWith('http')) {
+						parts.push(v);
+					}
+				}
+			}
+			// Skip numeric-only values — not useful for text search
+		}
+		return parts.join(' ').toLowerCase();
 	});
 }
 
