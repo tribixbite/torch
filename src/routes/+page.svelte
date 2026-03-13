@@ -1,0 +1,114 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import type { FlashlightDB, ColumnDef } from '$lib/schema/columns.js';
+	import { buildColumns } from '$lib/schema/columns.js';
+	import { serializeFilters } from '$lib/schema/filter-schema.js';
+	import { urlState } from '$lib/state/url-state.svelte.js';
+	import { preferences } from '$lib/state/preferences.svelte.js';
+	import { FilterWorkerClient } from '$lib/worker/worker-client.js';
+	import Header from '$lib/components/layout/Header.svelte';
+	import FilterSidebar from '$lib/components/filters/FilterSidebar.svelte';
+	import FilterPills from '$lib/components/filters/FilterPills.svelte';
+	import ResultToolbar from '$lib/components/results/ResultToolbar.svelte';
+	import ResultList from '$lib/components/results/ResultList.svelte';
+
+	let db = $state<FlashlightDB | null>(null);
+	let columns = $state<ColumnDef[]>([]);
+	let resultIndices = $state<number[]>([]);
+	let resultCount = $state(0);
+	let resultTiming = $state(0);
+	let loading = $state(true);
+	let workerClient: FilterWorkerClient | null = null;
+
+	// Debounce timers
+	let filterTimeout: ReturnType<typeof setTimeout> | undefined;
+	let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+
+	onMount(async () => {
+		// Load the dataset
+		const res = await fetch('/flashlights.now.json');
+		const rawDb: FlashlightDB = await res.json();
+		db = rawDb;
+		columns = buildColumns(rawDb);
+
+		// Initialize URL state from current URL
+		urlState.init(columns);
+
+		// Initialize web worker
+		workerClient = new FilterWorkerClient();
+		await workerClient.init(rawDb);
+
+		loading = false;
+
+		// Run initial filter
+		runFilter();
+
+		return () => {
+			workerClient?.destroy();
+		};
+	});
+
+	// React to filter changes
+	$effect(() => {
+		// Access reactive deps
+		const _filters = urlState.filters;
+		const _sort = urlState.sort;
+		if (!loading && workerClient) {
+			clearTimeout(filterTimeout);
+			filterTimeout = setTimeout(() => runFilter(), 10);
+		}
+	});
+
+	// React to search query changes (with debounce)
+	$effect(() => {
+		const _query = urlState.searchQuery;
+		if (!loading && workerClient) {
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(() => runFilter(), 150);
+		}
+	});
+
+	async function runFilter() {
+		if (!workerClient) return;
+		const serialized = serializeFilters(urlState.filters);
+		const result = await workerClient.filter(
+			serialized,
+			urlState.sort,
+			urlState.searchQuery || undefined
+		);
+		resultIndices = result.indices;
+		resultCount = result.count;
+		resultTiming = result.timing;
+	}
+</script>
+
+<svelte:head>
+	<title>Torch — {resultCount} flashlights</title>
+</svelte:head>
+
+{#if loading}
+	<div class="flex items-center justify-center h-screen" style="background: var(--bg-primary);">
+		<div class="text-center">
+			<div class="text-4xl mb-4" style="color: var(--accent);">🔦</div>
+			<p style="color: var(--text-secondary);">Loading flashlight data...</p>
+		</div>
+	</div>
+{:else if db}
+	<div class="min-h-screen" style="background: var(--bg-primary);">
+		<Header />
+
+		<!-- Filter pills bar -->
+		<FilterPills {columns} />
+
+		<div class="flex">
+			<!-- Sidebar -->
+			<FilterSidebar {columns} />
+
+			<!-- Main content area -->
+			<main class="flex-1 min-w-0">
+				<ResultToolbar {columns} count={resultCount} timing={resultTiming} />
+				<ResultList indices={resultIndices} {db} {columns} />
+			</main>
+		</div>
+	</div>
+{/if}
