@@ -120,13 +120,16 @@
 		background: var(--bg-secondary);
 		border-right: 1px solid var(--border);
 		transform: translateX(-100%);
+		/* Mobile: start below the sticky header (~45px) */
+		top: 45px;
+		height: calc(100% - 45px);
 	}
 
 	.sidebar-aside.sidebar-open {
 		transform: translateX(0);
 	}
 
-	/* Desktop: always visible, sticky */
+	/* Desktop: always visible, sticky, full height */
 	@media (min-width: 768px) {
 		.sidebar-aside {
 			position: sticky;
