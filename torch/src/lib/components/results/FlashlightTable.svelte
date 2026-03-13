@@ -1,0 +1,62 @@
+<script lang="ts">
+	import type { ColumnDef, FlashlightDB } from '$lib/schema/columns.js';
+	import { starredState } from '$lib/state/starred.svelte.js';
+	import SpriteImage from './SpriteImage.svelte';
+
+	interface Props {
+		index: number;
+		db: FlashlightDB;
+		columns: ColumnDef[];
+	}
+
+	let { index, db, columns }: Props = $props();
+
+	let data = $derived(db.data[index]);
+	let modelCol = $derived(db.head.indexOf('model'));
+	let brandCol = $derived(db.head.indexOf('brand'));
+	let picCol = $derived(db.head.indexOf('_pic'));
+	let priceCol = $derived(db.head.indexOf('price'));
+	let lumensCol = $derived(db.head.indexOf('lumens'));
+	let weightCol = $derived(db.head.indexOf('weight'));
+	let batteryCol = $derived(db.head.indexOf('battery'));
+
+	let pic = $derived(picCol >= 0 ? data[picCol] as [number, number] : [0, 0]);
+	let isStarred = $derived(starredState.isStarred(index));
+
+	function formatArray(val: unknown): string {
+		if (Array.isArray(val)) return (val as string[]).filter((x) => !x.startsWith('//')).join(', ');
+		return val ? String(val) : '?';
+	}
+</script>
+
+<div
+	class="result-item flex items-center gap-2 px-2 py-1 border-b text-xs"
+	style="border-color: var(--border);"
+>
+	<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={db.sprite} size={40} />
+	<span class="w-[120px] truncate font-medium" style="color: var(--text-primary);">
+		{data[modelCol] ?? ''}
+	</span>
+	<span class="w-[100px] truncate" style="color: var(--text-secondary);">
+		{data[brandCol] ?? ''}
+	</span>
+	<span class="w-[80px] truncate" style="color: var(--text-secondary);">
+		{lumensCol >= 0 ? formatArray(data[lumensCol]) : ''}
+	</span>
+	<span class="w-[80px] truncate" style="color: var(--text-secondary);">
+		{weightCol >= 0 ? (data[weightCol] ? data[weightCol] + 'g' : '?') : ''}
+	</span>
+	<span class="w-[100px] truncate" style="color: var(--text-secondary);">
+		{batteryCol >= 0 ? formatArray(data[batteryCol]) : ''}
+	</span>
+	<span class="w-[60px] text-right" style="color: var(--text-primary);">
+		{priceCol >= 0 && data[priceCol] ? '$' + data[priceCol] : ''}
+	</span>
+	<button
+		class="ml-auto cursor-pointer select-none"
+		style="color: {isStarred ? 'var(--star)' : 'var(--text-muted)'};"
+		onclick={() => starredState.toggle(index)}
+	>
+		{isStarred ? '★' : '☆'}
+	</button>
+</div>
