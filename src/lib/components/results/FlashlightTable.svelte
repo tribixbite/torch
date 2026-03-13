@@ -24,8 +24,8 @@
 	let isStarred = $derived(starredState.isStarred(index));
 
 	function formatArray(val: unknown): string {
-		if (Array.isArray(val)) return (val as string[]).filter((x) => !x.startsWith('//')).join(', ');
-		return val ? String(val) : '?';
+		if (Array.isArray(val)) return val.filter((x) => typeof x !== 'string' || !x.startsWith('//')).join(', ');
+		return val != null && val !== '' ? String(val) : '?';
 	}
 </script>
 
