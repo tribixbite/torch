@@ -77,7 +77,7 @@
 		if (col.unit === '{link}') {
 			if (Array.isArray(value)) {
 				return (value as string[])
-					.filter((u) => u)
+					.filter((u) => u && isSafeUrl(u))
 					.map((u) => {
 						const domain = extractDomain(u);
 						return `<a href="${u}" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">${domain}</a>`;
@@ -85,6 +85,7 @@
 					.join(', ');
 			}
 			const url = String(value);
+			if (!isSafeUrl(url)) return extractDomain(url) || '?';
 			const domain = extractDomain(url);
 			return `<a href="${url}" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">${domain}</a>`;
 		}
@@ -92,10 +93,23 @@
 		return col.unit.replace('{}', display);
 	}
 
+	/** Validate URL uses a safe protocol (no javascript:, data:, etc.) */
+	function isSafeUrl(url: string): boolean {
+		try {
+			const parsed = new URL(url);
+			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+		} catch {
+			return false;
+		}
+	}
+
 	function extractDomain(url: string): string {
-		const match = url.match(/\/([a-zA-Z0-9_.-]+)\//);
-		if (!match) return '';
-		return match[1].replace(/^www\./, '');
+		try {
+			const parsed = new URL(url);
+			return parsed.hostname.replace(/^www\./, '');
+		} catch {
+			return '';
+		}
 	}
 
 	function getPrice(): string {
@@ -111,7 +125,7 @@
 		if (purchaseCol < 0 || !data[purchaseCol]) return '';
 		const urls = Array.isArray(data[purchaseCol]) ? data[purchaseCol] as string[] : [String(data[purchaseCol])];
 		return urls
-			.filter((u) => u)
+			.filter((u) => u && isSafeUrl(u))
 			.map((u) => {
 				const domain = extractDomain(u);
 				return `<a href="${u}" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">${domain}</a>`;
@@ -123,7 +137,7 @@
 		if (infoCol < 0 || !data[infoCol]) return '';
 		const urls = Array.isArray(data[infoCol]) ? data[infoCol] as string[] : [String(data[infoCol])];
 		return urls
-			.filter((u) => u)
+			.filter((u) => u && isSafeUrl(u))
 			.map((u) => {
 				const domain = extractDomain(u);
 				return `<a href="${u}" target="_blank" rel="noopener" class="underline text-xs" style="color: var(--accent);">${domain}</a>`;

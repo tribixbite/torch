@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import type { ColumnDef } from '$lib/schema/columns.js';
 	import { urlState } from '$lib/state/url-state.svelte.js';
 	import { preferences } from '$lib/state/preferences.svelte.js';
@@ -35,13 +36,11 @@
 		openSections = next;
 	}
 
-	function scrollToFilter(colIndex: number) {
+	async function scrollToFilter(colIndex: number) {
 		openSections = new Set([...openSections, colIndex]);
-		// Small delay to let DOM update before scrolling
-		setTimeout(() => {
-			const el = document.getElementById(`filter-${colIndex}`);
-			el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-		}, 50);
+		await tick(); // wait for DOM update
+		const el = document.getElementById(`filter-${colIndex}`);
+		el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}
 
 	function isModified(colIndex: number): boolean {

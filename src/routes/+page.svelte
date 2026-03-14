@@ -18,6 +18,7 @@
 	let resultCount = $state(0);
 	let resultTiming = $state(0);
 	let loading = $state(true);
+	let loadError = $state('');
 	let workerClient: FilterWorkerClient | null = null;
 	// Keep a non-reactive reference to the raw DB for worker init
 	let plainDb: FlashlightDB | null = null;
@@ -27,25 +28,29 @@
 	let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
-		// Load data and init worker asynchronously
 		(async () => {
-			const res = await fetch('/flashlights.now.json');
-			const rawDb: FlashlightDB = await res.json();
-			plainDb = rawDb;
-			db = rawDb;
-			columns = buildColumns(rawDb);
+			try {
+				const res = await fetch('/flashlights.now.json');
+				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+				const rawDb: FlashlightDB = await res.json();
+				plainDb = rawDb;
+				db = rawDb;
+				columns = buildColumns(rawDb);
 
-			// Initialize URL state from current URL
-			urlState.init(columns);
+				// Initialize URL state from current URL
+				urlState.init(columns);
 
-			// Initialize web worker — pass plain object, not Svelte proxy
-			workerClient = new FilterWorkerClient();
-			await workerClient.init(plainDb);
+				// Initialize web worker — pass plain object, not Svelte proxy
+				workerClient = new FilterWorkerClient();
+				await workerClient.init(plainDb);
 
-			loading = false;
-
-			// Run initial filter
-			runFilter();
+				loading = false;
+				runFilter();
+			} catch (err) {
+				console.error('Failed to load flashlight data:', err);
+				loadError = err instanceof Error ? err.message : 'Unknown error';
+				loading = false;
+			}
 		})();
 
 		return () => {
@@ -100,6 +105,18 @@
 			<p style="color: var(--text-secondary);">Loading flashlight data...</p>
 		</div>
 	</div>
+{:else if loadError}
+	<div class="flex items-center justify-center h-screen" style="background: var(--bg-primary);">
+		<div class="text-center">
+			<p class="text-lg mb-2" style="color: var(--danger);">Failed to load data</p>
+			<p class="text-sm" style="color: var(--text-muted);">{loadError}</p>
+			<button
+				class="mt-4 px-4 py-2 rounded border cursor-pointer"
+				style="background: var(--bg-tertiary); color: var(--accent); border-color: var(--accent);"
+				onclick={() => window.location.reload()}
+			>Retry</button>
+		</div>
+	</div>
 {:else if db}
 	<div class="min-h-screen" style="background: var(--bg-primary);">
 		<Header />
@@ -118,7 +135,7 @@
 
 				<!-- Attribution footer -->
 				<footer class="px-4 py-3 text-center text-xs" style="color: var(--text-muted); border-top: 1px solid var(--border);">
-					Data from <a href="http://flashlights.parametrek.com" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">flashlights.parametrek.com</a>
+					Inspired by <a href="http://flashlights.parametrek.com" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">parametrek</a>
 					&middot; Built by <a href="https://github.com/tribixbite" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">tribixbite</a>
 					&middot; <a href="https://github.com/tribixbite/torch" target="_blank" rel="noopener" class="underline" style="color: var(--text-secondary);">Source</a>
 				</footer>

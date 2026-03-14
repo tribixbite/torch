@@ -9,17 +9,20 @@ import type { FilterMessage, FilterResult, SerializedFilter, SerializedFilters, 
 
 let db: FlashlightDB;
 let searchIndex: string[]; // lowercase model+brand for text search
+let lastFilterId = 0; // skip stale requests
 
 // --- Set operations (exact ports from parametrek.js) ---
 
-/** Returns true if sets intersect (any) */
+/** Returns true if sets intersect (any) — O(n) via Set lookup */
 function arrayIntersect(selected: string[], data: unknown): boolean {
-	const ar2 = normalizeToStringArray(data);
-	if (selected.length === 0 || ar2.length === 0) return false;
-	const b = selected.concat(ar2);
-	b.sort();
-	for (let i = 1; i < b.length; i++) {
-		if (b[i - 1] === b[i]) return true;
+	const dataArr = normalizeToStringArray(data);
+	if (selected.length === 0 || dataArr.length === 0) return false;
+	// Build Set from smaller array, iterate larger
+	const [smaller, larger] =
+		selected.length < dataArr.length ? [selected, dataArr] : [dataArr, selected];
+	const lookup = new Set(smaller);
+	for (const item of larger) {
+		if (lookup.has(item)) return true;
 	}
 	return false;
 }
@@ -138,13 +141,14 @@ function testItem(
 	return true;
 }
 
-/** Build text search index from all searchable columns.
- *  Includes model, brand, and all string/array option values so that
+/** Build text search index from searchable columns only (respects db.srch flags).
+ *  Includes model, brand, and string/array option values so that
  *  searching "Pink" matches flashlights with color=Pink, etc. */
 function buildSearchIndex(): void {
 	searchIndex = db.data.map((item) => {
 		const parts: string[] = [];
 		for (let col = 0; col < item.length; col++) {
+			if (!db.srch[col]) continue; // only index searchable columns
 			const val = item[col];
 			if (val === null || val === undefined || val === '') continue;
 			if (typeof val === 'string') {
@@ -156,7 +160,6 @@ function buildSearchIndex(): void {
 					}
 				}
 			}
-			// Skip numeric-only values — not useful for text search
 		}
 		return parts.join(' ').toLowerCase();
 	});
@@ -182,6 +185,10 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 	}
 
 	if (msg.type === 'filter') {
+		// Skip stale requests — a newer one is already queued
+		if (msg.id < lastFilterId) return;
+		lastFilterId = msg.id;
+
 		const start = performance.now();
 		const filters = msg.filters ?? {};
 		const sort = msg.sort;
