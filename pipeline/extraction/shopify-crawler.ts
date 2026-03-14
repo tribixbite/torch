@@ -81,6 +81,18 @@ function normalizeBrandName(vendor: string): string {
 		'dorcy': 'Dorcy',
 		'nightstick': 'Nightstick',
 		'bayco': 'Nightstick',
+		'powertac': 'PowerTac',
+		'malkoff': 'Malkoff',
+		'malkoff devices': 'Malkoff',
+		'reylight': 'ReyLight',
+		'foursevens': 'FourSevens',
+		'four sevens': 'FourSevens',
+		'4sevens': 'FourSevens',
+		'modlite': 'Modlite',
+		'cloud defensive': 'Cloud Defensive',
+		'clouddefensive': 'Cloud Defensive',
+		'nextorch': 'Nextorch',
+		'darksucks': 'FourSevens',
 	};
 	const lower = vendor.toLowerCase().trim();
 	if (map[lower]) return map[lower];
@@ -270,6 +282,96 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
 			return /flashlight|headlamp|lantern|light|torch|lumen/i.test(text) &&
 				!/battery|charger|holster|pouch|strap/i.test(text);
+		},
+	},
+	// --- New brand stores (from PIPELINE.md TODO) ---
+	{
+		brand: 'Nextorch',
+		baseUrl: 'https://www.nextorch.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|light|torch/i.test(text);
+		},
+	},
+	{
+		brand: 'PowerTac',
+		baseUrl: 'https://www.powertac.com',
+	},
+	{
+		brand: 'Nightstick',
+		baseUrl: 'https://www.nightstick.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''} ${p.tags.join(' ')}`.toLowerCase();
+			return /flashlight|headlamp|lantern|light|lamp/i.test(text);
+		},
+	},
+	{
+		brand: 'Malkoff',
+		baseUrl: 'https://malkoffdevices.com',
+	},
+	{
+		brand: 'ReyLight',
+		baseUrl: 'https://reylight.net',
+	},
+	{
+		brand: 'FourSevens',
+		baseUrl: 'https://www.foursevens.com',
+	},
+	{
+		brand: 'Modlite',
+		baseUrl: 'https://modlite.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /light|handheld|weapon|head\b|body\b/i.test(text) &&
+				!/mount|switch|cap|battery|charger|holster|sling/i.test(text);
+		},
+	},
+	{
+		brand: 'CloudDefensive',
+		baseUrl: 'https://www.clouddefensive.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /rein|light|owl|mcw/i.test(text) &&
+				!/mount|switch|tape|pad|rail|sling|hat|shirt|patch/i.test(text);
+		},
+	},
+	// --- New retailer stores ---
+	{
+		brand: 'JLHawaii808',
+		baseUrl: 'https://jlhawaii808.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|emisar|noctigon|hank/i.test(text);
+		},
+	},
+	{
+		brand: 'FlashlightWorldCA',
+		baseUrl: 'https://flashlightworld.ca',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|light/i.test(text) &&
+				!/battery|charger|filter|diffuser|mount|holster/i.test(text);
+		},
+	},
+	{
+		brand: 'FenixStore',
+		baseUrl: 'https://www.fenix-store.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			return /flashlight|headlamp|lantern|light/i.test(type);
+		},
+	},
+	{
+		brand: 'TorchDirectUK',
+		baseUrl: 'https://torchdirect.co.uk',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|light/i.test(text) &&
+				!/battery|charger|filter|case|pouch/i.test(text);
 		},
 	},
 ];

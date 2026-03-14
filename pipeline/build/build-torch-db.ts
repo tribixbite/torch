@@ -5,6 +5,15 @@
 import { getAllFlashlights } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { resolve } from 'path';
+import { existsSync } from 'fs';
+
+/** Sprite metadata written by scrape-images.ts */
+interface SpriteMetadata {
+	cols: number;
+	tileSize: number;
+	totalImages: number;
+	spriteFile: string;
+}
 
 /** Column definition — maps to head[i] / disp[i] / opts[i] etc. */
 interface ColumnMeta {
@@ -194,7 +203,9 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 
 /** Build opts[] — filter definitions for each column */
 function buildOpts(data: unknown[][]): (unknown[] | null)[] {
-	const MULTI_COLS = new Set(['brand', 'type', 'led', 'trueled', 'battery', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'environment']);
+	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'impact']);
+	// Mega-multi: columns with many options that benefit from grouped display
+	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'battery', 'environment']);
 	const BOOLEAN_COLS = new Set(['features']);
 
 	// Range definitions: [min, max, decimals]
@@ -214,11 +225,18 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		year: { type: 'range' },
 	};
 
+	// Composite filters group sub-columns under one header
+	// _bat would group battery+wh but wh is 0% populated, so skip it
+	// diam groups bezel_size + body_size (both sparse but functional)
 	const MULTIPLE_COLS: Record<string, number[]> = {
-		diam: [22, 23], // bezel_size, body_size column indices
+		diam: [22, 23],  // bezel_size (index 22), body_size (index 23)
 	};
 
 	return COLUMNS.map((col, i) => {
+		if (MEGA_MULTI_COLS.has(col.id)) {
+			const options = collectOptions(data, i);
+			return ['mega-multi', options];
+		}
 		if (MULTI_COLS.has(col.id)) {
 			const options = collectOptions(data, i);
 			return ['multi', options];
@@ -268,12 +286,33 @@ export async function buildTorchDb(): Promise<{
 	const entries = getAllFlashlights();
 	console.log(`  ${entries.length} entries from SQLite`);
 
+	// Load sprite metadata if available (written by scrape-images.ts)
+	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');
+	let spriteMeta: SpriteMetadata | null = null;
+	let spriteFile = '';
+	if (existsSync(spriteMetaPath)) {
+		spriteMeta = JSON.parse(await Bun.file(spriteMetaPath).text());
+		spriteFile = spriteMeta!.spriteFile;
+		console.log(`  Using sprite: ${spriteFile} (${spriteMeta!.cols} cols, ${spriteMeta!.totalImages} tiles)`);
+	} else {
+		console.log('  No sprite metadata found — using image URLs for _pic');
+	}
+
 	// Build data array — each row is 36 elements in column order
 	const data: unknown[][] = [];
-	for (const entry of entries) {
+	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
+
+	for (let rowIdx = 0; rowIdx < entries.length; rowIdx++) {
+		const entry = entries[rowIdx];
 		const row: unknown[] = [];
 		for (const col of COLUMNS) {
 			row.push(col.extract(entry));
+		}
+		// If sprite available, replace _pic with [col, row] sprite coordinates
+		if (spriteMeta && picColIdx >= 0) {
+			const spriteCol = rowIdx % spriteMeta.cols;
+			const spriteRow = Math.floor(rowIdx / spriteMeta.cols);
+			row[picColIdx] = [spriteCol, spriteRow];
 		}
 		data.push(row);
 	}
@@ -311,7 +350,7 @@ export async function buildTorchDb(): Promise<{
 		cvis,
 		link,
 		data,
-		sprite: '', // No sprite sheet — using individual image URLs
+		sprite: spriteFile,
 		help,
 		note,
 	};

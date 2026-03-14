@@ -64,6 +64,9 @@ async function main(): Promise<void> {
 		case 'cleanup':
 			cmdCleanup();
 			break;
+		case 'images':
+			await cmdImages();
+			break;
 		case 'run':
 			await cmdRun();
 			break;
@@ -78,6 +81,8 @@ Commands:
   shopify [brand] Crawl Shopify stores (JSON API, fast + reliable)
   detail-scrape  Scrape full product pages for missing specs (length, LED, etc.)
   enrich         Fill missing attributes via inference + manufacturer scraping
+  images         Download, optimize, and build sprite sheet from product images
+  cleanup        Remove dupes + entries without images
   build          Build flashlights.now.json from SQLite data
   stats          Show pipeline statistics
   validate       Validate all entries have required attributes
@@ -363,6 +368,19 @@ async function cmdEnrich(): Promise<void> {
 	console.log(`Enriched: ${result.enriched}`);
 	console.log(`Now valid: ${result.nowValid}`);
 	console.log(`Still invalid: ${result.stillInvalid}`);
+}
+
+/** Download, optimize, and build sprite sheet from product images */
+async function cmdImages(): Promise<void> {
+	const flags = process.argv.slice(3);
+	console.log('=== Image Pipeline ===\n');
+	console.log('Running: bun pipeline/images/scrape-images.ts', flags.join(' '));
+	const proc = Bun.spawn(['bun', 'run', 'pipeline/images/scrape-images.ts', ...flags], {
+		cwd: import.meta.dir.replace(/\/pipeline$/, ''),
+		stdout: 'inherit',
+		stderr: 'inherit',
+	});
+	await proc.exited;
 }
 
 /** Clean up the database: remove dupes and entries missing images */

@@ -56,6 +56,8 @@ interface WooProduct {
 interface WooStore {
 	brand: string;
 	baseUrl: string;
+	/** Custom API path (default: /wp-json/wc/store/v1/products) */
+	apiPath?: string;
 	/** Filter products to only flashlights */
 	isFlashlight?: (product: WooProduct) => boolean;
 }
@@ -77,6 +79,16 @@ export const WOOCOMMERCE_STORES: WooStore[] = [
 			return /flashlight|headlamp|lantern|torch|light|lumen/i.test(text);
 		},
 	},
+	{
+		brand: 'EagTac',
+		baseUrl: 'https://www.eagtac.com',
+		// EagTac uses /wp-json/wc/store/products (no v1)
+		apiPath: '/wp-json/wc/store/products',
+		isFlashlight: (p) => {
+			const text = `${p.name} ${p.short_description} ${p.categories.map((c) => c.name).join(' ')}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|light|lumen/i.test(text);
+		},
+	},
 ];
 
 /**
@@ -87,8 +99,10 @@ async function fetchAllProducts(store: WooStore): Promise<WooProduct[]> {
 	let page = 1;
 	const perPage = 100;
 
+	const apiBase = store.apiPath ?? '/wp-json/wc/store/v1/products';
+
 	while (true) {
-		const url = `${store.baseUrl}/wp-json/wc/store/v1/products?per_page=${perPage}&page=${page}`;
+		const url = `${store.baseUrl}${apiBase}?per_page=${perPage}&page=${page}`;
 		try {
 			const res = await fetch(url, {
 				headers: {
