@@ -11,7 +11,7 @@ import { deserializeUrl, serializeUrl } from '../schema/url-codec.js';
 /** Global app state — synced with URL search params */
 class UrlState {
 	filters = $state<Map<number, ActiveFilter>>(new Map());
-	sort = $state<SortState>({ column: 35, direction: 'inc' });
+	sort = $state<SortState>({ column: -1, direction: 'inc' });
 	searchQuery = $state('');
 	columns: ColumnDef[] = [];
 	private initialized = false;
@@ -93,7 +93,7 @@ class UrlState {
 	/** Clear all filters */
 	clearAll() {
 		this.filters = new Map();
-		this.sort = { column: this.columns.length - 1, direction: 'inc' };
+		this.sort = { column: -1, direction: 'inc' };
 		this.searchQuery = '';
 		this.syncToUrl();
 	}

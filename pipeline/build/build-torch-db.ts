@@ -346,8 +346,14 @@ export async function buildTorchDb(): Promise<{
 }> {
 	console.log('Building FlashlightDB JSON...');
 
-	const entries = getAllFlashlights();
-	console.log(`  ${entries.length} entries from SQLite`);
+	const allEntries = getAllFlashlights();
+	console.log(`  ${allEntries.length} entries from SQLite`);
+
+	// Filter out obvious non-flashlight accessories
+	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|glow tube|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|battery pack)\b/i;
+	const entries = allEntries.filter((e) => !ACCESSORY_PATTERNS.test(e.model));
+	const removed = allEntries.length - entries.length;
+	if (removed > 0) console.log(`  Filtered ${removed} accessories (${entries.length} actual flashlights)`);
 
 	// Load sprite metadata if available (written by scrape-images.ts)
 	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');

@@ -13,8 +13,8 @@ export function deserializeUrl(
 	columns: ColumnDef[]
 ): { filters: Map<number, ActiveFilter>; sort: SortState } {
 	const filters = new Map<number, ActiveFilter>();
-	// Default sort: last column (price), ascending
-	let sort: SortState = { column: columns.length - 1, direction: 'inc' };
+	// Default sort: no sort (data order)
+	let sort: SortState = { column: -1, direction: 'inc' };
 
 	for (const col of columns) {
 		if (col.filterType === null || col.filterType === 'multiple') continue;
