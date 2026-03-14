@@ -7,6 +7,54 @@ import type { FlashlightEntry } from '../schema/canonical.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
+/**
+ * Color normalization — maps raw variant strings to 20 canonical colors.
+ * Strips LED color temps, model numbers, finishes, and junk values.
+ */
+const COLOR_MAP: Record<string, string> = {
+	'black': 'black', 'blk': 'black', 'noir': 'black', 'dark': 'black',
+	'white': 'white', 'clear': 'white', 'silver': 'silver', 'chrome': 'silver',
+	'gray': 'gray', 'grey': 'gray', 'gunmetal': 'gray', 'charcoal': 'gray', 'titanium': 'gray',
+	'red': 'red', 'crimson': 'red', 'wine': 'red', 'maroon': 'red',
+	'blue': 'blue', 'navy': 'blue', 'cobalt': 'blue', 'sapphire': 'blue',
+	'green': 'green', 'olive': 'green', 'od green': 'green', 'odg': 'green', 'army green': 'green',
+	'yellow': 'yellow', 'gold': 'yellow', 'amber': 'yellow',
+	'orange': 'orange', 'fire': 'orange', 'lava': 'orange',
+	'purple': 'purple', 'violet': 'purple', 'blurple': 'purple',
+	'pink': 'pink', 'rose': 'pink', 'rose gold': 'pink', 'magenta': 'pink',
+	'brown': 'brown', 'tan': 'brown', 'desert': 'brown', 'sand': 'brown', 'fde': 'brown',
+	'flat dark earth': 'brown', 'coyote': 'brown', 'khaki': 'brown', 'bronze': 'brown',
+	'copper': 'copper', 'brass': 'brass',
+	'camo': 'camo', 'camouflage': 'camo',
+	'teal': 'teal', 'turquoise': 'teal', 'aqua': 'teal', 'cyan': 'teal', 'mint': 'teal',
+	'rainbow': 'rainbow',
+};
+
+function normalizeColors(rawColors: string[]): string[] {
+	const result = new Set<string>();
+	for (const raw of rawColors) {
+		const lower = raw.toLowerCase().trim();
+		// Skip LED color temps, model numbers, glow tubes, finishes
+		if (/^\d+k$/i.test(lower)) continue;
+		if (/\d{4}k/i.test(lower)) continue;
+		if (/^(cool|neutral|warm|nw|cw)\b/i.test(lower)) continue;
+		if (/glow|install|ready made|skeleton|solid|stock/i.test(lower)) continue;
+		// Direct match
+		if (COLOR_MAP[lower]) { result.add(COLOR_MAP[lower]); continue; }
+		// Partial match — check if any keyword is in the string
+		let matched = false;
+		for (const [keyword, canonical] of Object.entries(COLOR_MAP)) {
+			if (lower.includes(keyword)) { result.add(canonical); matched = true; break; }
+		}
+		if (!matched && lower.length > 0) {
+			// Unknown value — skip it (don't pollute with junk)
+		}
+	}
+	// Default to black if nothing matched
+	if (result.size === 0) result.add('black');
+	return [...result].sort();
+}
+
 /** Sprite metadata written by scrape-images.ts */
 interface SpriteMetadata {
 	cols: number;
@@ -88,7 +136,7 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'switch', display: 'switch', unit: '', cvis: 'always', link: 'switch', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.switch },
 	{ id: 'color', display: 'color', unit: '', cvis: '', link: 'color', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
-		extract: (e) => e.color },
+		extract: (e) => normalizeColors(e.color) },
 	{ id: 'length', display: 'length', unit: '{} mm', cvis: 'never', link: 'length', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.length_mm ?? '' },
 	{ id: 'bezel_size', display: 'bezel&nbsp;size', unit: '{} mm', cvis: 'never', link: 'diam', srch: false, mode: ['any'], sortable: true,
@@ -108,11 +156,25 @@ const COLUMNS: ColumnMeta[] = [
 		},
 	},
 	{ id: 'weight', display: 'weight', unit: '{} g', cvis: 'never', link: 'weight', srch: false, mode: ['any'], sortable: true,
-		extract: (e) => e.weight_g ?? '' },
+		extract: (e) => {
+			// Cap at 5000g (5kg) — anything higher is a data error
+			const w = e.weight_g;
+			if (w == null || w <= 0 || w > 5000) return '';
+			return w;
+		} },
 	{ id: 'material', display: 'material', unit: '', cvis: '', link: 'material', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.material },
-	{ id: 'impact', display: 'impact', unit: '{} m', cvis: '', link: 'impact', srch: false, mode: ['any', 'all', 'only', 'none'], sortable: false,
-		extract: (e) => e.impact.length > 0 ? e.impact : [] },
+	{ id: 'impact', display: 'impact', unit: '{} m', cvis: '', link: 'impact', srch: false, mode: ['any'], sortable: true,
+		extract: (e) => {
+			// Parse "2m", "1.5m" → numeric meters
+			// Filter out throw distances mistakenly in impact field (>10m is not impact resistance)
+			if (e.impact.length > 0) {
+				const val = parseFloat(e.impact[0].replace(/m$/i, ''));
+				if (isNaN(val) || val > 10) return '';
+				return val;
+			}
+			return '';
+		} },
 	{ id: 'environment', display: 'environment', unit: '', cvis: '', link: 'environment', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.environment },
 	{ id: 'efficacy', display: 'efficacy', unit: '{} lm/W', cvis: 'never', link: 'efficacy', srch: false, mode: ['any'], sortable: true,
@@ -203,7 +265,7 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 
 /** Build opts[] — filter definitions for each column */
 function buildOpts(data: unknown[][]): (unknown[] | null)[] {
-	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'impact']);
+	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material']);
 	// Mega-multi: columns with many options that benefit from grouped display
 	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'battery', 'environment']);
 	const BOOLEAN_COLS = new Set(['features']);
@@ -215,6 +277,7 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		runtime: { type: 'log-range' },
 		intensity: { type: 'log-range' },
 		throw: { type: 'range' },
+		impact: { type: 'range' },
 		length: { type: 'log-range' },
 		bezel_size: { type: 'log-range' },
 		body_size: { type: 'log-range' },
