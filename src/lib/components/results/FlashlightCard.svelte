@@ -27,7 +27,11 @@
 
 	let model = $derived(modelCol >= 0 ? String(data[modelCol] ?? '') : '');
 	let brand = $derived(brandCol >= 0 ? String(data[brandCol] ?? '') : '');
-	let pic = $derived(picCol >= 0 ? data[picCol] as [number, number] : [0, 0]);
+	// _pic can be [col, row] sprite coords OR a direct image URL string
+	let picRaw = $derived(picCol >= 0 ? data[picCol] : null);
+	let picIsSprite = $derived(Array.isArray(picRaw));
+	let picCoords = $derived(picIsSprite ? picRaw as [number, number] : [0, 0] as [number, number]);
+	let picUrl = $derived(!picIsSprite && typeof picRaw === 'string' && picRaw ? picRaw : '');
 	let isStarred = $derived(starredState.isStarred(index));
 
 	// Avoid list for detail display (same as parametrek.js)
@@ -134,7 +138,7 @@
 >
 	<!-- Sprite thumbnail -->
 	<div class="card-thumb">
-		<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={db.sprite} />
+		<SpriteImage col={picCoords[0]} row={picCoords[1]} spriteUrl={db.sprite} imageUrl={picUrl} />
 	</div>
 
 	<!-- Content -->

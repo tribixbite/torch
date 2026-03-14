@@ -11,9 +11,13 @@
 
 	let { columns }: Props = $props();
 
-	// Filterable columns (exclude null filterType and 'multiple' shown via composite parent)
+	// Filterable columns — show all with a filter type (searchable is for text search, not visibility)
+	// Exclude sub-columns that are rendered inside a composite ('multiple') parent
+	let compositeSubCols = $derived(
+		new Set(columns.filter((c) => c.filterType === 'multiple' && c.subColumns).flatMap((c) => c.subColumns!))
+	);
 	let filterableColumns = $derived(
-		columns.filter((c) => c.filterType !== null && c.searchable)
+		columns.filter((c) => c.filterType !== null && !compositeSubCols.has(c.index))
 	);
 
 	// Track which filter sections are expanded
