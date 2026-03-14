@@ -16,8 +16,10 @@
 	let compositeSubCols = $derived(
 		new Set(columns.filter((c) => c.filterType === 'multiple' && c.subColumns).flatMap((c) => c.subColumns!))
 	);
+	// Hidden columns: internal duplicates + columns with no usable data
+	const HIDDEN_FILTER_IDS = new Set(['trueled', '_pic', '_bat', '_reviews', 'wh', 'efficacy', 'beam_angle', 'year']);
 	let filterableColumns = $derived(
-		columns.filter((c) => c.filterType !== null && !compositeSubCols.has(c.index))
+		columns.filter((c) => c.filterType !== null && !HIDDEN_FILTER_IDS.has(c.id) && !compositeSubCols.has(c.index))
 	);
 
 	// Track which filter sections are expanded
