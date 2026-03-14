@@ -5,3 +5,6 @@ build
 .env.*
 !.env.example
 vite.config.ts.timestamp-*
+
+# Pipeline runtime data
+pipeline-data/
