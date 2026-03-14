@@ -350,8 +350,11 @@ export async function buildTorchDb(): Promise<{
 	console.log(`  ${allEntries.length} entries from SQLite`);
 
 	// Filter out obvious non-flashlight accessories
-	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|glow tube|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|battery pack)\b/i;
-	const entries = allEntries.filter((e) => !ACCESSORY_PATTERNS.test(e.model));
+	// Match non-flashlight items — \b word boundaries, case-insensitive
+	// "glow tubes" matched only if at start or is the entire product name
+	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|battery pack)\b/i;
+	const GLOW_TUBE_ONLY = /^(gitd\b|.*\bglow tubes?\b(?!.*\b(flashlight|headlamp|torch)\b))/i;
+	const entries = allEntries.filter((e) => !ACCESSORY_PATTERNS.test(e.model) && !GLOW_TUBE_ONLY.test(e.model));
 	const removed = allEntries.length - entries.length;
 	if (removed > 0) console.log(`  Filtered ${removed} accessories (${entries.length} actual flashlights)`);
 
