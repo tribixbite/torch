@@ -277,9 +277,41 @@ function inferMissing(entry: FlashlightEntry): FlashlightEntry {
 		}
 	}
 
-	// Color — default to black
-	if (!updated.color.length) {
-		updated.color = ['black'];
+	// Color — infer from model name, then default to black
+	{
+		const colorKeywords: Record<string, string> = {
+			'pink': 'pink', 'rose': 'pink',
+			'red': 'red', 'crimson': 'red',
+			'blue': 'blue', 'navy': 'blue', 'cobalt': 'blue',
+			'green': 'green', 'olive': 'green', 'od green': 'green',
+			'orange': 'orange', 'tangerine': 'orange',
+			'yellow': 'yellow', 'gold': 'yellow',
+			'purple': 'purple', 'violet': 'purple',
+			'white': 'white', 'silver': 'silver',
+			'desert tan': 'tan', 'sand': 'tan', 'coyote': 'tan', 'fde': 'tan',
+			'camo': 'camo', 'camouflage': 'camo',
+			'titanium': 'gray',
+		};
+		const title = `${updated.model}`.toLowerCase();
+		const detectedColors: string[] = [];
+		for (const [keyword, color] of Object.entries(colorKeywords)) {
+			if (title.includes(keyword) && !detectedColors.includes(color)) {
+				detectedColors.push(color);
+			}
+		}
+		if (detectedColors.length > 0) {
+			// If color was already set (e.g. to ['black'] default), replace with detected
+			if (!updated.color.length || (updated.color.length === 1 && updated.color[0] === 'black')) {
+				updated.color = detectedColors;
+			} else {
+				// Merge detected colors in
+				for (const c of detectedColors) {
+					if (!updated.color.includes(c)) updated.color.push(c);
+				}
+			}
+		} else if (!updated.color.length) {
+			updated.color = ['black'];
+		}
 	}
 
 	// Features — add common defaults
