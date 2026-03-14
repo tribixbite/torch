@@ -111,7 +111,7 @@
 				<div class="flex justify-between"><span><kbd class="px-1.5 py-0.5 rounded" style="background: var(--bg-tertiary); border: 1px solid var(--border);">?</kbd></span><span>Toggle this help</span></div>
 			</div>
 			<div class="mt-4 pt-3 text-xs" style="color: var(--text-muted); border-top: 1px solid var(--border);">
-				Data from <a href="http://flashlights.parametrek.com" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">parametrek.com</a>
+				Inspired by <a href="http://flashlights.parametrek.com" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">parametrek</a>
 			</div>
 		</div>
 	</div>

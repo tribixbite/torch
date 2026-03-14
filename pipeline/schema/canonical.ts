@@ -148,15 +148,19 @@ export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>;
 export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;
 export type FlashlightEntry = z.infer<typeof FlashlightEntrySchema>;
 
-// --- Required attributes for completion criteria ---
+// --- Required attributes — matches parametrek standard ---
+// These 16 fields are present for every entry in parametrek's database.
+// They define the quality bar for data completeness.
+// NOTE: intensity_cd is derivable from throw_m via ANSI FL1, not separately required.
 
 export const REQUIRED_ATTRIBUTES = [
-	'model', 'brand', 'type', 'led', 'battery', 'lumens',
-	'price_usd', 'weight_g', 'length_mm', 'material',
-	'switch', 'color', 'features', 'image_url', 'purchase_url',
+	'model', 'brand', 'type', 'led', 'battery',
+	'lumens', 'throw_m', 'runtime_hours',
+	'switch', 'features', 'color', 'material',
+	'length_mm', 'weight_g', 'price_usd', 'purchase_url',
 ] as const;
 
-/** Check if an entry has all required attributes populated */
+/** Check if an entry has all required attributes populated (parametrek standard) */
 export function hasRequiredAttributes(entry: FlashlightEntry): { valid: boolean; missing: string[] } {
 	const missing: string[] = [];
 	if (!entry.model) missing.push('model');
@@ -165,14 +169,15 @@ export function hasRequiredAttributes(entry: FlashlightEntry): { valid: boolean;
 	if (!entry.led?.length) missing.push('led');
 	if (!entry.battery?.length) missing.push('battery');
 	if (!entry.performance?.claimed?.lumens?.length) missing.push('lumens');
-	if (entry.price_usd == null || entry.price_usd <= 0) missing.push('price_usd');
-	if (entry.weight_g == null || entry.weight_g <= 0) missing.push('weight_g');
-	if (entry.length_mm == null || entry.length_mm <= 0) missing.push('length_mm');
-	if (!entry.material?.length) missing.push('material');
+	if (!entry.performance?.claimed?.throw_m || entry.performance.claimed.throw_m <= 0) missing.push('throw_m');
+	if (!entry.performance?.claimed?.runtime_hours?.length) missing.push('runtime_hours');
 	if (!entry.switch?.length) missing.push('switch');
-	if (!entry.color?.length) missing.push('color');
 	if (!entry.features?.length) missing.push('features');
-	if (!entry.image_urls?.length) missing.push('image_url');
+	if (!entry.color?.length) missing.push('color');
+	if (!entry.material?.length) missing.push('material');
+	if (entry.length_mm == null || entry.length_mm <= 0) missing.push('length_mm');
+	if (entry.weight_g == null || entry.weight_g <= 0) missing.push('weight_g');
+	if (entry.price_usd == null || entry.price_usd <= 0) missing.push('price_usd');
 	if (!entry.purchase_urls?.length) missing.push('purchase_url');
 	return { valid: missing.length === 0, missing };
 }
