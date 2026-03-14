@@ -395,6 +395,67 @@ export function findDuplicates(): { brand: string; model: string; count: number 
 	`).all() as { brand: string; model: string; count: number }[];
 }
 
+/** Delete entries that have no images (useless without visual) */
+export function deleteEntriesWithoutImages(): number {
+	const db = getDb();
+	// First get IDs to delete, then cascade
+	const ids = db.prepare(`
+		SELECT id FROM flashlights
+		WHERE image_urls IS NULL OR image_urls = '[]' OR image_urls = ''
+	`).all() as { id: string }[];
+
+	for (const { id } of ids) {
+		db.prepare('DELETE FROM sources WHERE flashlight_id = ?').run(id);
+		db.prepare('DELETE FROM prices WHERE flashlight_id = ?').run(id);
+		db.prepare('DELETE FROM flashlights WHERE id = ?').run(id);
+	}
+	return ids.length;
+}
+
+/** Remove duplicate entries (keep the one with more data) */
+export function removeDuplicates(): number {
+	const db = getDb();
+	// Find duplicate groups by lowercase brand+model
+	const dupes = db.prepare(`
+		SELECT GROUP_CONCAT(id) as ids, LOWER(brand) as lb, LOWER(model) as lm, COUNT(*) as cnt
+		FROM flashlights
+		GROUP BY LOWER(brand), LOWER(model)
+		HAVING cnt > 1
+	`).all() as { ids: string; lb: string; lm: string; cnt: number }[];
+
+	let removed = 0;
+	for (const group of dupes) {
+		const ids = group.ids.split(',');
+		// Keep the entry with the most non-null fields
+		const entries = ids.map((id) => {
+			const row = db.prepare('SELECT * FROM flashlights WHERE id = ?').get(id) as Record<string, unknown>;
+			let score = 0;
+			for (const v of Object.values(row)) {
+				if (v != null && v !== '' && v !== '[]' && v !== '{}') score++;
+			}
+			return { id, score };
+		});
+		entries.sort((a, b) => b.score - a.score);
+
+		// Delete all but the best entry (cascade related records)
+		for (let i = 1; i < entries.length; i++) {
+			const id = entries[i].id;
+			db.prepare('DELETE FROM sources WHERE flashlight_id = ?').run(id);
+			db.prepare('DELETE FROM prices WHERE flashlight_id = ?').run(id);
+			db.prepare('DELETE FROM flashlights WHERE id = ?').run(id);
+			removed++;
+		}
+	}
+	return removed;
+}
+
+/** Delete a flashlight entry by ID */
+export function deleteFlashlight(id: string): boolean {
+	const db = getDb();
+	const result = db.prepare('DELETE FROM flashlights WHERE id = ?').run(id);
+	return result.changes > 0;
+}
+
 /** Convert a database row to a FlashlightEntry */
 function rowToEntry(row: Record<string, unknown>): FlashlightEntry {
 	const parseJson = (v: unknown, fallback: unknown = []) => {

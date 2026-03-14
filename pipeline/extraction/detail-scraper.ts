@@ -52,12 +52,20 @@ export async function scrapeDetailForEntry(entry: FlashlightEntry): Promise<{
 function enrichFromFullPage(
 	entry: FlashlightEntry,
 	html: string,
-	text: string,
+	_text: string,
 	fieldsAdded: string[],
 ): void {
+	// Normalize smart quotes and special chars for reliable regex matching
+	const text = _text
+		.replace(/[\u2018\u2019\u201A\u201B]/g, "'") // Smart single quotes → '
+		.replace(/[\u2033\u2036]/g, '"')  // Double prime → "
+		.replace(/[\u201C\u201D\u201E\u201F\u2034\u2037]/g, '"') // Smart double quotes → "
+		.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-') // Various dashes → -
+		.replace(/\u00A0/g, ' '); // Non-breaking space → space
+
 	// === LENGTH / DIMENSIONS ===
 	if (!entry.length_mm || entry.length_mm <= 0) {
-		// Fenix format: "Length: 5.74" (145.8mm)"
+		// Fenix format: 'Length: 5.74" (145.8mm)' — with smart quotes normalized
 		let m = text.match(/length[:\s]*(\d+(?:\.\d+)?)["\s]*(?:inches?|in\.?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*mm\)?/i);
 		if (m) {
 			entry.length_mm = parseFloat(m[2]);

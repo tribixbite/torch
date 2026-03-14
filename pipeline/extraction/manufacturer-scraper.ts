@@ -71,6 +71,12 @@ export function htmlToText(html: string): string {
 		.replace(/&#39;/g, "'")
 		.replace(/&nbsp;/g, ' ')
 		.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+		// Normalize smart quotes and special chars
+		.replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+		.replace(/[\u2033\u2036]/g, '"')
+		.replace(/[\u201C\u201D\u201E\u201F\u2034\u2037]/g, '"')
+		.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-')
+		.replace(/\u00A0/g, ' ')
 		// Collapse whitespace
 		.replace(/[ \t]+/g, ' ')
 		.replace(/\n{3,}/g, '\n\n')

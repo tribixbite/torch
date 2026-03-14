@@ -8,6 +8,7 @@ import { discoverAllBrands, scrapeUnscrapedAsins } from './keepa/scraper.js';
 import {
 	getDb, closeDb, countFlashlights, countDiscoveredAsins,
 	getBrandStats, searchFlashlights, findDuplicates, getAllFlashlights,
+	deleteEntriesWithoutImages, removeDuplicates,
 } from './store/db.js';
 import { hasRequiredAttributes } from './schema/canonical.js';
 import { buildTorchDb } from './build/build-torch-db.js';
@@ -15,6 +16,7 @@ import { enrichAllEntries } from './extraction/enrich.js';
 import { scrapeDetailsForIncomplete } from './extraction/detail-scraper.js';
 import { crawlAllBrands, crawlBrand, getCrawlerBrands } from './extraction/catalog-crawler.js';
 import { crawlAllShopifyStores, crawlShopifyStore, SHOPIFY_STORES } from './extraction/shopify-crawler.js';
+import { crawlAllWooStores, crawlWooStore, WOOCOMMERCE_STORES } from './extraction/woocommerce-crawler.js';
 
 const command = process.argv[2];
 
@@ -58,6 +60,9 @@ async function main(): Promise<void> {
 			break;
 		case 'enrich':
 			await cmdEnrich();
+			break;
+		case 'cleanup':
+			cmdCleanup();
 			break;
 		case 'run':
 			await cmdRun();
@@ -360,49 +365,52 @@ async function cmdEnrich(): Promise<void> {
 	console.log(`Still invalid: ${result.stillInvalid}`);
 }
 
+/** Clean up the database: remove dupes and entries missing images */
+function cmdCleanup(): void {
+	console.log('=== Database Cleanup ===\n');
+
+	const beforeCount = countFlashlights();
+	console.log(`Entries before cleanup: ${beforeCount}`);
+
+	// Remove duplicates (keep best entry per brand+model group)
+	const dupesRemoved = removeDuplicates();
+	console.log(`Duplicates removed: ${dupesRemoved}`);
+
+	// Remove entries without images
+	const noImageRemoved = deleteEntriesWithoutImages();
+	console.log(`Entries without images removed: ${noImageRemoved}`);
+
+	const afterCount = countFlashlights();
+	console.log(`\nEntries after cleanup: ${afterCount} (removed ${beforeCount - afterCount} total)`);
+}
+
 /** Run full pipeline: discover → scrape in batches → build */
 async function cmdRun(): Promise<void> {
 	console.log('=== Full Pipeline Run ===\n');
 
-	// Step 1: Discover
-	const asinCounts = countDiscoveredAsins();
-	if (asinCounts.total === 0) {
-		console.log('Step 1: Discovering ASINs...');
-		await cmdDiscover();
-	} else {
-		console.log(`Step 1: ${asinCounts.total} ASINs already discovered (${asinCounts.unscraped} unscraped)`);
-	}
+	// Step 1: Crawl Shopify stores (fastest, most reliable)
+	console.log('Step 1: Crawling Shopify stores...');
+	await cmdShopify();
 
-	// Step 2: Scrape in batches until no more unscraped
-	console.log('\nStep 2: Scraping product details...');
-	let totalScraped = 0;
-	let batchNum = 0;
-	const MAX_TOTAL_BATCHES = 200; // Safety limit
+	// Step 2: Crawl WooCommerce stores
+	console.log('\nStep 2: Crawling WooCommerce stores...');
+	const wooResult = await crawlAllWooStores();
+	console.log(`WooCommerce: ${wooResult.totalSaved} saved`);
 
-	while (batchNum < MAX_TOTAL_BATCHES) {
-		const remaining = countDiscoveredAsins();
-		if (remaining.unscraped === 0) break;
+	// Step 3: Detail scrape for missing specs (length, LED, etc.)
+	console.log('\nStep 3: Detail scraping product pages...');
+	await cmdDetailScrape();
 
-		batchNum++;
-		console.log(`\n  Batch ${batchNum} — ${remaining.unscraped} ASINs remaining`);
-		const result = await scrapeUnscrapedAsins(new KeepaClient(), 1);
-		totalScraped += result.scraped;
-
-		if (result.scraped === 0 && result.errors === 0) break;
-	}
-
-	console.log(`\nTotal scraped: ${totalScraped} in ${batchNum} batches`);
-
-	// Step 3: Enrich
-	console.log('\nStep 3: Enriching missing attributes...');
+	// Step 4: Enrich remaining missing attributes via inference
+	console.log('\nStep 4: Enriching missing attributes...');
 	await cmdEnrich();
 
-	// Step 4: Build
-	console.log('\nStep 4: Building FlashlightDB JSON...');
+	// Step 5: Build FlashlightDB JSON
+	console.log('\nStep 5: Building FlashlightDB JSON...');
 	await cmdBuild();
 
-	// Step 5: Verify
-	console.log('\nStep 5: Verification...');
+	// Step 6: Verify
+	console.log('\nStep 6: Verification...');
 	await cmdVerifyAll();
 }
 

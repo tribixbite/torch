@@ -12,6 +12,101 @@ import { htmlToText } from './manufacturer-scraper.js';
 
 const CRAWL_DELAY = 800; // ms between requests
 
+/** Normalize vendor names from retailers to canonical brand names */
+function normalizeBrandName(vendor: string): string {
+	const map: Record<string, string> = {
+		'acebeam': 'Acebeam',
+		'armytek': 'Armytek',
+		'convoy': 'Convoy',
+		'eagletac': 'EagleTac',
+		'eagtac': 'EagleTac',
+		'emisar': 'Emisar',
+		'fenix': 'Fenix',
+		'fenix store': 'Fenix',
+		'fireflies': 'Fireflies',
+		'haikelite': 'Haikelite',
+		'imalent': 'Imalent',
+		'jetbeam': 'JETBeam',
+		'klarus': 'Klarus',
+		'ledlenser': 'Ledlenser',
+		'led lenser': 'Ledlenser',
+		'lumintop': 'Lumintop',
+		'maglite': 'Maglite',
+		'manker': 'Manker',
+		'nitecore': 'Nitecore',
+		'nightcore': 'Nitecore',
+		'noctigon': 'Noctigon',
+		'olight': 'Olight',
+		'pelican': 'Pelican',
+		'reylight': 'ReyLight',
+		'rovyvon': 'Rovyvon',
+		'skilhunt': 'Skilhunt',
+		'sofirn': 'Sofirn',
+		'streamlight': 'Streamlight',
+		'surefire': 'SureFire',
+		'thrunite': 'ThruNite',
+		'weltool': 'Weltool',
+		'wurkkos': 'Wurkkos',
+		'wuben': 'Wuben',
+		'zebralight': 'Zebralight',
+		'coast': 'Coast',
+		'nebo': 'Nebo',
+		'astrolux': 'Astrolux',
+		'cyansky': 'Cyansky',
+		'folomov': 'Folomov',
+		'nightwatch': 'NightWatch',
+		'amutorch': 'Amutorch',
+		'brinyte': 'Brinyte',
+		'catapult': 'Catapult',
+		'mateminco': 'Mateminco',
+		'nitebeam': 'NiteBeam',
+		'wowtac': 'WowTac',
+		'thyrm': 'Thyrm',
+		'prometheus': 'Prometheus',
+		'big idea design': 'Big Idea Design',
+		'laulima metal craft': 'Laulima',
+		'frelux': 'Frelux',
+		'copper revival': 'Copper Revival',
+		'skylumen': 'Skylumen',
+		'hanko': 'Hanko',
+		'veleno designs': 'Veleno',
+		'fraz labs': 'Fraz Labs',
+		'sunwayman': 'Sunwayman',
+		'xtar': 'XTAR',
+		'imalent store': 'Imalent',
+		'petzl': 'Petzl',
+		'black diamond': 'Black Diamond',
+		'princeton tec': 'Princeton Tec',
+		'energizer': 'Energizer',
+		'dorcy': 'Dorcy',
+		'nightstick': 'Nightstick',
+		'bayco': 'Nightstick',
+	};
+	const lower = vendor.toLowerCase().trim();
+	if (map[lower]) return map[lower];
+
+	// Fuzzy match for common typos (Levenshtein distance 1)
+	const typoMap: Record<string, string> = {
+		'wrukkos': 'Wurkkos', 'skihunt': 'Skilhunt', 'firefiles': 'Fireflies',
+		'firtorch': 'Fitorch', 'fire-foxes': 'Fireflies', 'firefoxes': 'Fireflies',
+		'fireflylite': 'Fireflies', 'sky lumen': 'Skylumen', 'nlightd': 'NlightD',
+		'tank007': 'Tank007', 'mhvast': 'MHvast', 'nextorch': 'Nextorch',
+		'mobi garden': 'Mobi Garden', 'ripsshine': 'Ripsshine', 'superfire': 'Superfire',
+		'maxtoch': 'Maxtoch', 'towild': 'Towild', 'wontorch': 'Wontorch',
+		'sunrei': 'Sunrei', 'rofis': 'Rofis', 'speras': 'Speras',
+		'wildtrail': 'WildTrail', 'szfeic': 'Szfeic', 'meote': 'Meote',
+		'fitorch': 'Fitorch', 'ravemen': 'Ravemen', 'ferei': 'Ferei',
+		'niwalker': 'Niwalker', 'wolf eyes': 'Wolf Eyes', 'gaciron': 'Gaciron',
+		'vastlite': 'Vastlite', 'trustfire': 'Trustfire', 'archon': 'Archon',
+		'manta ray': 'Manta Ray', 'ruisha': 'Ruisha', 'pioneman': 'Pioneman',
+		'tgzuo': 'TGZUO', 'wwlz': 'WWLZ', 'lumzoo': 'Lumzoo',
+	};
+	if (typoMap[lower]) return typoMap[lower];
+
+	// Title-case the vendor name as fallback
+	return vendor.trim().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 /** Shopify product JSON structure (subset of fields we use) */
 interface ShopifyProduct {
 	id: number;
@@ -53,6 +148,8 @@ interface ShopifyStore {
 	baseUrl: string;
 	/** Filter: only include products matching this predicate */
 	isFlashlight?: (product: ShopifyProduct) => boolean;
+	/** For retailer stores: extract brand from vendor field instead of using fixed brand */
+	isRetailer?: boolean;
 }
 
 /** Known Shopify stores for flashlight brands */
@@ -114,6 +211,67 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 			return /flashlight|headlamp|light|lamp/i.test(text);
 		},
 	},
+	// --- Retailer stores (multi-brand, use vendor field for brand) ---
+	{
+		brand: 'Killzone',
+		baseUrl: 'https://www.killzoneflashlights.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			return /flashlight|headlamp|lantern|light/i.test(type) ||
+				/flashlight|headlamp|lantern|lumen|torch/i.test(p.title.toLowerCase());
+		},
+	},
+	{
+		brand: 'NealGadgets',
+		baseUrl: 'https://www.nealsgadgets.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|lumen|lep\b/i.test(text) &&
+				!/knife|blade|tool|pen\b(?!light)|spinner|fidget|wallet/i.test(text);
+		},
+	},
+	{
+		brand: 'GoingGear',
+		baseUrl: 'https://goinggear.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			return /flashlight|headlamp|lantern|light/i.test(type);
+		},
+	},
+	{
+		brand: 'BatteryJunction',
+		baseUrl: 'https://www.batteryjunction.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			const title = p.title.toLowerCase();
+			return /flashlight|headlamp|lantern/i.test(type) ||
+				(/flashlight|headlamp|lantern|torch/i.test(title) &&
+				!/battery|charger|mount|holster|filter|diffuser|switch\s+cap|lens|accessory|replacement/i.test(type));
+		},
+	},
+	{
+		brand: 'FlashlightGo',
+		baseUrl: 'https://flashlightgo.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|lumen/i.test(text);
+		},
+	},
+	{
+		brand: 'Skylumen',
+		baseUrl: 'https://skylumen.com',
+		isRetailer: true,
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			return /flashlight|headlamp|lantern|light|torch|lumen/i.test(text) &&
+				!/battery|charger|holster|pouch|strap/i.test(text);
+		},
+	},
 ];
 
 /**
@@ -165,15 +323,26 @@ async function fetchAllProducts(store: ShopifyStore): Promise<ShopifyProduct[]> 
  * Convert a Shopify product to FlashlightEntry.
  * Extracts structured data from tags + body_html.
  */
-function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string): FlashlightEntry | null {
+function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string, isRetailer = false): FlashlightEntry | null {
+	// For retailer stores, extract brand from vendor field
+	if (isRetailer && product.vendor) {
+		brand = normalizeBrandName(product.vendor);
+	}
+
 	// Extract model name from title (remove brand prefix and product type suffixes)
 	let model = product.title;
 	const brandLower = brand.toLowerCase();
 	if (model.toLowerCase().startsWith(brandLower)) {
 		model = model.slice(brand.length).trim();
 	}
-	// Remove leading separators
+	// Remove leading separators and common prefixes
 	model = model.replace(/^[\s\-–—:]+/, '');
+	// Remove retailer prefixes like "Garage Sale -", "Pre-Order -", "Clearance -"
+	model = model.replace(/^(?:garage\s*sale|pre[\s-]?order|clearance|new|sale|hot|limited)\s*[-–—:]\s*/i, '');
+	// If brand still appears at start after cleanup, remove it again
+	if (model.toLowerCase().startsWith(brandLower)) {
+		model = model.slice(brand.length).trim().replace(/^[\s\-–—:]+/, '');
+	}
 	// Remove common suffixes (progressive, longest first)
 	const suffixPatterns = [
 		/\s+(?:rechargeable|tactical|led|edc|super\s*bright|high\s*performance|compact|professional|outdoor)\s+(?:flashlight|headlamp|lantern|work\s*light|pen\s*light|key\s*light|search\s*light|bike\s*light|camping\s*light|spotlight|floodlight|head\s*lamp|lamp|light|torch)s?$/i,
@@ -612,11 +781,11 @@ export async function crawlShopifyStore(store: ShopifyStore): Promise<{
 			continue;
 		}
 
-		const entry = shopifyToEntry(product, store.brand, store.baseUrl);
+		const entry = shopifyToEntry(product, store.brand, store.baseUrl, store.isRetailer);
 		if (entry) {
 			upsertFlashlight(entry);
 			addSource(entry.id, {
-				source: `shopify:${store.brand}`,
+				source: `shopify:${store.isRetailer ? entry.brand : store.brand}`,
 				url: `${store.baseUrl}/products/${product.handle}`,
 				scraped_at: new Date().toISOString(),
 				confidence: 0.9,
