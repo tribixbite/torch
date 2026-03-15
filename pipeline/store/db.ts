@@ -239,6 +239,15 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 	`);
 
 	const claimed = entry.performance?.claimed ?? {};
+
+	// Sanitize arrays to prevent page-level text pollution
+	// A single flashlight realistically has: 1-2 LEDs, 1-3 batteries, 1-2 materials, 1-2 switches
+	const cap = (arr: unknown[], max: number): unknown[] => arr.length > max ? [] : arr;
+	const safeLed = cap(entry.led, 2);
+	const safeBattery = cap(entry.battery, 4);
+	const safeMaterial = cap(entry.material, 2);
+	const safeSwitch = cap(entry.switch, 2);
+
 	stmt.run({
 		$id: entry.id,
 		$family_id: entry.family_id ?? null,
@@ -247,7 +256,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 		$type: JSON.stringify(entry.type),
 		$year: entry.year ?? null,
 		$discontinued: entry.discontinued ? 1 : 0,
-		$led: JSON.stringify(entry.led),
+		$led: JSON.stringify(safeLed),
 		$led_color: JSON.stringify(entry.led_color),
 		$lumens: JSON.stringify(claimed.lumens ?? []),
 		$intensity_cd: claimed.intensity_cd ?? null,
@@ -259,7 +268,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 		$tint_duv: claimed.tint_duv ?? null,
 		$runtime_hours: JSON.stringify(claimed.runtime_hours ?? []),
 		$measured_performance: JSON.stringify(entry.performance?.measured ?? {}),
-		$battery: JSON.stringify(entry.battery),
+		$battery: JSON.stringify(safeBattery),
 		$wh: entry.wh ?? null,
 		$charging: JSON.stringify(entry.charging),
 		$modes: JSON.stringify(entry.modes),
@@ -269,11 +278,11 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 		$bezel_mm: entry.bezel_mm ?? null,
 		$body_mm: entry.body_mm ?? null,
 		$weight_g: entry.weight_g ?? null,
-		$material: JSON.stringify(entry.material),
+		$material: JSON.stringify(safeMaterial),
 		$color: JSON.stringify(entry.color),
 		$impact: JSON.stringify(entry.impact),
 		$environment: JSON.stringify(entry.environment),
-		$switch: JSON.stringify(entry.switch),
+		$switch: JSON.stringify(safeSwitch),
 		$features: JSON.stringify(entry.features),
 		$price_usd: entry.price_usd ?? null,
 		$purchase_urls: JSON.stringify(entry.purchase_urls),

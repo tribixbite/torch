@@ -1928,6 +1928,207 @@ function enrichFromStructuredHtml(
 			}
 		}
 	}
+
+	// === NEXTORCH: <li>Key: Value</li> specs inside product-short-description or c-row ===
+	if (/nextorch\.com/i.test(html) || (/c-row-group/i.test(html) && /TECHNICAL SPECIFICATIONS/i.test(html))) {
+		// Extract <li> items from spec lists
+		const specSection = html.match(/TECHNICAL SPECIFICATIONS[\s\S]*?<\/ul>/i);
+		if (specSection) {
+			const items = specSection[0].matchAll(/<li[^>]*>\s*([\s\S]*?)\s*<\/li>/gi);
+			for (const item of items) {
+				const line = item[1].replace(/<[^>]+>/g, '').trim();
+				const kvMatch = line.match(/^(.+?):\s*(.+)$/);
+				if (!kvMatch) continue;
+				const label = kvMatch[1].trim().toLowerCase();
+				const value = kvMatch[2].trim();
+
+				// Maximum Output: 10,000 lumens
+				if (/max(?:imum)?\s*output/i.test(label) && !entry.performance.claimed.lumens?.length) {
+					const lm = parseInt(value.replace(/,/g, ''), 10);
+					if (lm > 0 && lm < 1_000_000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+
+				// Max Beam Distance: 380 meters
+				if (/beam\s*distance/i.test(label) && !entry.performance.claimed.throw_m) {
+					const tv = parseInt(value.replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+
+				// Max Intensity: 36,100 candela
+				if (/intensity/i.test(label) && !entry.performance.claimed.intensity_cd) {
+					const cd = parseInt(value.replace(/,/g, ''), 10);
+					if (cd > 0 && cd < 50_000_000) {
+						entry.performance.claimed.intensity_cd = cd;
+						fieldsAdded.push('intensity_cd');
+					}
+				}
+
+				// Max Runtime: Up to 170 hours
+				if (/runtime/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+					const rtMatch = value.match(/([\d.]+)\s*hours?/i);
+					if (rtMatch) {
+						const hours = parseFloat(rtMatch[1]);
+						if (hours > 0 && hours < 100000) {
+							entry.performance.claimed.runtime_hours = [Math.round(hours * 100) / 100];
+							fieldsAdded.push('runtime_hours');
+						}
+					}
+				}
+
+				// Dimensions: 156 mm x 53 mm x 49 mm
+				if (/dimensions/i.test(label) && (!entry.length_mm || entry.length_mm <= 0)) {
+					const dimMatch = value.match(/([\d.]+)\s*mm\s*x\s*([\d.]+)\s*mm/i);
+					if (dimMatch) {
+						entry.length_mm = parseFloat(dimMatch[1]);
+						fieldsAdded.push('length_mm');
+						if (!entry.bezel_mm) {
+							entry.bezel_mm = parseFloat(dimMatch[2]);
+							fieldsAdded.push('bezel_mm');
+						}
+					}
+				}
+
+				// Weight: 425 g
+				if (/^weight$/i.test(label) && !entry.weight_g) {
+					const gMatch = value.match(/([\d.]+)\s*g\b/i);
+					if (gMatch) {
+						const g = parseFloat(gMatch[1]);
+						if (g > 1 && g < 10000) {
+							entry.weight_g = g;
+							fieldsAdded.push('weight_g');
+						}
+					}
+				}
+
+				// Waterproof Rating: IPX8; 2 meters
+				if (/waterproof|water\s*resist/i.test(label) && !entry.environment.length) {
+					const ipMatch = value.match(/\bIPX?(\d{1,2})\b/i);
+					if (ipMatch) {
+						const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+						entry.environment = [rating];
+						fieldsAdded.push('environment');
+					}
+				}
+
+				// Impact Resistance: 2 meters
+				if (/impact/i.test(label) && !entry.impact.length) {
+					const impMatch = value.match(/([\d.]+)\s*m(?:eter)?s?/i);
+					if (impMatch) {
+						entry.impact = [`${impMatch[1]}m`];
+						fieldsAdded.push('impact');
+					}
+				}
+
+				// Battery: 2 x 4800 mAh Li-ion
+				if (/^battery$/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+					const batteries: string[] = [];
+					if (/21700/.test(value)) batteries.push('21700');
+					if (/18650/.test(value)) batteries.push('18650');
+					if (/18350/.test(value)) batteries.push('18350');
+					if (/16340/.test(value)) batteries.push('16340');
+					if (/CR123/i.test(value)) batteries.push('CR123A');
+					if (/Li-ion|lithium/i.test(value) && batteries.length === 0) batteries.push('Li-ion');
+					if (batteries.length > 0) {
+						entry.battery = batteries;
+						fieldsAdded.push('battery');
+					}
+				}
+			}
+		}
+	}
+
+	// === ROVYVON: <br>-separated Key: Value lines in SPECIFICATIONS section ===
+	if (/rovyvon\.com/i.test(html) || (/product-single__description/i.test(html) && /SPECIFICATIONS/i.test(html))) {
+		// Extract the SPECIFICATIONS section: everything between SPECIFICATIONS heading and next heading or end
+		const specMatch = html.match(/SPECIFICATIONS[\s\S]*?<\/p>/i);
+		if (specMatch) {
+			// Split on <br> tags to get individual key-value lines
+			const lines = specMatch[0].replace(/<[^>]+>/g, '\n').split('\n').filter(l => l.trim());
+			for (const line of lines) {
+				const kvMatch = line.match(/^(.+?):\s*(.+)$/);
+				if (!kvMatch) continue;
+				const label = kvMatch[1].trim().toLowerCase();
+				const value = kvMatch[2].trim();
+
+				// Material: 6063 aluminum (Body), stainless steel (Switches)
+				if (/^material$/i.test(label) && !entry.material.length) {
+					const materials: string[] = [];
+					if (/alumin/i.test(value)) materials.push('aluminum');
+					if (/stainless/i.test(value)) materials.push('stainless steel');
+					if (/titanium/i.test(value)) materials.push('titanium');
+					if (/copper/i.test(value)) materials.push('copper');
+					if (/polymer|plastic|polycarb/i.test(value)) materials.push('polymer');
+					if (materials.length > 0) {
+						entry.material = materials;
+						fieldsAdded.push('material');
+					}
+				}
+
+				// Dimensions: 130.6mm (Length) x 29mm (Width) x 14.8mm (Height)
+				if (/^dimensions$/i.test(label) && (!entry.length_mm || entry.length_mm <= 0)) {
+					const lenMatch = value.match(/([\d.]+)\s*mm\s*\(?\s*Length\s*\)?/i);
+					if (lenMatch) {
+						entry.length_mm = parseFloat(lenMatch[1]);
+						fieldsAdded.push('length_mm');
+					} else {
+						// Fallback: first mm value is length
+						const mmMatch = value.match(/([\d.]+)\s*mm/i);
+						if (mmMatch) {
+							const mm = parseFloat(mmMatch[1]);
+							if (mm >= 20 && mm <= 500) {
+								entry.length_mm = mm;
+								fieldsAdded.push('length_mm');
+							}
+						}
+					}
+				}
+
+				// Weight: 104.8g / 3.7oz
+				if (/^weight$/i.test(label) && !entry.weight_g) {
+					const gMatch = value.match(/([\d.]+)\s*g\b/i);
+					if (gMatch) {
+						const g = parseFloat(gMatch[1]);
+						if (g > 1 && g < 10000) {
+							entry.weight_g = g;
+							fieldsAdded.push('weight_g');
+						}
+					}
+				}
+			}
+		}
+
+		// Also extract from FEATURES <li> items for lumens, battery, IP rating
+		const featMatch = html.match(/FEATURES[\s\S]*?<\/ul>/i);
+		if (featMatch) {
+			const items = featMatch[0].matchAll(/<li[^>]*>\s*([\s\S]*?)\s*<\/li>/gi);
+			for (const item of items) {
+				const line = item[1].replace(/<[^>]+>/g, '').trim();
+
+				// "max 3500 lumens"
+				if (/max\s+(\d[\d,]*)\s*lumens?/i.test(line) && !entry.performance.claimed.lumens?.length) {
+					const lm = parseInt(line.match(/max\s+(\d[\d,]*)\s*lumens?/i)![1].replace(/,/g, ''), 10);
+					if (lm > 0 && lm < 1_000_000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+
+				// "IP68 waterproof"
+				if (/\bIP[X]?(\d{1,2})\b/i.test(line) && !entry.environment.length) {
+					const ipMatch = line.match(/\bIP[X]?(\d{1,2})\b/i)!;
+					const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+					entry.environment = [rating];
+					fieldsAdded.push('environment');
+				}
+			}
+		}
+	}
 }
 
 /**
