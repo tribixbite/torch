@@ -107,17 +107,22 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 	if (cdMatch) result.intensity_cd = parseInt(cdMatch[1].replace(/,/g, ''), 10);
 
 	// Extract throw distance — try labeled patterns first, then contextual
-	const throwMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
+	const throwMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?(?!Ah)\b/i);
 	if (throwMatch) {
 		result.throw_m = parseInt(throwMatch[1].replace(/,/g, ''), 10);
 	} else {
-		// Reverse format: "187m throw" or "380 meters beam distance"
-		const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)\b/i);
-		if (reverseThrow) result.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
+		// Compound "NNN feet (NNN meters)" format (Fenix, Streamlight)
+		const compound = text.match(/(\d[\d,]*)\s*(?:feet|ft\.?)\s*\(?\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)?/i);
+		if (compound) result.throw_m = parseInt(compound[2].replace(/,/g, ''), 10);
 		else {
-			// Yards format: "546 yards" — convert to meters
-			const yardsMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
-			if (yardsMatch) result.throw_m = Math.round(parseInt(yardsMatch[1].replace(/,/g, ''), 10) * 0.9144);
+			// Reverse format: "187m throw" or "380 meters beam distance"
+			const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
+			if (reverseThrow) result.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
+			else {
+				// Yards format: "546 yards" — convert to meters
+				const yardsMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
+				if (yardsMatch) result.throw_m = Math.round(parseInt(yardsMatch[1].replace(/,/g, ''), 10) * 0.9144);
+			}
 		}
 	}
 
@@ -188,15 +193,25 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 	}
 	if (batteries.length > 0) result.battery = batteries;
 
-	// Extract LED types
+	// Extract LED types — comprehensive pattern list
 	const leds: string[] = [];
 	const ledPatterns: [RegExp, string][] = [
-		[/\bSST[\s-]?20\b/i, 'SST-20'], [/\bSST[\s-]?40\b/i, 'SST-40'],
-		[/\bSST[\s-]?70\b/i, 'SST-70'], [/\bSFT[\s-]?40\b/i, 'SFT-40'],
-		[/\bXHP[\s-]?50\b/i, 'XHP50'], [/\bXHP[\s-]?70\b/i, 'XHP70'],
-		[/\bXM[\s-]?L2?\b/i, 'XM-L2'], [/\bXP[\s-]?L\b/i, 'XP-L'],
-		[/\b519A\b/, '519A'], [/\b219[BCF]\b/, '219B'],
+		[/\bLuminus\s+SFT[\s-]?70\b/i, 'Luminus SFT70'],
+		[/\bLuminus\s+SFT[\s-]?40\b/i, 'Luminus SFT40'],
+		[/\bSST[\s-]?10\b/i, 'SST-10'], [/\bSST[\s-]?20\b/i, 'SST-20'],
+		[/\bSST[\s-]?40\b/i, 'SST-40'], [/\bSST[\s-]?70\b/i, 'SST-70'],
+		[/\bSFT[\s-]?40\b/i, 'SFT-40'], [/\bSFT[\s-]?42\w?\b/i, 'SFT-42'],
+		[/\bSFT[\s-]?70\b/i, 'SFT-70'],
+		[/\bXHP[\s-]?50(?:\.\d)?\b/i, 'XHP50'], [/\bXHP[\s-]?70(?:\.\d)?\b/i, 'XHP70'],
+		[/\bXM[\s-]?L2?\b/i, 'XM-L2'], [/\bXP[\s-]?L\s*(?:HI|HD|V6)?\b/i, 'XP-L'],
+		[/\bXP[\s-]?G[23S]?\b/i, 'XP-G'], [/\bXP[\s-]?E2?\b/i, 'XP-E'],
+		[/\b519A\b/, '519A'], [/\b219[BCF]\b/, '219B'], [/\b319A\b/, '319A'],
 		[/\bLH351D\b/i, 'LH351D'], [/\bE21A\b/, 'E21A'],
+		[/\bCree\s+XHP/i, 'Cree XHP'], [/\bCree\s+XP/i, 'Cree XP'],
+		[/\bOSRAM\b/i, 'Osram'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
+		[/\b7070\b/, '7070'], [/\bNichia\b/i, 'Nichia'],
+		[/\bC4\s*LED\b/i, 'C4'], // Streamlight proprietary
+		[/\bLUXEON\s+TX\b/i, 'Luxeon TX'], [/\bSFN60\b/i, 'SFN60'],
 	];
 	for (const [re, name] of ledPatterns) {
 		if (re.test(text) && !leds.includes(name)) leds.push(name);
@@ -207,11 +222,72 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 	const priceMatch = text.match(/\$(\d+(?:\.\d{2})?)\b/);
 	if (priceMatch) result.price_usd = parseFloat(priceMatch[1]);
 
-	// Extract IP rating
-	const ipMatch = text.match(/\bIP[X]?(\d{1,2})\b/i);
-	if (ipMatch) {
-		// Store as environment info — will be normalized later
+	// === RUNTIME — was completely missing ===
+	const runtimes: number[] = [];
+	const runtimeRe = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/gi;
+	let rtm;
+	while ((rtm = runtimeRe.exec(text)) !== null) {
+		const val = parseFloat(rtm[1]);
+		if (val > 0 && val < 5000 && !runtimes.includes(val)) runtimes.push(val);
 	}
+	if (runtimes.length > 0) result.runtime_hours = runtimes;
+
+	// === SWITCH — was completely missing ===
+	const switches: string[] = [];
+	if (/tail[\s-]?switch|tail[\s-]?cap\s*switch|tail\s*click|tactical\s*tail|single\s*tail/i.test(text)) switches.push('tail');
+	if (/side[\s-]?switch|side\s*button|single\s*side/i.test(text)) switches.push('side');
+	if (/dual[\s-]?switch|body\s*and\s*tail|dual\s*(?:power\s*)?switch/i.test(text)) switches.push('dual');
+	if (/rotary\b|twist(?:ing)?\s*(?:switch|head|ring)/i.test(text)) switches.push('rotary');
+	if (/push[\s-]?button\s*(?:tail|rear)/i.test(text) && !switches.includes('tail')) switches.push('tail');
+	if (switches.length > 0) result.switch = switches;
+
+	// === MATERIAL — was completely missing ===
+	const materials: string[] = [];
+	if (/\baluminum\b|\baluminium\b|A6061|AL6061|6061[\s-]?T6|aluminum\s*alloy|aero\s*grade\s*aluminum/i.test(text)) materials.push('aluminum');
+	if (/\btitanium\b/i.test(text)) materials.push('titanium');
+	if (/\bcopper\b/i.test(text)) materials.push('copper');
+	if (/\bbrass\b/i.test(text)) materials.push('brass');
+	if (/\bstainless\b/i.test(text)) materials.push('stainless steel');
+	if (/\bpolymer\b|\bplastic\b|\bnylon\b|\bpolycarbonate\b|\bpolyamide\b|\babs\b/i.test(text)) materials.push('polymer');
+	if (materials.length > 0) result.material = materials;
+
+	// === FEATURES — was completely missing ===
+	const features: string[] = [];
+	if (/\bclip\b/i.test(text) && !/video\s*clip/i.test(text)) features.push('clip');
+	if (/\bmagnet(?:ic)?\b/i.test(text) && !/magnetic\s*charg/i.test(text)) features.push('magnet');
+	if (/\blanyard\b/i.test(text)) features.push('lanyard');
+	if (/\blockout\b/i.test(text)) features.push('lockout');
+	if (/\bmemory\b/i.test(text) && !/card|flash\s*memory|storage/i.test(text)) features.push('mode memory');
+	if (/\banduril\b/i.test(text)) features.push('Anduril');
+	if (/\brechargeable\b/i.test(text)) features.push('rechargeable');
+	if (/\bpower\s*bank\b/i.test(text)) features.push('power bank');
+	if (/\banti[\s-]?roll\b/i.test(text)) features.push('anti-roll');
+	if (/\bthermal\s*(?:regulation|management|step)/i.test(text)) features.push('thermal stepdown');
+	if (/\bstrike\s*bezel\b|\bglass\s*break/i.test(text)) features.push('strike bezel');
+	if (features.length > 0) result.features = features;
+
+	// === ENVIRONMENT / IP RATING — was broken (matched but never stored) ===
+	const environment: string[] = [];
+	const ipMatch = text.match(/\bIP[X\-]?(\d{1,2})\b/i);
+	if (ipMatch) {
+		const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+		environment.push(rating);
+	}
+	if (environment.length > 0) result.environment = environment;
+
+	// === CHARGING — was completely missing ===
+	const charging: string[] = [];
+	if (/usb[\s-]?c\b|type[\s-]?c\b/i.test(text)) charging.push('USB-C');
+	if (/micro[\s-]?usb/i.test(text)) charging.push('Micro-USB');
+	if (/magnetic\s*charg/i.test(text)) charging.push('magnetic');
+	if (charging.length > 0) result.charging = charging;
+
+	// === BLINK MODES — was completely missing ===
+	const blink: string[] = [];
+	if (/\bstrobe\b/i.test(text)) blink.push('strobe');
+	if (/\bsos\b/i.test(text)) blink.push('SOS');
+	if (/\bbeacon\b/i.test(text)) blink.push('beacon');
+	if (blink.length > 0) result.blink = blink;
 
 	return result;
 }

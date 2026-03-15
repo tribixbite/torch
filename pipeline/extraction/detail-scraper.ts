@@ -325,6 +325,52 @@ function enrichFromFullPage(
 		}
 	}
 
+	// === RUNTIME — was completely missing from detail-scraper ===
+	if (!entry.performance.claimed.runtime_hours?.length) {
+		const runtimes: number[] = [];
+		const rtRe = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/gi;
+		let rtm;
+		while ((rtm = rtRe.exec(text)) !== null) {
+			const val = parseFloat(rtm[1]);
+			if (val > 0 && val < 5000 && !runtimes.includes(val)) runtimes.push(val);
+		}
+		if (runtimes.length > 0) {
+			entry.performance.claimed.runtime_hours = runtimes;
+			fieldsAdded.push('runtime_hours');
+		}
+	}
+
+	// === FEATURES — was completely missing from detail-scraper ===
+	if (!entry.features.length) {
+		const features: string[] = [];
+		if (/\bclip\b/i.test(text) && !/video\s*clip/i.test(text)) features.push('clip');
+		if (/\bmagnet(?:ic)?\b/i.test(text) && !/magnetic\s*charg/i.test(text)) features.push('magnet');
+		if (/\blanyard\b/i.test(text)) features.push('lanyard');
+		if (/\blockout\b/i.test(text)) features.push('lockout');
+		if (/\bmemory\b/i.test(text) && !/card|flash\s*memory|storage/i.test(text)) features.push('mode memory');
+		if (/\banduril\b/i.test(text)) features.push('Anduril');
+		if (/\brechargeable\b/i.test(text)) features.push('rechargeable');
+		if (/\bpower\s*bank\b/i.test(text)) features.push('power bank');
+		if (/\banti[\s-]?roll\b/i.test(text)) features.push('anti-roll');
+		if (/\bstrike\s*bezel\b|\bglass\s*break/i.test(text)) features.push('strike bezel');
+		if (features.length > 0) {
+			entry.features = features;
+			fieldsAdded.push('features');
+		}
+	}
+
+	// === CHARGING — was completely missing from detail-scraper ===
+	if (!entry.charging.length) {
+		const charging: string[] = [];
+		if (/usb[\s-]?c\b|type[\s-]?c\b/i.test(text)) charging.push('USB-C');
+		if (/micro[\s-]?usb/i.test(text)) charging.push('Micro-USB');
+		if (/magnetic\s*charg/i.test(text)) charging.push('magnetic');
+		if (charging.length > 0) {
+			entry.charging = charging;
+			fieldsAdded.push('charging');
+		}
+	}
+
 	// === RAW SPEC TEXT CAPTURE for future AI parsing ===
 	// Extract text segments that look like spec data but weren't fully parsed by regex.
 	// These get stored in raw_spec_text table for batch AI processing later.
