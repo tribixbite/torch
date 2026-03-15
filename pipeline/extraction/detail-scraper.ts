@@ -488,9 +488,36 @@ function enrichFromStructuredHtml(
 	}
 
 	// === NITECORE product-spec-table: <th>Label</th><td>Value</td> rows ===
+	// Uses matchAll to catch both spec tables AND mode tables (MODE/OUTPUT/RUNTIME)
 	if (/product-spec-table/i.test(html)) {
-		const tableMatch = html.match(/<table[^>]*class="[^"]*product-spec-table[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-		if (tableMatch) {
+		const allTables = html.matchAll(/<table[^>]*class="[^"]*product-spec-table[^"]*"[^>]*>([\s\S]*?)<\/table>/gi);
+		for (const tableMatch of allTables) {
+			// Detect mode tables (3-column: MODE, OUTPUT, RUNTIME) and extract runtime
+			if (/>\s*MODE\s*<[\s\S]*?>\s*OUTPUT\s*<[\s\S]*?>\s*RUNTIME\s*</i.test(tableMatch[1])) {
+				if (!entry.performance.claimed.runtime_hours?.length) {
+					// Parse 3-column mode rows: <th>ModeName</th><td>Lumens</td><td>Runtime</td>
+					const modeRows = tableMatch[1].matchAll(/<tr[^>]*>\s*<th[^>]*>([\s\S]*?)<\/th>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi);
+					for (const modeRow of modeRows) {
+						const modeName = modeRow[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+						if (/^mode$/i.test(modeName)) continue; // skip header
+						if (/strobe|sos|beacon/i.test(modeName)) continue; // skip blink modes
+						const runtimeText = modeRow[3].replace(/<[^>]+>/g, '').trim();
+						// Parse "2 hrs 15 mins", "11 hrs", "360 hrs"
+						const hrMatch = runtimeText.match(/(\d+)\s*(?:hrs?|hours?)/i);
+						const minMatch = runtimeText.match(/(\d+)\s*(?:mins?|minutes?)/i);
+						if (hrMatch) {
+							let runtime = parseInt(hrMatch[1], 10);
+							if (minMatch) runtime += parseInt(minMatch[1], 10) / 60;
+							runtime = Math.round(runtime * 100) / 100;
+							entry.performance.claimed.runtime_hours = [runtime];
+							fieldsAdded.push('runtime_hours');
+							break; // first non-blink mode = highest brightness runtime
+						}
+					}
+				}
+				continue; // skip spec-table processing for mode tables
+			}
+
 			const rows = tableMatch[1].matchAll(/<tr[^>]*>\s*<th[^>]*>([\s\S]*?)<\/th>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi);
 			for (const row of rows) {
 				const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
@@ -2131,7 +2158,7 @@ function enrichFromFullPage(
 				}
 			} else {
 				// Priority 3: reverse "NNNm throw|beam"
-				m = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
+				m = text.match(/(\d[\d,]*)[\s-]*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
 				if (m) {
 					const tv = parseInt(m[1].replace(/,/g, ''), 10);
 					if (tv >= 5 && tv <= 5000 && !(tv >= 2000 && tv <= 2030)) {
@@ -2249,7 +2276,7 @@ function enrichFromFullPage(
 		}
 	}
 
-	// === RUNTIME — was completely missing from detail-scraper ===
+	// === RUNTIME — hours and days (converted to hours) ===
 	if (!entry.performance.claimed.runtime_hours?.length) {
 		const runtimes: number[] = [];
 		const rtRe = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/gi;
@@ -2257,6 +2284,12 @@ function enrichFromFullPage(
 		while ((rtm = rtRe.exec(text)) !== null) {
 			const val = parseFloat(rtm[1]);
 			if (val > 0 && val < 5000 && !runtimes.includes(val)) runtimes.push(val);
+		}
+		// Also capture "NN days" runtime (convert to hours)
+		const dayRe = /(\d+(?:\.\d+)?)\s*days?\b/gi;
+		while ((rtm = dayRe.exec(text)) !== null) {
+			const val = Math.round(parseFloat(rtm[1]) * 24 * 100) / 100;
+			if (val > 0 && val < 100000 && !runtimes.includes(val)) runtimes.push(val);
 		}
 		if (runtimes.length > 0) {
 			entry.performance.claimed.runtime_hours = runtimes;
@@ -2298,7 +2331,7 @@ function enrichFromFullPage(
 
 	// === IMPACT RESISTANCE — was missing from detail-scraper ===
 	if (!entry.impact?.length) {
-		const impactMatch = text.match(/(\d+(?:\.\d+)?)\s*m(?:eter)?s?\s*(?:impact|drop)/i);
+		const impactMatch = text.match(/(\d+(?:\.\d+)?)[\s-]*m(?:eter)?s?\s*(?:impact|drop)/i);
 		if (impactMatch) {
 			entry.impact = [`${impactMatch[1]}m`];
 			fieldsAdded.push('impact');

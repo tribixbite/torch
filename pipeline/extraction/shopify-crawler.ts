@@ -933,7 +933,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 		if (compound) specs.throw_m = parseInt(compound[2].replace(/,/g, ''), 10);
 		else {
 			// Priority 3: reverse "NNNm throw" or "NNN meters beam"
-			const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
+			const reverseThrow = text.match(/(\d[\d,]*)[\s-]*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
 			if (reverseThrow) specs.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
 			else {
 				// Priority 4: yards with conversion
@@ -961,12 +961,18 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 		if (cct >= 1800 && cct <= 10000) specs.cct = cct;
 	}
 
-	// Runtime
+	// Runtime — hours and days (converted to hours)
 	const runtimes: number[] = [];
 	const runtimeRe = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/gi;
 	while ((m = runtimeRe.exec(text)) !== null) {
 		const val = parseFloat(m[1]);
 		if (val > 0 && val < 10000 && !runtimes.includes(val)) runtimes.push(val);
+	}
+	// Also capture "NN days" runtime (convert to hours)
+	const dayRe = /(\d+(?:\.\d+)?)\s*days?\b/gi;
+	while ((m = dayRe.exec(text)) !== null) {
+		const val = Math.round(parseFloat(m[1]) * 24 * 100) / 100;
+		if (val > 0 && val < 100000 && !runtimes.includes(val)) runtimes.push(val);
 	}
 	if (runtimes.length > 0) specs.runtime_hours = runtimes;
 
@@ -1125,7 +1131,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 
 	// Impact resistance
 	const impact: string[] = [];
-	const impactMatch = text.match(/(\d+(?:\.\d+)?)\s*m(?:eter)?s?\s*(?:impact|drop)/i);
+	const impactMatch = text.match(/(\d+(?:\.\d+)?)[\s-]*m(?:eter)?s?\s*(?:impact|drop)/i);
 	if (impactMatch) impact.push(`${impactMatch[1]}m`);
 	if (impact.length > 0) specs.impact = impact;
 
