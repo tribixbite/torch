@@ -282,12 +282,16 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 	}
 
 	// Battery from title (only if empty)
+	// Use (?:^|\D) instead of \b to handle "1x18650" where \b fails between "x" and "1"
 	if (!entry.battery?.length) {
 		const batPatterns: [RegExp, string][] = [
-			[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
-			[/\b14500\b/, '14500'], [/\b26650\b/, '26650'], [/\b26800\b/, '26800'],
-			[/\b16340\b/, '16340'], [/\bCR123A?\b/i, 'CR123A'],
-			[/\b(?:AA|1xAA|2xAA)\b(?!A)/, 'AA'], [/\bAAA\b/, 'AAA'],
+			[/(?:^|\D)21700(?:\D|$)/, '21700'], [/(?:^|\D)18650(?:\D|$)/, '18650'],
+			[/(?:^|\D)18350(?:\D|$)/, '18350'], [/(?:^|\D)14500(?:\D|$)/, '14500'],
+			[/(?:^|\D)26650(?:\D|$)/, '26650'], [/(?:^|\D)26800(?:\D|$)/, '26800'],
+			[/(?:^|\D)16340(?:\D|$)/, '16340'], [/(?:^|\D)10440(?:\D|$)/, '10440'],
+			[/(?:^|\D)10280(?:\D|$)/, '10280'],
+			[/CR123A?\b/i, 'CR123A'],
+			[/\b(?:AA|1xAA|2xAA|3xAA)\b(?!A)/i, 'AA'], [/\bAAA\b/i, 'AAA'],
 		];
 		for (const [re, name] of batPatterns) {
 			if (re.test(title)) {
