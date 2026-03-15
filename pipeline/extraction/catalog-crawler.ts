@@ -741,28 +741,44 @@ const CRAWLERS: SiteCrawler[] = [
 	{
 		brand: 'SureFire',
 		async discoverUrls() {
-			// BigCommerce — no sitemap. Paginate /flashlights/ category.
+			// BigCommerce — no sitemap. Paginate multiple category pages.
 			const urls: string[] = [];
-			for (let page = 1; page <= 5; page++) {
-				const pageUrl = page === 1
-					? 'https://www.surefire.com/flashlights/'
-					: `https://www.surefire.com/flashlights/?page=${page}`;
-				try {
-					const html = await fetchPage(pageUrl);
-					// SureFire product links are at root level: /product-slug/
-					const re = /href=["'](\/[a-z0-9][a-z0-9-]*\/)["']/gi;
-					let m;
-					while ((m = re.exec(html)) !== null) {
-						const path = m[1];
-						// Exclude non-product pages
-						if (!/^\/(flashlights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn)/.test(path) &&
-							path.length > 3 && path.length < 80) {
-							const fullUrl = `https://www.surefire.com${path}`;
-							if (!urls.includes(fullUrl)) urls.push(fullUrl);
+			const categories = ['flashlights', 'weapon-lights', 'hands-free', 'helmet-lights'];
+
+			for (const category of categories) {
+				for (let page = 1; page <= 5; page++) {
+					const pageUrl = page === 1
+						? `https://www.surefire.com/${category}/`
+						: `https://www.surefire.com/${category}/?page=${page}`;
+					try {
+						const html = await fetchPage(pageUrl);
+						// SureFire product links are at root level: /product-slug/
+						// Match both relative (/slug/) and absolute (https://www.surefire.com/slug/) URLs
+						const reRel = /href=["'](\/[a-z0-9][a-z0-9-]*\/)["']/gi;
+						const reAbs = /href=["'](https?:\/\/(?:www\.)?surefire\.com\/[a-z0-9][a-z0-9-]*\/)["']/gi;
+						let m;
+						while ((m = reRel.exec(html)) !== null) {
+							const path = m[1];
+							// Exclude non-product / navigation pages
+							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn)\/?$/i.test(path) &&
+								path.length > 3 && path.length < 80) {
+								const fullUrl = `https://www.surefire.com${path}`;
+								if (!urls.includes(fullUrl)) urls.push(fullUrl);
+							}
 						}
-					}
-					await Bun.sleep(CRAWL_DELAY);
-				} catch { break; }
+						while ((m = reAbs.exec(html)) !== null) {
+							const absPath = new URL(m[1]).pathname;
+							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn)\/?$/i.test(absPath) &&
+								absPath.length > 3 && absPath.length < 80) {
+								const fullUrl = `https://www.surefire.com${absPath}`;
+								if (!urls.includes(fullUrl)) urls.push(fullUrl);
+							}
+						}
+						// If page has no product links, stop paginating this category
+						if (urls.length === 0 && page > 1) break;
+						await Bun.sleep(CRAWL_DELAY);
+					} catch { break; }
+				}
 			}
 			return [...new Set(urls)];
 		},
@@ -843,42 +859,57 @@ const CRAWLERS: SiteCrawler[] = [
 	{
 		brand: 'Armytek',
 		async discoverUrls() {
-			// CS-Cart platform — two-level discovery: model categories → product pages
+			// CS-Cart platform — paginate /flashlights/models/ listing (4+ pages, ~95 products)
 			const urls: string[] = [];
-
-			// Step 1: Get model category links from /flashlights/models/ and /headlamps/
-			const indexPages = [
-				'https://www.armytek.com/flashlights/',
-				'https://www.armytek.com/flashlights/models/',
-				'https://www.armytek.com/headlamps/',
-			];
 			const modelCategories: string[] = [];
 
-			for (const indexUrl of indexPages) {
+			// Step 1: Paginate the models listing to find model family categories
+			for (let page = 1; page <= 6; page++) {
+				const listUrl = page === 1
+					? 'https://www.armytek.com/flashlights/models/'
+					: `https://www.armytek.com/flashlights/models/page-${page}/`;
 				try {
-					const html = await fetchPage(indexUrl);
-					// Extract model category links: /flashlights/models/{model-name}/
-					const re = /href=["'](\/(?:flashlights|headlamps)\/(?:models\/)?[a-z0-9-]+\/)["']/gi;
+					const html = await fetchPage(listUrl);
+					// Match both relative and absolute URLs for model categories
+					const reRel = /href=["'](\/flashlights\/models\/[a-z0-9-]+\/)["']/gi;
+					const reAbs = /href=["'](https?:\/\/(?:www\.)?armytek\.com\/flashlights\/models\/[a-z0-9-]+\/)["']/gi;
 					let m;
-					while ((m = re.exec(html)) !== null) {
+					while ((m = reRel.exec(html)) !== null) {
 						const fullUrl = `https://www.armytek.com${m[1]}`;
-						if (!modelCategories.includes(fullUrl) &&
-							!/\/types\/|\/accessories|\/batteries|\/charger|\/filters/i.test(m[1])) {
+						// Exclude non-model pages
+						if (!/\/features\/|\/activity-hobby\/|\/types\/|\/accessories|\/batteries|\/charger|\/filters|\/page-\d/i.test(m[1]) &&
+							!modelCategories.includes(fullUrl)) {
 							modelCategories.push(fullUrl);
 						}
 					}
+					while ((m = reAbs.exec(html)) !== null) {
+						const fullUrl = m[1].replace(/^http:/, 'https:').replace('armytek.com', 'www.armytek.com');
+						if (!/\/features\/|\/activity-hobby\/|\/types\/|\/accessories|\/batteries|\/charger|\/filters|\/page-\d/i.test(fullUrl) &&
+							!modelCategories.includes(fullUrl)) {
+							modelCategories.push(fullUrl);
+						}
+					}
+					// Stop paginating if page returned no new categories
+					const prevCount = modelCategories.length;
+					if (page > 1 && prevCount === modelCategories.length) break;
 					await Bun.sleep(CRAWL_DELAY);
-				} catch { /* skip */ }
+				} catch { break; }
 			}
 
 			// Step 2: Crawl each model category to find individual product pages
 			for (const catUrl of modelCategories) {
 				try {
 					const html = await fetchPage(catUrl);
-					const re = /href=["'](\/(?:flashlights|headlamps)\/models\/[a-z0-9-]+\/[a-z0-9-]+\/)["']/gi;
+					// Match both relative and absolute product URLs
+					const reRel = /href=["'](\/flashlights\/models\/[a-z0-9-]+\/[a-z0-9-]+\/)["']/gi;
+					const reAbs = /href=["'](https?:\/\/(?:www\.)?armytek\.com\/flashlights\/models\/[a-z0-9-]+\/[a-z0-9-]+\/)["']/gi;
 					let m;
-					while ((m = re.exec(html)) !== null) {
+					while ((m = reRel.exec(html)) !== null) {
 						const fullUrl = `https://www.armytek.com${m[1]}`;
+						if (!urls.includes(fullUrl)) urls.push(fullUrl);
+					}
+					while ((m = reAbs.exec(html)) !== null) {
+						const fullUrl = m[1].replace(/^http:/, 'https:').replace('armytek.com', 'www.armytek.com');
 						if (!urls.includes(fullUrl)) urls.push(fullUrl);
 					}
 					await Bun.sleep(CRAWL_DELAY);

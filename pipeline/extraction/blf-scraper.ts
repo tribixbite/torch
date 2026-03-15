@@ -61,21 +61,34 @@ interface DiscourseTopic {
 	};
 }
 
-/** Fetch JSON from BLF API */
+/** Fetch JSON from BLF API with 429 retry/backoff */
 async function fetchBlfJson<T>(path: string): Promise<T> {
 	const url = `${BLF_BASE}${path}`;
-	const res = await fetch(url, {
-		headers: {
-			'User-Agent': USER_AGENT,
-			'Accept': 'application/json',
-		},
-	});
 
-	if (!res.ok) {
-		throw new Error(`BLF API ${res.status}: ${url}`);
+	for (let attempt = 0; attempt < 3; attempt++) {
+		const res = await fetch(url, {
+			headers: {
+				'User-Agent': USER_AGENT,
+				'Accept': 'application/json',
+			},
+		});
+
+		if (res.status === 429) {
+			// Rate limited — back off exponentially
+			const delay = CRAWL_DELAY * (2 ** (attempt + 1));
+			console.log(`    Rate limited (429), backing off ${delay / 1000}s...`);
+			await Bun.sleep(delay);
+			continue;
+		}
+
+		if (!res.ok) {
+			throw new Error(`BLF API ${res.status}: ${url}`);
+		}
+
+		return await res.json() as T;
 	}
 
-	return await res.json() as T;
+	throw new Error(`BLF API: max retries exceeded for ${url}`);
 }
 
 /**
@@ -292,10 +305,21 @@ export async function enrichFromBlf(options: {
 		if (!JSON.parse(r.environment || '[]').length) missing++;
 		if (!JSON.parse(r.charging || '[]').length) missing++;
 		if (missing >= minMissing) {
-			// Skip obvious non-flashlight entries (website page names, accessories)
-			const modelLower = r.model.toLowerCase();
-			if (/^(addresses|history|login|register|wishlist|shipping|privacy|warranty|return|about|contact|faq|support|terms|custom|gift|sale|blog|news|policy|reviews?|info)$/i.test(r.model.trim())) continue;
-			if (/\b(holster|filter|diffuser|charger|mount|strap|case|pouch|battery\s*pack|lanyard|clip|headband|replacement|spare)\b/i.test(modelLower)) continue;
+			// Skip obvious non-flashlight entries (website page names, accessories, marketing)
+			const modelLower = r.model.toLowerCase().trim();
+
+			// Website page names (exact match)
+			if (/^(addresses|history|login|register|wishlist|shipping|privacy|warranty|returns?|about|contact|faq|support|terms|custom|gift|sale|blog|news|policy|reviews?|info|all|search|dealer|locator|collection|affiliate|feedback|sitemap|compare)$/i.test(modelLower)) continue;
+
+			// Accessory/component keywords
+			if (/\b(holster|filter|diffuser|charger|mount|strap|case|pouch|battery\s*pack|lanyard|clip|headband|replacement|spare|glass|lens|pcb|driver|o-ring|gasket|tube|extension|screwdriver|bits?|tripod|phone\s*holder|mouse\s*pad|patch|cooling\s*shell|charging\s*cable|gift\s*card|sticker|poster|hat|shirt|apparel)\b/i.test(modelLower)) continue;
+
+			// Marketing/page description keywords
+			if (/\b(bundle\s*sale|fast\s*shipping|custom\s*illumination|personalized|engraved|constant\s*current|mos\s*fet|lumen\s*and\s*lux|raising\s*hope|new\s*flashlight\s*(?:is\s*)?com|affiliate\s*program|dealer\s*locator|feedback\s*photo|shipping\s*(?:cost|policy))\b/i.test(modelLower)) continue;
+
+			// Model names > 60 chars are usually descriptions, not models
+			if (modelLower.length > 60) continue;
+
 			scored.push({ id: r.id, brand: r.brand, model: r.model, missing });
 		}
 	}
