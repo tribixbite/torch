@@ -968,6 +968,128 @@ function enrichFromStructuredHtml(
 		}
 	}
 
+	// === NIGHTSTICK product-specifications: <ul class="product-specifications"><li><strong>Label</strong>: Value</li></ul> ===
+	if (/product-specifications/i.test(html)) {
+		const specLists = html.matchAll(/<ul[^>]*class="[^"]*product-specifications[^"]*"[^>]*>([\s\S]*?)<\/ul>/gi);
+		for (const list of specLists) {
+			const items = list[1].matchAll(/<li[^>]*>\s*<strong>([\s\S]*?)<\/strong>[:\s]*([\s\S]*?)<\/li>/gi);
+			for (const item of items) {
+				const label = item[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+				const value = item[2].replace(/<[^>]+>/g, '').trim();
+
+				// High Lumens / Floodlight Lumens
+				if (/^(?:high\s*lumens?|floodlight\s*lumens?|max\s*lumens?)$/i.test(label) && !entry.performance.claimed.lumens?.length) {
+					const lm = parseInt(value.replace(/,/g, ''), 10);
+					if (lm > 0 && lm < 1_000_000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+
+				// High Beam Distance (m)
+				if (/beam\s*distance\s*\(?m\)?/i.test(label) && !entry.performance.claimed.throw_m) {
+					const tv = parseInt(value.replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+
+				// High Candela
+				if (/^(?:high\s*)?candela$/i.test(label) && !entry.performance.claimed.intensity_cd) {
+					const cd = parseInt(value.replace(/,/g, ''), 10);
+					if (cd > 0) {
+						entry.performance.claimed.intensity_cd = cd;
+						fieldsAdded.push('intensity_cd');
+					}
+				}
+
+				// Runtime — "High Flood Runtime (h)" or "High Runtime (h)"
+				if (/runtime\s*\(?h\)?/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+					const hrs = parseFloat(value);
+					if (hrs > 0 && hrs < 5000) {
+						entry.performance.claimed.runtime_hours = [hrs];
+						fieldsAdded.push('runtime_hours');
+					}
+				}
+
+				// Length — "7 in (178 mm)"
+				if (/^length$/i.test(label) && !entry.length_mm) {
+					const mmMatch = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+					const inMatch = value.match(/(\d+(?:\.\d+)?)\s*in\b/i);
+					if (mmMatch) { entry.length_mm = parseFloat(mmMatch[1]); fieldsAdded.push('length_mm'); }
+					else if (inMatch) { entry.length_mm = Math.round(parseFloat(inMatch[1]) * 25.4); fieldsAdded.push('length_mm'); }
+				}
+
+				// Weight — "10.2 oz (with battery)"
+				if (/^weight$/i.test(label) && !entry.weight_g) {
+					const gMatch = value.match(/(\d+(?:\.\d+)?)\s*(?:g\b|grams?)/i);
+					const ozMatch = value.match(/(\d+(?:\.\d+)?)\s*oz/i);
+					if (gMatch) { entry.weight_g = parseFloat(gMatch[1]); fieldsAdded.push('weight_g'); }
+					else if (ozMatch) { entry.weight_g = Math.round(parseFloat(ozMatch[1]) * 28.35); fieldsAdded.push('weight_g'); }
+				}
+
+				// Case Material — "6061-T6 Aluminum"
+				if (/(?:case\s*)?material/i.test(label) && !entry.material.length) {
+					const materials: string[] = [];
+					if (/aluminum|aluminium/i.test(value)) materials.push('aluminum');
+					if (/polymer|plastic|nylon/i.test(value)) materials.push('polymer');
+					if (/stainless/i.test(value)) materials.push('stainless steel');
+					if (materials.length > 0) { entry.material = materials; fieldsAdded.push('material'); }
+				}
+
+				// Switch Function — "Single Side Switch - H/M/L/SOS STROBE"
+				if (/switch\s*function/i.test(label) && !entry.switch.length) {
+					const switches: string[] = [];
+					if (/tail/i.test(value)) switches.push('tail');
+					if (/side/i.test(value)) switches.push('side');
+					if (/dual/i.test(value)) switches.push('dual');
+					if (/rotary|twist/i.test(value)) switches.push('rotary');
+					if (switches.length === 0 && /single/i.test(value)) switches.push('side');
+					if (switches.length > 0) { entry.switch = switches; fieldsAdded.push('switch'); }
+				}
+
+				// Water Rating — "IP-X7 Waterproof"
+				if (/water\s*rating/i.test(label) && !entry.environment.length) {
+					const ipMatch = value.match(/IP[\s-]?X?(\d{1,2})/i);
+					if (ipMatch) {
+						const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+						entry.environment = [rating];
+						fieldsAdded.push('environment');
+					}
+				}
+
+				// Body Color
+				if (/body\s*color/i.test(label) && !entry.color.length) {
+					const colors = value.split(/[,/]/).map(c => c.trim().toLowerCase()).filter(c => c && c !== 'white');
+					if (colors.length > 0) { entry.color = colors; fieldsAdded.push('color'); }
+				}
+
+				// Power Source — "Li-ion Rechargeable"
+				if (/power\s*source/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+					const batteries: string[] = [];
+					if (/21700/i.test(value)) batteries.push('21700');
+					if (/18650/i.test(value)) batteries.push('18650');
+					if (/CR123/i.test(value)) batteries.push('CR123A');
+					if (/\bAA\b(?!\w)/i.test(value)) batteries.push('AA');
+					if (/\bAAA\b/i.test(value)) batteries.push('AAA');
+					if (batteries.length === 0 && /li[\s-]?ion/i.test(value)) batteries.push('built-in Li-ion');
+					if (batteries.length > 0) { entry.battery = batteries; fieldsAdded.push('battery'); }
+				}
+
+				// Handle Diameter — "1 x 1.3 in (25 x 33 mm)" → body_mm
+				if (/handle\s*diameter|body\s*diameter/i.test(label) && (!entry.body_mm || entry.body_mm <= 0)) {
+					const mmMatch = value.match(/(\d+(?:\.\d+)?)\s*(?:x\s*(\d+(?:\.\d+)?)\s*)?mm/i);
+					if (mmMatch) {
+						// Take the first dimension as body diameter
+						entry.body_mm = parseFloat(mmMatch[1]);
+						fieldsAdded.push('body_mm');
+					}
+				}
+			}
+		}
+	}
+
 	// === STREAMLIGHT productSpecifications: <div class="row"><div class="col-4">Label</div><div class="col-8">Value</div></div> ===
 	if (/productSpecifications/i.test(html)) {
 		const specSection = html.match(/<div[^>]*id="productSpecifications"[^>]*>([\s\S]*?)(?:<br\s*\/?>|<\/div>\s*<\/div>\s*$)/i);
