@@ -108,6 +108,7 @@ function detectColorFromModelName(entry: FlashlightEntry): boolean {
 	if (entry.color.length > 0) return false; // Already has color data
 
 	const colorKeywords: Record<string, string> = {
+		'black': 'black', 'midnight': 'black',
 		'pink': 'pink', 'rose': 'pink', 'rose gold': 'pink',
 		'red': 'red', 'crimson': 'red', 'wine': 'red',
 		'blue': 'blue', 'navy': 'blue', 'cobalt': 'blue', 'sapphire': 'blue',
@@ -124,7 +125,8 @@ function detectColorFromModelName(entry: FlashlightEntry): boolean {
 		'fde': 'brown', 'flat dark earth': 'brown',
 		'camo': 'camo', 'camouflage': 'camo',
 		'teal': 'teal', 'turquoise': 'teal',
-		'rainbow': 'rainbow',
+		'rainbow': 'rainbow', 'gold': 'gold', 'titanium gray': 'gray',
+		'khaki': 'brown', 'beige': 'brown', 'stonewash': 'gray',
 	};
 
 	const title = entry.model.toLowerCase();
