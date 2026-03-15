@@ -944,6 +944,24 @@ function enrichFromStructuredHtml(
 				if (/magnetic/i.test(value)) charging.push('magnetic');
 				if (charging.length > 0) { entry.charging = charging; fieldsAdded.push('charging'); }
 			}
+
+			// Color — "Body Color: Black", "Light Color: ..." (but not "Light Color: Cool White")
+			if (/^(?:body\s*color|color|colours?)$/i.test(label) && !entry.color.length) {
+				const colorVal = value.toLowerCase();
+				const colorMap: Record<string, string> = {
+					'black': 'black', 'red': 'red', 'blue': 'blue', 'green': 'green',
+					'orange': 'orange', 'yellow': 'yellow', 'pink': 'pink',
+					'purple': 'purple', 'white': 'white', 'silver': 'silver',
+					'gray': 'gray', 'grey': 'gray', 'copper': 'copper', 'brass': 'brass',
+					'brown': 'brown', 'tan': 'brown', 'desert tan': 'brown',
+					'olive drab': 'green', 'camo': 'camo', 'teal': 'teal', 'gold': 'gold',
+				};
+				// Skip "cool white", "neutral white", "warm white" (those are LED tints, not body color)
+				if (!/\b(?:cool|warm|neutral)\s*white\b/i.test(colorVal)) {
+					const mapped = colorMap[colorVal] || colorMap[colorVal.split(/[,/]/)[0].trim()];
+					if (mapped) { entry.color = [mapped]; fieldsAdded.push('color'); }
+				}
+			}
 		}
 
 		// Also try extracting LED from Battery Junction title: "Nitecore MH12 Pro ... - Uhi 40 LED - Includes 1 x 21700"
@@ -1628,6 +1646,34 @@ function enrichFromFullPage(
 		if (charging.length > 0) {
 			entry.charging = charging;
 			fieldsAdded.push('charging');
+		}
+	}
+
+	// === COLOR from labeled spec data — "Color: Black", "Body Color: Black", etc. ===
+	if (!entry.color.length) {
+		const colorMatch = text.match(/(?:body\s*color|color|finish)[:\s]+([A-Za-z]+(?:\s+[A-Za-z]+)?)\b/i);
+		if (colorMatch) {
+			const colorVal = colorMatch[1].trim().toLowerCase();
+			const colorMap: Record<string, string> = {
+				'black': 'black', 'midnight': 'black', 'dark': 'black',
+				'red': 'red', 'crimson': 'red', 'wine': 'red',
+				'blue': 'blue', 'navy': 'blue', 'cobalt': 'blue',
+				'green': 'green', 'olive': 'green', 'od': 'green',
+				'orange': 'orange', 'yellow': 'yellow',
+				'pink': 'pink', 'rose': 'pink',
+				'purple': 'purple', 'violet': 'purple',
+				'white': 'white', 'silver': 'silver', 'chrome': 'silver',
+				'gray': 'gray', 'grey': 'gray', 'gunmetal': 'gray',
+				'copper': 'copper', 'brass': 'brass',
+				'brown': 'brown', 'tan': 'brown', 'desert': 'brown', 'sand': 'brown',
+				'camo': 'camo', 'camouflage': 'camo',
+				'teal': 'teal', 'gold': 'gold',
+			};
+			const mapped = colorMap[colorVal] || colorMap[colorVal.split(/\s+/)[0]];
+			if (mapped) {
+				entry.color = [mapped];
+				fieldsAdded.push('color');
+			}
 		}
 	}
 
