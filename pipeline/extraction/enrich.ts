@@ -253,6 +253,21 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 	const title = entry.model;
 	let changed = false;
 
+	// Lumens from title (only if empty)
+	// Battery Junction: "Model - 1800 Lumens - Includes 1 x 18650"
+	// Shopify: "Model 5600lm" or "Model 1200 Lumen"
+	if (!entry.performance?.claimed?.lumens?.length) {
+		const lumMatch = title.match(/(\d[\d,]*)\s*(?:lumens?|lm)\b/i);
+		if (lumMatch) {
+			const lm = parseInt(lumMatch[1].replace(/,/g, ''), 10);
+			if (lm > 0 && lm < 1_000_000) {
+				if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+				entry.performance.claimed.lumens = [lm];
+				changed = true;
+			}
+		}
+	}
+
 	// LED from title (only if empty)
 	if (!entry.led?.length) {
 		const ledPatterns: [RegExp, string][] = [
