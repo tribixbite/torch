@@ -116,6 +116,25 @@ function enrichFromFullPage(
 									entry.length_mm = val;
 									fieldsAdded.push('length_mm');
 								}
+							} else {
+								// Fenix-style: "5.91" x 1.57" x 1.02" / 150 x 40 x 26 mm" — first value is length
+								m = text.match(/(\d+(?:\.\d+)?)["\u2033']{1,2}\s*x\s*\d+(?:\.\d+)?["\u2033']{1,2}\s*x\s*\d+(?:\.\d+)?["\u2033']{1,2}\s*\/?\s*(\d{2,4}(?:\.\d+)?)\s*x\s*(\d{2,4}(?:\.\d+)?)\s*x\s*(\d{2,4}(?:\.\d+)?)\s*mm/i);
+								if (m) {
+									entry.length_mm = parseFloat(m[2]);
+									if (!entry.bezel_mm) entry.bezel_mm = parseFloat(m[3]);
+									if (!entry.body_mm) entry.body_mm = parseFloat(m[4]);
+									fieldsAdded.push('length_mm');
+								} else {
+									// Plain "NNN x NN x NN mm" where first is longest (length)
+									m = text.match(/(\d{2,4}(?:\.\d+)?)\s*x\s*(\d{2,4}(?:\.\d+)?)\s*x\s*(\d{2,4}(?:\.\d+)?)\s*mm/i);
+									if (m) {
+										const dims = [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])].sort((a, b) => b - a);
+										if (dims[0] >= 20 && dims[0] <= 800) {
+											entry.length_mm = dims[0];
+											fieldsAdded.push('length_mm');
+										}
+									}
+								}
 							}
 						}
 					}
@@ -325,11 +344,13 @@ function enrichFromFullPage(
 	// === SWITCH (from full page HTML) ===
 	if (!entry.switch.length) {
 		const switches: string[] = [];
-		if (/tail[\s-]?switch|tail[\s-]?cap|tail\s*click|rear\s*switch/i.test(text)) switches.push('tail');
+		if (/tail[\s-]?switch|tail[\s-]?cap|tail\s*click|rear\s*switch|tactical\s*button|forward\s*clicky|reverse\s*clicky/i.test(text)) switches.push('tail');
 		if (/side[\s-]?switch|side\s*button|e[\s-]?switch|electronic\s*switch|soft[\s-]?touch\s*switch/i.test(text)) switches.push('side');
-		if (/dual[\s-]?switch|two\s*switch/i.test(text)) switches.push('dual');
-		if (/rotary\b|twist|magnetic\s*(?:control\s*)?ring/i.test(text)) switches.push('rotary');
-		if (/push[\s-]?button|momentary/i.test(text) && switches.length === 0) switches.push('side');
+		if (/dual[\s-]?switch|two\s*switch|two\s*button/i.test(text)) switches.push('dual');
+		if (/rotary\b|twist|magnetic\s*(?:control\s*)?ring|selector\s*ring/i.test(text)) switches.push('rotary');
+		// Fallbacks — only if nothing matched above
+		if (switches.length === 0 && /push[\s-]?button|momentary|single\s*switch/i.test(text)) switches.push('side');
+		if (switches.length === 0 && /\bclicky\b/i.test(text)) switches.push('tail');
 		if (switches.length > 0) {
 			entry.switch = switches;
 			fieldsAdded.push('switch');
@@ -342,7 +363,8 @@ function enrichFromFullPage(
 		const patterns: [RegExp, string][] = [
 			[/\b21700[iI]?\b/, '21700'], [/\b18650[iI]?\b/, '18650'], [/\b18350\b/, '18350'],
 			[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
-			[/\b26650\b/, '26650'], [/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
+			[/\b26650\b/, '26650'], [/\b26800\b/, '26800'],
+			[/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
 		];
 		for (const [re, name] of patterns) {
 			if (re.test(text) && !batteries.includes(name)) batteries.push(name);
