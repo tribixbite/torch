@@ -296,12 +296,16 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 		}
 	}
 
-	// Throw from title: "500m Range", "500 meters beam distance", "1600Lumen 500 Meters"
+	// Throw from title: "500m Range", "500 meters beam distance", "1600Lumen 500 Meters", "5600lm 1500m"
 	if (!entry.performance?.claimed?.throw_m) {
 		const throwM = title.match(/(\d{2,4})\s*m(?:eters?)?\s*(?:range|beam|throw|distance)/i)
 			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m\b/i)
 			// "1000Lumens 120 Meters" — lumens followed by meters
-			?? title.match(/\d+\s*lumens?\s+(\d{2,4})\s*meters?\b/i);
+			?? title.match(/\d+\s*lumens?\s+(\d{2,4})\s*meters?\b/i)
+			// "5600lm 1500m" — short lm/m format common in flashlight product titles
+			?? title.match(/\d+\s*lm\s+(\d{2,4})\s*m\b/i)
+			// "NNNm Thrower" or "NNNm Throw" or "NNNm Tactical"
+			?? title.match(/(\d{2,4})\s*m\s+(?:Throw(?:er)?|Tactical|EDC|Spotlight|Flood)/i);
 		if (throwM) {
 			const val = parseInt(throwM[1], 10);
 			if (val >= 20 && val <= 5000) {
