@@ -351,9 +351,10 @@ async function cmdCrawl(): Promise<void> {
 /** Scrape full product page HTML for missing specs */
 async function cmdDetailScrape(): Promise<void> {
 	const maxArg = parseInt(process.argv[3] || '500', 10);
+	const force = process.argv.includes('--force');
 	console.log(`=== Detail Scraping (max ${maxArg} items) ===\n`);
-	const result = await scrapeDetailsForIncomplete({ maxItems: maxArg });
-	console.log(`\nResult: ${result.scraped} scraped, ${result.enriched} enriched, ${result.errors} errors`);
+	const result = await scrapeDetailsForIncomplete({ maxItems: maxArg, force });
+	console.log(`\nResult: ${result.scraped} scraped, ${result.enriched} enriched, ${result.skipped} skipped, ${result.errors} errors`);
 	console.log(`Total flashlights in DB: ${countFlashlights()}`);
 }
 

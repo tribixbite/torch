@@ -382,6 +382,13 @@ export function countRawSpecText(): { category: string; count: number }[] {
 	`).all() as { category: string; count: number }[];
 }
 
+/** Get set of all source URLs already scraped (for skip-cache in detail scraper) */
+export function getScrapedUrlSet(): Set<string> {
+	const db = getDb();
+	const rows = db.prepare(`SELECT DISTINCT source_url FROM raw_spec_text`).all() as { source_url: string }[];
+	return new Set(rows.map((r) => r.source_url));
+}
+
 /** Mark an ASIN as scraped */
 export function markAsinScraped(asin: string): void {
 	const db = getDb();

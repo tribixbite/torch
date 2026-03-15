@@ -3,7 +3,7 @@
  * not available from the Shopify JSON API (length, LED, material, etc.).
  * Runs as enrichment pass on existing DB entries.
  */
-import { getAllFlashlights, upsertFlashlight, addSource, addRawSpecText } from '../store/db.js';
+import { getAllFlashlights, upsertFlashlight, addSource, addRawSpecText, getScrapedUrlSet } from '../store/db.js';
 import { hasRequiredAttributes } from '../schema/canonical.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { fetchPage, htmlToText } from './manufacturer-scraper.js';
@@ -14,17 +14,29 @@ const CRAWL_DELAY = 1200; // ms between requests
  * Scrape the full product page HTML for missing specs.
  * Uses the entry's info_urls or purchase_urls to find the product page.
  */
-export async function scrapeDetailForEntry(entry: FlashlightEntry): Promise<{
+export async function scrapeDetailForEntry(
+	entry: FlashlightEntry,
+	scrapedUrls?: Set<string>,
+): Promise<{
 	enriched: boolean;
 	fieldsAdded: string[];
+	skipped: boolean;
 }> {
 	const fieldsAdded: string[] = [];
 
 	// Find a URL to scrape
 	const urls = [...(entry.info_urls ?? []), ...(entry.purchase_urls ?? [])];
-	if (urls.length === 0) return { enriched: false, fieldsAdded };
+	if (urls.length === 0) return { enriched: false, fieldsAdded, skipped: false };
+
+	// Skip entries where ALL URLs were already scraped (no new pages to try)
+	if (scrapedUrls && urls.every((u) => scrapedUrls.has(u))) {
+		return { enriched: false, fieldsAdded, skipped: true };
+	}
 
 	for (const url of urls) {
+		// Skip individual URLs already scraped
+		if (scrapedUrls?.has(url)) continue;
+
 		try {
 			const html = await fetchPage(url);
 			const text = htmlToText(html);
@@ -34,7 +46,7 @@ export async function scrapeDetailForEntry(entry: FlashlightEntry): Promise<{
 
 			if (fieldsAdded.length > 0) {
 				entry.updated_at = new Date().toISOString();
-				return { enriched: true, fieldsAdded };
+				return { enriched: true, fieldsAdded, skipped: false };
 			}
 		} catch {
 			// Try next URL
@@ -42,7 +54,7 @@ export async function scrapeDetailForEntry(entry: FlashlightEntry): Promise<{
 		}
 	}
 
-	return { enriched: false, fieldsAdded };
+	return { enriched: false, fieldsAdded, skipped: false };
 }
 
 /**
@@ -482,18 +494,27 @@ function extractSpecSections(text: string): string[] {
 export async function scrapeDetailsForIncomplete(options: {
 	maxItems?: number;
 	onlyMissing?: string[];
+	force?: boolean;
 } = {}): Promise<{
 	total: number;
 	scraped: number;
 	enriched: number;
 	errors: number;
+	skipped: number;
 }> {
-	const { maxItems = 500, onlyMissing } = options;
+	const { maxItems = 500, onlyMissing, force = false } = options;
 	const entries = getAllFlashlights();
+
+	// Load set of already-scraped URLs to skip (unless --force)
+	const scrapedUrls = force ? undefined : getScrapedUrlSet();
+	if (scrapedUrls) {
+		console.log(`  Loaded ${scrapedUrls.size} already-scraped URLs (use --force to re-scrape)`);
+	}
 
 	let scraped = 0;
 	let enriched = 0;
 	let errors = 0;
+	let skipped = 0;
 
 	for (const entry of entries) {
 		if (scraped >= maxItems) break;
@@ -505,16 +526,22 @@ export async function scrapeDetailsForIncomplete(options: {
 		if (onlyMissing && !missing.some((m) => onlyMissing.includes(m))) continue;
 
 		try {
-			const result = await scrapeDetailForEntry(entry);
+			const result = await scrapeDetailForEntry(entry, scrapedUrls);
+
+			if (result.skipped) {
+				skipped++;
+				continue; // Don't count toward scraped limit, don't delay
+			}
+
 			scraped++;
 
 			if (result.enriched) {
 				upsertFlashlight(entry);
 				enriched++;
+			}
 
-				if (scraped % 25 === 0) {
-					console.log(`  Progress: ${scraped} scraped, ${enriched} enriched (${result.fieldsAdded.join(', ')})`);
-				}
+			if (scraped % 25 === 0) {
+				console.log(`  Progress: ${scraped} scraped, ${enriched} enriched, ${skipped} skipped${result.fieldsAdded.length > 0 ? ` (${result.fieldsAdded.join(', ')})` : ''}`);
 			}
 		} catch {
 			errors++;
@@ -523,5 +550,5 @@ export async function scrapeDetailsForIncomplete(options: {
 		await Bun.sleep(CRAWL_DELAY);
 	}
 
-	return { total: entries.length, scraped, enriched, errors };
+	return { total: entries.length, scraped, enriched, errors, skipped };
 }
