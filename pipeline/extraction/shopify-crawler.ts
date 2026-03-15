@@ -161,10 +161,14 @@ interface ShopifyProduct {
 interface ShopifyStore {
 	brand: string;
 	baseUrl: string;
+	/** Public URL for building purchase links (when API URL differs, e.g. myshopify domain) */
+	publicUrl?: string;
 	/** Filter: only include products matching this predicate */
 	isFlashlight?: (product: ShopifyProduct) => boolean;
 	/** For retailer stores: extract brand from vendor field instead of using fixed brand */
 	isRetailer?: boolean;
+	/** Option name that contains emitter specs embedded in variant strings (e.g. "Emitter Type") */
+	emitterSpecOption?: string;
 }
 
 /** Known Shopify stores for flashlight brands */
@@ -243,6 +247,20 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 		isFlashlight: (p) => {
 			const text = `${p.title} ${p.product_type} ${p.tags.join(' ')}`.toLowerCase();
 			return /flashlight|headlamp|light|lamp/i.test(text);
+		},
+	},
+	{
+		brand: 'Fireflies',
+		// Custom domain blocks /products.json (503), use myshopify domain for API
+		baseUrl: 'https://ff-light.myshopify.com',
+		publicUrl: 'https://www.firefly-outdoor.com',
+		// Emitter specs embedded in variant option2: "FFL5009R 5000K CRI95 2200lm 220m"
+		emitterSpecOption: 'Emitter Type',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			// Filter out accessories: O-rings, emitters, tripods, clips, batteries
+			return /flashlight|headlamp|lantern|torch|edc|right.?angle/i.test(text) &&
+				!/o-ring|emitter|tripod|clip|battery|upgrade|service/i.test(text);
 		},
 	},
 	// --- Retailer stores (multi-brand, use vendor field for brand) ---
@@ -447,7 +465,7 @@ async function fetchAllProducts(store: ShopifyStore): Promise<ShopifyProduct[]> 
  * Convert a Shopify product to FlashlightEntry.
  * Extracts structured data from tags + body_html.
  */
-function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string, isRetailer = false): FlashlightEntry | null {
+function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string, isRetailer = false, emitterSpecOption?: string): FlashlightEntry | null {
 	// For retailer stores, extract brand from vendor field
 	if (isRetailer && product.vendor) {
 		brand = normalizeBrandName(product.vendor);
@@ -697,6 +715,68 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		if (llIp) {
 			const rating = llIp[1].toUpperCase();
 			if (!environment.includes(rating)) environment.push(rating);
+		}
+	}
+
+	// === Emitter variant parsing (e.g. Fireflies: "FFL5009R 5000K CRI95 2200lm 220m") ===
+	if (emitterSpecOption) {
+		const emitterOption = product.options.find((o) => o.name === emitterSpecOption);
+		if (emitterOption) {
+			const variantLeds: string[] = [];
+			const variantLumens: number[] = [];
+			let maxThrow = 0;
+			let bestCri: number | undefined;
+			const ccts: number[] = [];
+
+			for (const val of emitterOption.values) {
+				// Parse formats like:
+				//   "FFL5009R 5000K CRI95 2200lm 220m"
+				//   "21x Nichia E21A 4500K R9080 6000LM"
+				//   "Luminous SFT70 6500K 2600lm 300m"
+				const cleaned = val.trim();
+				if (!cleaned) continue;
+
+				// Extract LED name — everything before the first number followed by K
+				const ledMatch = cleaned.match(/^(?:\d+x\s+)?(.+?)\s+\d{4,5}K/i);
+				if (ledMatch) {
+					const ledName = ledMatch[1].trim();
+					if (ledName && !variantLeds.includes(ledName)) variantLeds.push(ledName);
+				}
+
+				// Extract CCT
+				const cctMatch = cleaned.match(/(\d{4,5})K/);
+				if (cctMatch) {
+					const cct = parseInt(cctMatch[1], 10);
+					if (cct >= 1800 && cct <= 10000 && !ccts.includes(cct)) ccts.push(cct);
+				}
+
+				// Extract CRI
+				const criMatch = cleaned.match(/CRI(\d+)|R(\d+)/i);
+				if (criMatch) {
+					const cri = parseInt(criMatch[1] ?? criMatch[2], 10);
+					if (cri >= 50 && cri <= 100 && (!bestCri || cri > bestCri)) bestCri = cri;
+				}
+
+				// Extract lumens
+				const lmMatch = cleaned.match(/(\d+)\s*l[mM]/);
+				if (lmMatch) {
+					const lm = parseInt(lmMatch[1], 10);
+					if (lm > 0 && lm < 1_000_000 && !variantLumens.includes(lm)) variantLumens.push(lm);
+				}
+
+				// Extract throw
+				const throwMatch = cleaned.match(/(\d+)\s*m\s*$/);
+				if (throwMatch) {
+					const t = parseInt(throwMatch[1], 10);
+					if (t > maxThrow && t < 10000) maxThrow = t;
+				}
+			}
+
+			// Merge variant data (supplement, don't overwrite)
+			if (variantLeds.length > 0 && !specs.leds?.length) specs.leds = variantLeds;
+			if (variantLumens.length > 0 && !specs.lumens?.length) specs.lumens = variantLumens.sort((a, b) => b - a);
+			if (maxThrow > 0 && !specs.throw_m) specs.throw_m = maxThrow;
+			if (bestCri && !specs.cri) specs.cri = bestCri;
 		}
 	}
 
@@ -1070,12 +1150,13 @@ export async function crawlShopifyStore(store: ShopifyStore): Promise<{
 			continue;
 		}
 
-		const entry = shopifyToEntry(product, store.brand, store.baseUrl, store.isRetailer);
+		const publicUrl = store.publicUrl ?? store.baseUrl;
+		const entry = shopifyToEntry(product, store.brand, publicUrl, store.isRetailer, store.emitterSpecOption);
 		if (entry) {
 			upsertFlashlight(entry);
 			addSource(entry.id, {
 				source: `shopify:${store.isRetailer ? entry.brand : store.brand}`,
-				url: `${store.baseUrl}/products/${product.handle}`,
+				url: `${publicUrl}/products/${product.handle}`,
 				scraped_at: new Date().toISOString(),
 				confidence: 0.9,
 			});

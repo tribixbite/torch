@@ -547,6 +547,419 @@ const CRAWLERS: SiteCrawler[] = [
 			return buildEntryFromSpecs('Klarus', model, specs, url, images);
 		},
 	},
+	{
+		brand: 'Emisar',
+		async discoverUrls() {
+			// intl-outdoor.com is Magento — no sitemap, no API. Discover via category pages.
+			const categoryUrls = [
+				'https://intl-outdoor.com/single-channel-led-flashlights.html',
+				'https://intl-outdoor.com/tint-ramping-instant-channel-swiching-led-flashlights.html',
+				'https://intl-outdoor.com/triple-channel-led-flashlights.html',
+				'https://intl-outdoor.com/headlamps-worklights.html',
+				'https://intl-outdoor.com/mule-led-flashlights.html',
+			];
+			const productUrls: string[] = [];
+
+			for (const catUrl of categoryUrls) {
+				try {
+					const html = await fetchPage(catUrl);
+					// Extract product links from category listing
+					const re = /href=["'](https?:\/\/intl-outdoor\.com\/[^"']*\.html)["']/gi;
+					let m;
+					while ((m = re.exec(html)) !== null) {
+						const url = m[1];
+						// Filter to product pages (not category, cart, account pages)
+						if (!/components|accessories|checkout|customer|catalogsearch|review/i.test(url) &&
+							/led|flashlight|headlamp|mule|emisar|noctigon/i.test(url)) {
+							if (!productUrls.includes(url)) productUrls.push(url);
+						}
+					}
+					await Bun.sleep(CRAWL_DELAY);
+				} catch { /* skip failed category pages */ }
+			}
+
+			return productUrls;
+		},
+		extractProduct(url, html, text) {
+			// Extract model name from <h1> or URL
+			let model = '';
+			const h1Match = html.match(/<h1[^>]*class="[^"]*product-name[^"]*"[^>]*>(.*?)<\/h1>/is)
+				?? html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+			if (h1Match) {
+				model = h1Match[1].replace(/<[^>]+>/g, '').trim();
+			}
+			if (!model) model = modelFromPath(url);
+			// Normalize: extract the core model (e.g. "D4V2" from "Emisar D4V2 High Power LED Flashlight")
+			model = model.replace(/^(?:Emisar|Noctigon)\s+/i, '');
+			// Trim trailing descriptions
+			model = model.replace(/\s+(?:High\s+Power|Quad|Dual|Triple|Channel|LED|Flashlight|Headlamp|Right\s*Angle|Work\s*Light|Mule).*$/i, '').trim();
+			if (!model || model.length < 2) return null;
+
+			// Determine brand from model name or page title
+			const pageTitle = (h1Match?.[1] ?? '').replace(/<[^>]+>/g, '');
+			const brand = /noctigon/i.test(pageTitle) ? 'Noctigon' : 'Emisar';
+
+			// Start with generic text extraction
+			const specs = extractSpecsFromText(text);
+
+			// Parse Emisar-specific dimension format: "95mm(length) * 28mm(head) * 24mm(body)"
+			const emisarDims = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?\s*[×*x]\s*(\d+(?:\.\d+)?)\s*mm\s*\(?head\)?\s*[×*x]\s*(\d+(?:\.\d+)?)\s*mm\s*\(?body\)?/i);
+			if (emisarDims) {
+				specs.length_mm = parseFloat(emisarDims[1]);
+				specs.bezel_mm = parseFloat(emisarDims[2]);
+				specs.body_mm = parseFloat(emisarDims[3]);
+			}
+
+			// Parse weight: "58g" or "58 grams"
+			const weightM = text.match(/(?:weight|net\s*weight)[:\s]*(\d+(?:\.\d+)?)\s*g\b/i);
+			if (weightM) specs.weight_g = parseFloat(weightM[1]);
+
+			// Parse LED variants from <select> dropdown options
+			const leds: string[] = [];
+			// Find select elements labeled "LED" or "LED & Tint" or "Channel"
+			const selectRe = /<label[^>]*>([^<]*(?:LED|Tint|Emitter|Channel)[^<]*)<\/label>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			let sm;
+			while ((sm = selectRe.exec(html)) !== null) {
+				const optionsHtml = sm[2];
+				const optRe = /<option[^>]*>(.*?)<\/option>/gi;
+				let om;
+				while ((om = optRe.exec(optionsHtml)) !== null) {
+					const optText = om[1].replace(/<[^>]+>/g, '').trim();
+					if (!optText || /choose|select|please/i.test(optText)) continue;
+					// Clean LED name: extract core emitter from text like "Nichia 519A sm573 - 5700K D200 R9080 +$4.00"
+					const ledName = optText
+						.replace(/\s*\+?\$[\d.]+.*$/, '') // Remove price suffix
+						.replace(/\s*-\s*\d{4,5}K.*$/, '') // Remove CCT suffix for primary name
+						.trim();
+					if (ledName && ledName.length > 1 && !leds.includes(ledName)) {
+						leds.push(ledName);
+					}
+				}
+			}
+			if (leds.length > 0) specs.led = leds;
+
+			// Parse performance tables: "NTG35 5000K: 4200 lm / 17,100 cd"
+			const lumens: number[] = [];
+			const candelas: number[] = [];
+			const perfRe = /(\d[\d,]*)\s*(?:lumens?|lm)\b/gi;
+			let pm;
+			while ((pm = perfRe.exec(text)) !== null) {
+				const val = parseInt(pm[1].replace(/,/g, ''), 10);
+				if (val > 0 && val < 1_000_000 && !lumens.includes(val)) lumens.push(val);
+			}
+			const cdRe = /(\d[\d,]*)\s*(?:cd|candela)\b/gi;
+			while ((pm = cdRe.exec(text)) !== null) {
+				const val = parseInt(pm[1].replace(/,/g, ''), 10);
+				if (val > 0 && val < 100_000_000 && !candelas.includes(val)) candelas.push(val);
+			}
+			if (lumens.length > 0) specs.lumens = lumens.sort((a, b) => b - a);
+			if (candelas.length > 0 && !specs.intensity_cd) {
+				specs.intensity_cd = Math.max(...candelas);
+			}
+
+			// IP rating
+			const ipMatch = text.match(/\bIP[X]?(\d{1,2})\b/i);
+			if (ipMatch) {
+				const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+				specs.environment = [rating];
+			}
+
+			// Material is always aluminum for Emisar/Noctigon
+			if (!specs.material?.length && /alumin/i.test(text)) {
+				specs.material = ['aluminum'];
+			}
+
+			// Battery from text
+			if (!specs.battery?.length) {
+				const batts: string[] = [];
+				if (/\b21700\b/.test(text)) batts.push('21700');
+				if (/\b18650\b/.test(text)) batts.push('18650');
+				if (/\b18350\b/.test(text)) batts.push('18350');
+				if (/\b26800\b/.test(text)) batts.push('26800');
+				if (batts.length > 0) specs.battery = batts;
+			}
+
+			// Anduril firmware is always present for Emisar/Noctigon
+			if (!specs.features?.length) specs.features = [];
+			if (/anduril/i.test(text) && !specs.features.includes('Anduril')) {
+				specs.features.push('Anduril');
+			}
+
+			// Switch type (Emisar typically uses side switch with aux LEDs)
+			if (!specs.switch?.length && /side\s*switch/i.test(text)) {
+				specs.switch = ['side'];
+			}
+
+			// Charging
+			if (!specs.charging?.length) {
+				const chg: string[] = [];
+				if (/usb[\s-]?c/i.test(text)) chg.push('USB-C');
+				if (chg.length > 0) specs.charging = chg;
+			}
+
+			const images = extractImages(html, url);
+			const price = extractPagePrice(html);
+			if (price) specs.price_usd = price;
+
+			// Extract colors from body color dropdown
+			const colors: string[] = [];
+			const colorSelectRe = /<label[^>]*>([^<]*(?:Body\s*Color|Color|Finish)[^<]*)<\/label>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			let cm;
+			while ((cm = colorSelectRe.exec(html)) !== null) {
+				const optionsHtml = cm[2];
+				const optRe = /<option[^>]*>(.*?)<\/option>/gi;
+				let om;
+				while ((om = optRe.exec(optionsHtml)) !== null) {
+					const colorText = om[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+					if (!colorText || /choose|select|please/i.test(colorText)) continue;
+					// Map to canonical colors
+					const colorMap: Record<string, string> = {
+						'black': 'black', 'dark grey': 'gray', 'cyan': 'cyan',
+						'green': 'green', 'sand': 'sand', 'stone': 'gray',
+						'white': 'white', 'red': 'red', 'blue': 'blue',
+						'grey': 'gray', 'desert tan': 'tan', 'olive': 'olive',
+						'orange': 'orange', 'purple': 'purple',
+					};
+					for (const [key, val] of Object.entries(colorMap)) {
+						if (colorText.includes(key) && !colors.includes(val)) {
+							colors.push(val);
+						}
+					}
+				}
+			}
+			if (colors.length > 0) specs.color = colors;
+
+			return buildEntryFromSpecs(brand, model, specs, url, images);
+		},
+	},
+	{
+		brand: 'SureFire',
+		async discoverUrls() {
+			// BigCommerce product sitemap
+			const urls: string[] = [];
+			const sitemapUrls = await parseSitemap('https://www.surefire.com/xmlsitemap.php?type=products');
+			// Filter to lighting products (SureFire also sells suppressors, earplugs, apparel)
+			urls.push(...sitemapUrls.filter((u) =>
+				/flashlight|weapon-?light|head-?lamp|lantern|scout|fury|stiletto|edcl|titan|sidekick|aviator|p[123]x|x300|x400|m\d+|g2x|6p|e[12][a-z]|defender/i.test(u)
+			));
+			return [...new Set(urls)];
+		},
+		extractProduct(url, html, text) {
+			const model = modelFromPath(url).replace(/^Surefire\s+/i, '');
+			const specs = extractSpecsFromText(text);
+
+			// SureFire uses <dl>/<dt>/<dd> spec tables — extract structured data
+			const dlRe = /<dt[^>]*>(.*?)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/gis;
+			let dm;
+			while ((dm = dlRe.exec(html)) !== null) {
+				const label = dm[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+				const value = dm[2].replace(/<[^>]+>/g, '').trim();
+
+				if (/max.*output|lumens/i.test(label)) {
+					const lm = value.match(/(\d[\d,]*)/);
+					if (lm) specs.lumens = [parseInt(lm[1].replace(/,/g, ''), 10)];
+				}
+				if (/peak.*candela|candela/i.test(label)) {
+					const cd = value.match(/(\d[\d,]*)/);
+					if (cd) specs.intensity_cd = parseInt(cd[1].replace(/,/g, ''), 10);
+				}
+				if (/beam.*distance|distance/i.test(label)) {
+					const dist = value.match(/(\d[\d,]*)\s*m/i);
+					if (dist) specs.throw_m = parseInt(dist[1].replace(/,/g, ''), 10);
+				}
+				if (/runtime|run\s*time/i.test(label)) {
+					const rt = value.match(/(\d+(?:\.\d+)?)\s*(?:hour|hr)/i);
+					if (rt) specs.runtime_hours = [parseFloat(rt[1])];
+				}
+				if (/length/i.test(label)) {
+					const mm = value.match(/(\d+(?:\.\d+)?)\s*(?:cm)/i);
+					if (mm) specs.length_mm = Math.round(parseFloat(mm[1]) * 10);
+					else {
+						const inches = value.match(/(\d+(?:\.\d+)?)\s*(?:in|")/i);
+						if (inches) specs.length_mm = Math.round(parseFloat(inches[1]) * 25.4);
+					}
+				}
+				if (/weight/i.test(label)) {
+					const g = value.match(/(\d+(?:\.\d+)?)\s*g\b/i);
+					if (g) specs.weight_g = parseFloat(g[1]);
+					else {
+						const oz = value.match(/(\d+(?:\.\d+)?)\s*oz/i);
+						if (oz) specs.weight_g = Math.round(parseFloat(oz[1]) * 28.35);
+					}
+				}
+				if (/batter/i.test(label)) {
+					const batts: string[] = [];
+					if (/CR123/i.test(value)) batts.push('CR123A');
+					if (/18650/i.test(value)) batts.push('18650');
+					if (/18350/i.test(value)) batts.push('18350');
+					if (/AAA/i.test(value)) batts.push('AAA');
+					if (/AA\b/i.test(value)) batts.push('AA');
+					if (batts.length > 0) specs.battery = batts;
+				}
+				if (/material|construc/i.test(label)) {
+					const mats: string[] = [];
+					if (/aluminum|aluminium/i.test(value)) mats.push('aluminum');
+					if (/polymer|nylon|plastic/i.test(value)) mats.push('polymer');
+					if (mats.length > 0) specs.material = mats;
+				}
+				if (/water|ip[x]?\d/i.test(label)) {
+					const ipM = value.match(/IP[X]?(\d{1,2})/i);
+					if (ipM) {
+						const rating = ipM[1].length === 1 ? `IPX${ipM[1]}` : `IP${ipM[1]}`;
+						specs.environment = [rating];
+					}
+				}
+			}
+
+			const images = extractImages(html, url);
+			const price = extractPagePrice(html);
+			if (price) specs.price_usd = price;
+
+			return buildEntryFromSpecs('SureFire', model, specs, url, images);
+		},
+	},
+	{
+		brand: 'Armytek',
+		async discoverUrls() {
+			// CS-Cart platform — paginate category pages
+			const urls: string[] = [];
+			const categories = [
+				'https://www.armytek.com/flashlights/',
+				'https://www.armytek.com/headlamps/',
+			];
+
+			for (const catUrl of categories) {
+				let page = 1;
+				while (page <= 10) {
+					const pageUrl = page === 1 ? catUrl : `${catUrl}?page=${page}`;
+					try {
+						const html = await fetchPage(pageUrl);
+						const links = extractProductLinks(html, 'https://www.armytek.com', /\/flashlights\/|\/headlamps\//);
+						if (links.length === 0) break;
+
+						// Filter to product detail pages (with /models/ in path)
+						const productLinks = links.filter((u) =>
+							/\/models\//.test(u) || /\/$/.test(u) && !/\?/.test(u)
+						);
+						urls.push(...productLinks);
+						page++;
+						await Bun.sleep(CRAWL_DELAY);
+					} catch {
+						break;
+					}
+				}
+			}
+
+			return [...new Set(urls)];
+		},
+		extractProduct(url, html, text) {
+			const model = modelFromPath(url)
+				.replace(/^Armytek\s+/i, '')
+				.replace(/\s+(?:warm|white|pro|multi|v\d+)$/i, (m) => m); // Keep suffixes like "Pro", "V2"
+			const specs = extractSpecsFromText(text);
+
+			// Armytek uses #tc-table for structured specs
+			const tableRe = /<tr[^>]*>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<\/tr>/gis;
+			let tm;
+			while ((tm = tableRe.exec(html)) !== null) {
+				const label = tm[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+				const value = tm[2].replace(/<[^>]+>/g, '').trim();
+
+				if (/max.*brightness|light.*output|luminous.*flux/i.test(label)) {
+					const lm = value.match(/(\d[\d,]*)\s*(?:lm|lumen)/i);
+					if (lm) specs.lumens = [parseInt(lm[1].replace(/,/g, ''), 10)];
+				}
+				if (/beam.*distance|throw/i.test(label)) {
+					const dist = value.match(/(\d[\d,]*)\s*m/i);
+					if (dist) specs.throw_m = parseInt(dist[1].replace(/,/g, ''), 10);
+				}
+				if (/beam.*intensity|candela/i.test(label)) {
+					const cd = value.match(/(\d[\d,]*)\s*cd/i);
+					if (cd) specs.intensity_cd = parseInt(cd[1].replace(/,/g, ''), 10);
+				}
+				if (/^length/i.test(label)) {
+					const mm = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+					if (mm) specs.length_mm = parseFloat(mm[1]);
+				}
+				if (/head.*diameter|bezel/i.test(label)) {
+					const mm = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+					if (mm) specs.bezel_mm = parseFloat(mm[1]);
+				}
+				if (/body.*diameter/i.test(label)) {
+					const mm = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+					if (mm) specs.body_mm = parseFloat(mm[1]);
+				}
+				if (/weight.*(?:without|w\/o|no)\s*batt/i.test(label) || /^weight$/i.test(label)) {
+					const g = value.match(/(\d+(?:\.\d+)?)\s*g\b/i);
+					if (g) specs.weight_g = parseFloat(g[1]);
+				}
+				if (/protection|water/i.test(label)) {
+					const ipM = value.match(/IP[X]?(\d{1,2})/i);
+					if (ipM) {
+						const rating = ipM[1].length === 1 ? `IPX${ipM[1]}` : `IP${ipM[1]}`;
+						specs.environment = [rating];
+					}
+				}
+				if (/impact/i.test(label)) {
+					const im = value.match(/(\d+(?:\.\d+)?)\s*m/i);
+					if (im) specs.impact = [`${im[1]}m`];
+				}
+			}
+
+			// Parse multi-mode runtime from Armytek's detailed table rows
+			// Format: "2500 lm / 2h 40min" or "0.15 lm / 200 days"
+			const runtimes: number[] = [];
+			const rtRe = /(\d+(?:\.\d+)?)\s*(?:lm|lumen)\s*[/|]\s*(\d+)\s*h(?:ours?)?\s*(?:(\d+)\s*min)?/gi;
+			let rm;
+			while ((rm = rtRe.exec(text)) !== null) {
+				const hours = parseInt(rm[2], 10) + (rm[3] ? parseInt(rm[3], 10) / 60 : 0);
+				if (hours > 0 && hours < 10000 && !runtimes.includes(hours)) runtimes.push(hours);
+			}
+			// Also check for "NNN days" runtime
+			const daysRe = /(\d+)\s*days?/gi;
+			while ((rm = daysRe.exec(text)) !== null) {
+				const hours = parseInt(rm[1], 10) * 24;
+				if (hours > 0 && hours < 100000 && !runtimes.includes(hours)) runtimes.push(hours);
+			}
+			if (runtimes.length > 0 && !specs.runtime_hours?.length) {
+				specs.runtime_hours = runtimes.sort((a, b) => b - a);
+			}
+
+			// Parse LED from product title (Armytek puts LED in title, not spec table)
+			if (!specs.led?.length) {
+				const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+				if (titleMatch) {
+					const title = titleMatch[1].replace(/<[^>]+>/g, '');
+					const ledPatterns: [RegExp, string][] = [
+						[/\bXHP50\.2\b/i, 'XHP50.2'], [/\bXHP50\.3\b/i, 'XHP50.3'],
+						[/\bXHP50\b/i, 'XHP50'], [/\bXHP70\.2\b/i, 'XHP70.2'],
+						[/\bXHP70\b/i, 'XHP70'], [/\bNichia 144A\b/i, 'Nichia 144A'],
+						[/\bNichia 144AR\b/i, 'Nichia 144AR'], [/\bSST[\s-]?40\b/i, 'SST-40'],
+						[/\bSST[\s-]?20\b/i, 'SST-20'], [/\b519A\b/, '519A'],
+						[/\bSFT[\s-]?70\b/i, 'SFT-70'], [/\bSFT[\s-]?40\b/i, 'SFT-40'],
+						[/\bXM[\s-]?L2\b/i, 'XM-L2'], [/\bXP[\s-]?L\b/i, 'XP-L'],
+					];
+					for (const [re, name] of ledPatterns) {
+						if (re.test(title)) {
+							specs.led = [name];
+							break;
+						}
+					}
+				}
+			}
+
+			// Armytek material is typically aluminum
+			if (!specs.material?.length && /alumin/i.test(text)) {
+				specs.material = ['aluminum'];
+			}
+
+			const images = extractImages(html, url);
+			const price = extractPagePrice(html);
+			if (price) specs.price_usd = price;
+
+			return buildEntryFromSpecs('Armytek', model, specs, url, images);
+		},
+	},
 ];
 
 /**

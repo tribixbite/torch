@@ -59,6 +59,20 @@ const BRAND_URL_PATTERNS: Record<string, (model: string) => string[]> = {
 	'Streamlight': (m) => [
 		`https://www.streamlight.com/products/${m.toLowerCase().replace(/\s+/g, '-')}`,
 	],
+	'Emisar': (m) => [
+		`https://intl-outdoor.com/emisar-${m.toLowerCase().replace(/\s+/g, '-')}-high-power-led-flashlight.html`,
+		`https://intl-outdoor.com/${m.toLowerCase().replace(/\s+/g, '-')}.html`,
+	],
+	'Noctigon': (m) => [
+		`https://intl-outdoor.com/noctigon-${m.toLowerCase().replace(/\s+/g, '-')}-high-power-led-flashlight.html`,
+		`https://intl-outdoor.com/${m.toLowerCase().replace(/\s+/g, '-')}.html`,
+	],
+	'SureFire': (m) => [
+		`https://www.surefire.com/${m.toLowerCase().replace(/\s+/g, '-')}/`,
+	],
+	'Armytek': (m) => [
+		`https://www.armytek.com/flashlights/models/${m.toLowerCase().replace(/\s+/g, '-')}/`,
+	],
 };
 
 /**
