@@ -88,7 +88,7 @@ Commands:
   shopify [brand] Crawl Shopify stores (JSON API, fast + reliable)
   detail-scrape  Scrape full product pages for missing specs (length, LED, etc.)
   enrich         Fill missing attributes via inference + manufacturer scraping
-  reviews [site] Scrape review sites for specs (site: zakreviews, or omit for all)
+  reviews [site] Scrape review sites (zakreviews, 1lumen, zeroair, tgreviews, sammyshp)
   blf [n]        Enrich from BudgetLightForum reviews (n = max entries, default 200)
   images         Download, optimize, and build sprite sheet from product images
   cleanup        Remove dupes + entries without images

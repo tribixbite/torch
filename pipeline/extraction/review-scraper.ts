@@ -400,6 +400,760 @@ function parseLedValue(value: string): string[] {
 	return leds;
 }
 
+// ─── 1Lumen site implementation ──────────────────────────────────────────────
+
+/**
+ * Discover review URLs from 1lumen.com via sitemap.
+ * Sitemap index at /sitemaps.xml → /post-sitemap1.xml with all ~942 review URLs.
+ */
+async function discover1LumenUrls(_maxPages = 20): Promise<string[]> {
+	const urls = new Set<string>();
+
+	try {
+		console.log('  Fetching 1lumen sitemap index...');
+		const sitemapIndex = await fetchPage('https://1lumen.com/sitemaps.xml');
+		// Extract post-sitemap URLs
+		const sitemapRe = /<loc>(https:\/\/1lumen\.com\/post-sitemap\d*\.xml)<\/loc>/gi;
+		const sitemapUrls: string[] = [];
+		let sm;
+		while ((sm = sitemapRe.exec(sitemapIndex)) !== null) {
+			sitemapUrls.push(sm[1]);
+		}
+		if (sitemapUrls.length === 0) {
+			// Fallback: try direct URL
+			sitemapUrls.push('https://1lumen.com/post-sitemap1.xml');
+		}
+
+		for (const smUrl of sitemapUrls) {
+			console.log(`  Fetching sitemap: ${smUrl}`);
+			const xml = await fetchPage(smUrl);
+			// Handle both plain and CDATA-wrapped URLs
+			const locRe = /<loc>(?:<!\[CDATA\[)?(https:\/\/1lumen\.com\/review\/[^\]<]+?)(?:\]\]>)?<\/loc>/gi;
+			let loc;
+			while ((loc = locRe.exec(xml)) !== null) {
+				urls.add(loc[1].trim());
+			}
+			console.log(`  Found ${urls.size} review URLs so far`);
+			await Bun.sleep(CRAWL_DELAY);
+		}
+	} catch (err) {
+		console.warn(`  Error fetching 1lumen sitemap: ${err instanceof Error ? err.message : err}`);
+	}
+
+	return Array.from(urls);
+}
+
+/**
+ * Parse a 1lumen.com review page.
+ * Specs in wp-block-table with striped style. Brand+model from h1 or thead.
+ * Separate dimensions table (3 cols: name, mm, inches) and weight table.
+ */
+function parse1LumenReview(html: string, url: string): ParsedReview | null {
+	// Extract brand + model from <h1 class="entry-title">
+	const h1Match = html.match(/<h1[^>]*class="entry-title"[^>]*>([^<]+)<\/h1>/i);
+	if (!h1Match) return null;
+
+	const fullTitle = h1Match[1].trim();
+	const parts = fullTitle.split(/\s+/);
+	if (parts.length < 2) return null;
+
+	const brand = parts[0];
+	const model = parts.slice(1).join(' ');
+
+	const specs: Partial<ExtractedSpecs> = {};
+
+	// Find all tables in wp-block-table figures
+	const tableRe = /<figure[^>]*class="wp-block-table[^"]*"[^>]*>\s*<table[^>]*>([\s\S]*?)<\/table>/gi;
+	let tableMatch;
+	const tables: string[] = [];
+	while ((tableMatch = tableRe.exec(html)) !== null) {
+		tables.push(tableMatch[1]);
+	}
+
+	for (const table of tables) {
+		const theadLower = table.toLowerCase();
+
+		// Detect table type by thead content
+		if (/brand\s*[&\/]/i.test(theadLower) || /brand\/model/i.test(theadLower)) {
+			// Main spec table — two-column key-value
+			parseMainSpecTable1Lumen(table, specs);
+		} else if (/millimeters/i.test(theadLower)) {
+			// Dimensions table
+			parseDimensionsTable1Lumen(table, specs);
+		} else if (/weight\s*in\s*grams/i.test(theadLower) || /weight\s*in\s*oz/i.test(theadLower)) {
+			// Weight table
+			parseWeightTable1Lumen(table, specs);
+		}
+	}
+
+	// Also try expanded format (newer reviews with sections like "Dimensions:", "LED & Beam")
+	parseExpandedSpec1Lumen(html, specs);
+
+	const rawText = htmlToText(tables.join('\n'));
+	return { brand, model, specs, rawSpecText: rawText };
+}
+
+/** Parse 1lumen main spec table (two-column label-value) */
+function parseMainSpecTable1Lumen(table: string, specs: Partial<ExtractedSpecs>): void {
+	const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+	let row;
+	while ((row = rowRe.exec(table)) !== null) {
+		const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+		const value = row[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
+
+		if (/^led\b|^led\s*type/i.test(label)) {
+			const leds = parseLedValue(value);
+			if (leds.length > 0 && !specs.led?.length) specs.led = leds;
+		} else if (/max\.?\s*output|max\.?\s*lumens|specified\s*output/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)\s*(?:lm|lumens?)?/i);
+			if (m) {
+				const lm = parseInt(m[1].replace(/,/g, ''), 10);
+				if (lm > 0 && lm < 1_000_000 && !specs.lumens?.length) specs.lumens = [lm];
+			}
+		} else if (/max\.?\s*beam\s*distance|specified\s*beam\s*distance/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)\s*m(?:eters?)?/i);
+			if (m) {
+				const t = parseInt(m[1].replace(/,/g, ''), 10);
+				if (t >= 5 && t <= 5000 && !specs.throw_m) specs.throw_m = t;
+			}
+		} else if (/max\.?\s*beam\s*intensity|specified\s*beam\s*intensity/i.test(label)) {
+			// "39,240 cd" or combined "5,875 cd / 153 meters"
+			const m = value.match(/(\d[\d,]*)\s*cd/i);
+			if (m && !specs.intensity_cd) specs.intensity_cd = parseInt(m[1].replace(/,/g, ''), 10);
+			// Also grab throw from combined field
+			const tm = value.match(/(\d[\d,]*)\s*m(?:eters?)?/i);
+			if (tm && !specs.throw_m) {
+				const t = parseInt(tm[1].replace(/,/g, ''), 10);
+				if (t >= 5 && t <= 5000) specs.throw_m = t;
+			}
+		} else if (/battery\s*config/i.test(label)) {
+			const batteries = parseBatteryValue(value);
+			if (batteries.length > 0 && !specs.battery?.length) specs.battery = batteries;
+		} else if (/switch\s*type/i.test(label)) {
+			const switches: string[] = [];
+			if (/tail/i.test(value)) switches.push('tail');
+			if (/side/i.test(value)) switches.push('side');
+			if (/rotary|twist/i.test(value)) switches.push('rotary');
+			if (/dual/i.test(value)) switches.push('dual');
+			if (/electronic|e-switch/i.test(value) && switches.length === 0) switches.push('side');
+			if (switches.length > 0 && !specs.switch?.length) specs.switch = switches;
+		} else if (/waterproof|water\s*resistance/i.test(label)) {
+			const ipMatch = value.match(/IP[X\-]?(\d{1,2})/i);
+			if (ipMatch && !specs.environment?.length) {
+				const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+				specs.environment = [rating];
+			}
+		} else if (/onboard\s*charging/i.test(label)) {
+			if (/usb[\s-]?c|type[\s-]?c/i.test(value) && !specs.charging?.length) specs.charging = ['USB-C'];
+			else if (/micro[\s-]?usb/i.test(value) && !specs.charging?.length) specs.charging = ['Micro-USB'];
+			else if (/magnetic/i.test(value) && !specs.charging?.length) specs.charging = ['magnetic'];
+		}
+		// Length/weight from expanded table within main spec
+		else if (label === 'length') {
+			const mm = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+			if (mm && !specs.length_mm) specs.length_mm = parseFloat(mm[1]);
+		} else if (/weight\s*with\s*battery/i.test(label) || label === 'weight') {
+			const g = value.match(/(\d+(?:\.\d+)?)\s*g\b/i);
+			if (g && !specs.weight_g) specs.weight_g = parseFloat(g[1]);
+		}
+	}
+}
+
+/** Parse 1lumen dimensions table (3 columns: label, mm, inches) */
+function parseDimensionsTable1Lumen(table: string, specs: Partial<ExtractedSpecs>): void {
+	const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+	let row;
+	while ((row = rowRe.exec(table)) !== null) {
+		const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+		const value = row[2].replace(/<[^>]+>/g, '').trim();
+		const mm = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+		if (!mm) continue;
+		const v = parseFloat(mm[1]);
+
+		if (label === 'length' && !specs.length_mm && v >= 15 && v <= 1000) {
+			specs.length_mm = v;
+		} else if (/head\s*diameter|bezel/i.test(label) && !specs.bezel_mm) {
+			specs.bezel_mm = v;
+		} else if (/body\s*diameter/i.test(label) && !specs.body_mm) {
+			specs.body_mm = v;
+		}
+	}
+}
+
+/** Parse 1lumen weight table */
+function parseWeightTable1Lumen(table: string, specs: Partial<ExtractedSpecs>): void {
+	const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+	let row;
+	while ((row = rowRe.exec(table)) !== null) {
+		const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+		const value = row[2].replace(/<[^>]+>/g, '').trim();
+		const g = value.match(/(\d+(?:\.\d+)?)\s*g\b/i);
+		if (!g) continue;
+
+		// Prefer "without battery" weight, but take "with battery" if that's all we have
+		if (/without\s*battery/i.test(label) && !specs.weight_g) {
+			specs.weight_g = parseFloat(g[1]);
+		} else if (/with\s*battery/i.test(label) && !specs.weight_g) {
+			specs.weight_g = parseFloat(g[1]);
+		}
+	}
+}
+
+/** Parse 1lumen expanded format (2024+ reviews with section headers in main table) */
+function parseExpandedSpec1Lumen(html: string, specs: Partial<ExtractedSpecs>): void {
+	// These newer reviews have rows like <td><strong>Dimensions:</strong></td><td></td>
+	// followed by data rows. We already parse normal rows, but let's grab specifics.
+	const expandedRe = /<tr>\s*<td>([^<]*(?:<strong>[^<]*<\/strong>[^<]*)?)<\/td>\s*<td>([^<]*)<\/td>\s*<\/tr>/gi;
+	let row;
+	while ((row = expandedRe.exec(html)) !== null) {
+		const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+		const value = row[2].trim();
+
+		if (/^specified\s*output/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)\s*(?:lm|lumens?)?/i);
+			if (m && !specs.lumens?.length) {
+				const lm = parseInt(m[1].replace(/,/g, ''), 10);
+				if (lm > 0 && lm < 1_000_000) specs.lumens = [lm];
+			}
+		} else if (/^specified\s*beam\s*distance/i.test(label)) {
+			const m = value.match(/(\d+)\s*m/i);
+			if (m && !specs.throw_m) {
+				const t = parseInt(m[1], 10);
+				if (t >= 5 && t <= 5000) specs.throw_m = t;
+			}
+		} else if (/^specified\s*beam\s*intensity/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)\s*cd/i);
+			if (m && !specs.intensity_cd) specs.intensity_cd = parseInt(m[1].replace(/,/g, ''), 10);
+		}
+	}
+}
+
+// ─── ZeroAir site implementation ─────────────────────────────────────────────
+
+/**
+ * Discover review URLs from zeroair.org via sitemap.
+ * Two sitemaps: post-sitemap.xml (1000 URLs) and post-sitemap2.xml (437 URLs).
+ */
+async function discoverZeroAirUrls(_maxPages = 20): Promise<string[]> {
+	const urls = new Set<string>();
+	const sitemapUrls = [
+		'https://zeroair.org/post-sitemap.xml',
+		'https://zeroair.org/post-sitemap2.xml',
+	];
+
+	for (const smUrl of sitemapUrls) {
+		try {
+			console.log(`  Fetching sitemap: ${smUrl}`);
+			const xml = await fetchPage(smUrl);
+			// URLs may be in CDATA: <loc><![CDATA[url]]></loc> or plain <loc>url</loc>
+			const locRe = /<loc>(?:<!\[CDATA\[)?(https:\/\/zeroair\.org\/\d{4}\/\d{2}\/\d{2}\/[^\]<]+?)(?:\]\]>)?<\/loc>/gi;
+			let loc;
+			while ((loc = locRe.exec(xml)) !== null) {
+				const u = loc[1].trim();
+				// Only grab URLs that look like flashlight reviews
+				if (/flashlight|headlamp|lantern|review/i.test(u)) {
+					urls.add(u);
+				}
+			}
+			console.log(`  Found ${urls.size} review URLs so far`);
+			await Bun.sleep(CRAWL_DELAY);
+		} catch (err) {
+			console.warn(`  Error fetching ${smUrl}: ${err instanceof Error ? err.message : err}`);
+		}
+	}
+
+	return Array.from(urls);
+}
+
+/**
+ * Parse a zeroair.org review page.
+ * Spec summary in a plain <table> with td[style="text-align: right;"] for labels.
+ * Dimensions in prose text under <h3 id="size">.
+ */
+function parseZeroAirReview(html: string, url: string): ParsedReview | null {
+	// Brand + model from h1: "Sofirn SC21 Pro Flashlight Review"
+	const h1Match = html.match(/<h1[^>]*>(.+?)\s+(?:Flashlight|Headlamp|Lantern|Light)\s+Review/i);
+	if (!h1Match) return null;
+
+	const fullTitle = h1Match[1].replace(/<[^>]+>/g, '').trim();
+	const parts = fullTitle.split(/\s+/);
+	if (parts.length < 2) return null;
+
+	const brand = parts[0];
+	const model = parts.slice(1).join(' ');
+	const specs: Partial<ExtractedSpecs> = {};
+	const text = htmlToText(html);
+
+	// Find spec summary table — rows with style="text-align: right;" in first td
+	const specRowRe = /<tr>\s*<td[^>]*text-align:\s*right[^>]*>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+	let row;
+	while ((row = specRowRe.exec(html)) !== null) {
+		const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+		const value = row[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#8211;/g, '–').replace(/&#215;/g, '×').trim();
+
+		if (/^emitter/i.test(label)) {
+			const leds = parseLedValue(value);
+			if (leds.length > 0) specs.led = leds;
+		} else if (/^price\s*in\s*usd/i.test(label)) {
+			const m = value.match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
+			if (m) {
+				const price = parseFloat(m[1]);
+				if (price > 0 && price < 10000) specs.price_usd = price;
+			}
+		} else if (/^cell/i.test(label)) {
+			specs.battery = parseBatteryValue(value);
+		} else if (/^switch\s*type/i.test(label)) {
+			const switches: string[] = [];
+			if (/tail/i.test(value)) switches.push('tail');
+			if (/side|e[\s-]?switch/i.test(value)) switches.push('side');
+			if (/rotary|twist/i.test(value)) switches.push('rotary');
+			if (switches.length > 0) specs.switch = switches;
+		} else if (/^claimed\s*lumens/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)/);
+			if (m) {
+				const lm = parseInt(m[1].replace(/,/g, ''), 10);
+				if (lm > 0 && lm < 1_000_000) specs.lumens = [lm];
+			}
+		} else if (/^claimed\s*throw/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)/);
+			if (m) {
+				const t = parseInt(m[1].replace(/,/g, ''), 10);
+				if (t >= 5 && t <= 5000) specs.throw_m = t;
+			}
+		} else if (/candela.*calculated|^candela/i.test(label)) {
+			const m = value.match(/(\d[\d,]*)\s*cd/i);
+			if (m) specs.intensity_cd = parseInt(m[1].replace(/,/g, ''), 10);
+		} else if (/^on[\s-]?board\s*charging/i.test(label)) {
+			if (/yes/i.test(value)) {
+				// Check charge port type in next row — we'll also look for it separately
+			}
+		} else if (/^charge\s*port\s*type/i.test(label)) {
+			if (/usb[\s-]?c|type[\s-]?c/i.test(value)) specs.charging = ['USB-C'];
+			else if (/micro/i.test(value)) specs.charging = ['Micro-USB'];
+			else if (/magnetic/i.test(value)) specs.charging = ['magnetic'];
+		}
+	}
+
+	// Extract dimensions from prose under "Size and Comps" section
+	// Format A: "Length: 73mm" / "Body Diameter: 22.5 mm"
+	const lenMatch = text.match(/(?:length|overall)[:\s]+(\d+(?:\.\d+)?)\s*mm/i);
+	if (lenMatch) {
+		const len = parseFloat(lenMatch[1]);
+		if (len >= 15 && len <= 1000) specs.length_mm = len;
+	}
+	// Format B: "133.5mm x 31mm x 23mm and 116g"
+	if (!specs.length_mm) {
+		const dimMatch = text.match(/(\d+(?:\.\d+)?)\s*mm\s*x\s*(\d+(?:\.\d+)?)\s*mm\s*x\s*(\d+(?:\.\d+)?)\s*mm/i);
+		if (dimMatch) {
+			const dims = [parseFloat(dimMatch[1]), parseFloat(dimMatch[2]), parseFloat(dimMatch[3])];
+			const maxDim = Math.max(...dims);
+			if (maxDim >= 15 && maxDim <= 1000) specs.length_mm = maxDim;
+		}
+	}
+	// Format C: "Dimensions: 188.3 × 28.5 × 60.8 mm"
+	if (!specs.length_mm) {
+		const dimMatch2 = text.match(/Dimensions[:\s]+(\d+(?:\.\d+)?)\s*[×x]\s*(\d+(?:\.\d+)?)\s*[×x]\s*(\d+(?:\.\d+)?)\s*mm/i);
+		if (dimMatch2) {
+			const dims = [parseFloat(dimMatch2[1]), parseFloat(dimMatch2[2]), parseFloat(dimMatch2[3])];
+			const maxDim = Math.max(...dims);
+			if (maxDim >= 15 && maxDim <= 1000) specs.length_mm = maxDim;
+		}
+	}
+
+	// Extract weight from prose
+	const weightMatch = text.match(/(?:weight|weighs?)[:\s]+(\d+(?:\.\d+)?)\s*g\b/i);
+	if (weightMatch) specs.weight_g = parseFloat(weightMatch[1]);
+	if (!specs.weight_g) {
+		// "and 116g" pattern
+		const wm = text.match(/\band\s+(\d+(?:\.\d+)?)\s*g\b/i);
+		if (wm) specs.weight_g = parseFloat(wm[1]);
+	}
+
+	// Extract material from text
+	const materials: string[] = [];
+	if (/\baluminum|aluminium\b/i.test(text)) materials.push('aluminum');
+	if (/\btitanium\b/i.test(text)) materials.push('titanium');
+	if (/\bcopper\b/i.test(text) && !/copper\s*(?:board|pcb|mcpcb)/i.test(text)) materials.push('copper');
+	if (/\bbrass\b/i.test(text)) materials.push('brass');
+	if (/\bstainless\b/i.test(text)) materials.push('stainless steel');
+	if (materials.length > 0 && !specs.material?.length) specs.material = materials;
+
+	const rawText = htmlToText(html.substring(0, 5000));
+	return { brand, model, specs, rawSpecText: rawText };
+}
+
+// ─── TGReviews site implementation ──────────────────────────────────────────
+
+/**
+ * Discover review URLs from tgreviews.com via sitemap.
+ * Sitemap at /sitemap-1.xml with ~290 review URLs.
+ */
+async function discoverTGReviewUrls(_maxPages = 20): Promise<string[]> {
+	const urls = new Set<string>();
+
+	try {
+		console.log('  Fetching tgreviews sitemap...');
+		const sitemapIndex = await fetchPage('https://tgreviews.com/sitemap.xml');
+		// Find sub-sitemaps
+		const subRe = /<loc>(https:\/\/tgreviews\.com\/sitemap[^<]*)<\/loc>/gi;
+		const subUrls: string[] = [];
+		let sm;
+		while ((sm = subRe.exec(sitemapIndex)) !== null) {
+			subUrls.push(sm[1]);
+		}
+		if (subUrls.length === 0) subUrls.push('https://tgreviews.com/sitemap-1.xml');
+
+		for (const subUrl of subUrls) {
+			console.log(`  Fetching: ${subUrl}`);
+			const xml = await fetchPage(subUrl);
+			// Match date-based review URLs (handle CDATA)
+			const locRe = /<loc>(?:<!\[CDATA\[)?(https:\/\/tgreviews\.com\/\d{4}\/\d{2}\/\d{2}\/[^\]<]+?)(?:\]\]>)?<\/loc>/gi;
+			let loc;
+			while ((loc = locRe.exec(xml)) !== null) {
+				const u = loc[1].trim();
+				// Skip known non-review pages
+				const slug = u.replace(/\/$/, '').split('/').pop() || '';
+				if (/^collection$|^glossary$|^tfc$|^grizzlys-guide/i.test(slug)) continue;
+				urls.add(u);
+			}
+			console.log(`  Found ${urls.size} review URLs so far`);
+			await Bun.sleep(CRAWL_DELAY);
+		}
+	} catch (err) {
+		console.warn(`  Error fetching tgreviews sitemap: ${err instanceof Error ? err.message : err}`);
+	}
+
+	return Array.from(urls);
+}
+
+/**
+ * Parse a tgreviews.com review page.
+ * H1: "Brand Model Review – Tagline"
+ * Size table under #size with wp-block-table
+ * Mode chart under #modes with lumens/candela/throw
+ * Inline text sections for LED (#emitter), battery (#batteries), switch (#switch)
+ */
+function parseTGReview(html: string, url: string): ParsedReview | null {
+	// Extract brand + model from h1: "Thrunite Catapult Pro Review – The Thrower for Everyone"
+	const h1Match = html.match(/<h1[^>]*>(.+?)\s+Review\b/i);
+	if (!h1Match) return null;
+
+	const fullTitle = h1Match[1].replace(/<[^>]+>/g, '').trim();
+	const parts = fullTitle.split(/\s+/);
+	if (parts.length < 2) return null;
+
+	const brand = parts[0];
+	const model = parts.slice(1).join(' ');
+	const specs: Partial<ExtractedSpecs> = {};
+	const text = htmlToText(html);
+
+	// === Size & Measurements table ===
+	// Find wp-block-table near #size heading with rows like "Length | 104.3"
+	const sizeTableRe = /<figure[^>]*class="wp-block-table[^"]*"[^>]*>\s*<table[^>]*>([\s\S]*?)<\/table>/gi;
+	let tableMatch;
+	while ((tableMatch = sizeTableRe.exec(html)) !== null) {
+		const table = tableMatch[1];
+		const tableLower = table.toLowerCase();
+
+		// Size table has rows like "Length", "Bezel Diameter", "Weight"
+		if (/length|bezel|diameter/i.test(tableLower) && !/lumens|candela|turbo|high|low/i.test(tableLower)) {
+			const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+			let row;
+			while ((row = rowRe.exec(table)) !== null) {
+				const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+				const value = row[2].replace(/<[^>]+>/g, '').trim();
+
+				if (label === 'length' && !specs.length_mm) {
+					const m = value.match(/(\d+(?:\.\d+)?)/);
+					if (m) {
+						const v = parseFloat(m[1]);
+						if (v >= 15 && v <= 1000) specs.length_mm = v;
+					}
+				} else if (/bezel|maximum\s*head/i.test(label) && !specs.bezel_mm) {
+					const m = value.match(/(\d+(?:\.\d+)?)/);
+					if (m) specs.bezel_mm = parseFloat(m[1]);
+				} else if (/body\s*tube/i.test(label) && !specs.body_mm) {
+					const m = value.match(/(\d+(?:\.\d+)?)/);
+					if (m) specs.body_mm = parseFloat(m[1]);
+				} else if (/weight/i.test(label) && !specs.weight_g) {
+					const m = value.match(/(\d+(?:\.\d+)?)\s*g/i);
+					if (m) specs.weight_g = parseFloat(m[1]);
+				}
+			}
+		}
+
+		// Mode chart has "Lumens", "Candela", "Throw" columns
+		if (/lumens|candela/i.test(tableLower) && /turbo|high|low/i.test(tableLower)) {
+			// Get max lumens/throw/candela from first data row (Turbo)
+			const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>((?:\s*<td>[\s\S]*?<\/td>)+)\s*<\/tr>/gi;
+			let row;
+			let isFirstDataRow = true;
+			while ((row = rowRe.exec(table)) !== null) {
+				const level = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+				if (/turbo|max|high/i.test(level) && isFirstDataRow) {
+					// Extract all cell values
+					const cellRe = /<td>([\s\S]*?)<\/td>/gi;
+					const cells: string[] = [];
+					let cell;
+					while ((cell = cellRe.exec(row[0])) !== null) {
+						cells.push(cell[1].replace(/<[^>]+>/g, '').trim());
+					}
+					// cells[0]=Level, cells[1]=Lumens, cells[2]=Candela, cells[3]=Throw(m)
+					if (cells[1] && !specs.lumens?.length) {
+						const lm = parseInt(cells[1].replace(/,/g, ''), 10);
+						if (lm > 0 && lm < 1_000_000) specs.lumens = [lm];
+					}
+					if (cells[2] && !specs.intensity_cd) {
+						const cd = parseInt(cells[2].replace(/,/g, ''), 10);
+						if (cd > 0) specs.intensity_cd = cd;
+					}
+					if (cells[3] && !specs.throw_m) {
+						const t = parseInt(cells[3].replace(/,/g, ''), 10);
+						if (t >= 5 && t <= 5000) specs.throw_m = t;
+					}
+					isFirstDataRow = false;
+				}
+			}
+		}
+	}
+
+	// === Inline spec extraction from text sections ===
+	// LED: after "Emitter" or "emitter" heading
+	const ledSection = text.match(/(?:emitter|led)[:\s]+([^\n]+)/i);
+	if (ledSection && !specs.led?.length) {
+		const leds = parseLedValue(ledSection[1]);
+		if (leds.length > 0) specs.led = leds;
+	}
+
+	// Battery: after "batteries" or "battery" or "power"
+	const battSection = text.match(/(?:batteries?|power|cell)[:\s]+([^\n]+)/i);
+	if (battSection && !specs.battery?.length) {
+		const batteries = parseBatteryValue(battSection[1]);
+		if (batteries.length > 0) specs.battery = batteries;
+	}
+
+	// Switch
+	const switchSection = text.match(/(?:switch)[:\s]+([^\n]+)/i);
+	if (switchSection && !specs.switch?.length) {
+		const switches: string[] = [];
+		const sv = switchSection[1];
+		if (/tail/i.test(sv)) switches.push('tail');
+		if (/side/i.test(sv)) switches.push('side');
+		if (/rotary/i.test(sv)) switches.push('rotary');
+		if (/electronic/i.test(sv) && switches.length === 0) switches.push('side');
+		if (switches.length > 0) specs.switch = switches;
+	}
+
+	// Price
+	const priceMatch = text.match(/\$(\d+(?:\.\d{1,2})?)\s*(?:USD|usd|retail)?/);
+	if (priceMatch && !specs.price_usd) {
+		const price = parseFloat(priceMatch[1]);
+		if (price > 0 && price < 10000) specs.price_usd = price;
+	}
+
+	// Material
+	const materials: string[] = [];
+	if (/anodized\s*aluminum|aluminum\s*body|alumin(?:um|ium)/i.test(text)) materials.push('aluminum');
+	if (/\btitanium\b/i.test(text)) materials.push('titanium');
+	if (/\bcopper\b/i.test(text) && !/copper\s*(?:board|pcb|mcpcb)/i.test(text)) materials.push('copper');
+	if (materials.length > 0 && !specs.material?.length) specs.material = materials;
+
+	// Charging
+	if (!specs.charging?.length) {
+		if (/usb[\s-]?c\s*charg|charg.*usb[\s-]?c/i.test(text)) specs.charging = ['USB-C'];
+		else if (/magnetic\s*(?:usb)?\s*charg/i.test(text)) specs.charging = ['magnetic'];
+	}
+
+	const rawText = htmlToText(html.substring(0, 5000));
+	return { brand, model, specs, rawSpecText: rawText };
+}
+
+// ─── SammySHP site implementation ────────────────────────────────────────────
+
+/**
+ * Discover review URLs from sammyshp.de via the tag page.
+ * All flashlight reviews tagged "taschenlampe" at /betablog/tag/taschenlampe
+ */
+async function discoverSammySHPUrls(_maxPages = 20): Promise<string[]> {
+	const urls = new Set<string>();
+	const baseUrl = 'https://sammyshp.de';
+
+	try {
+		console.log('  Fetching sammyshp.de tag page...');
+		const html = await fetchPage(`${baseUrl}/betablog/tag/taschenlampe`);
+		// Extract post links: /betablog/post/NNN
+		const linkRe = /href="(\/betablog\/post\/\d+)"/gi;
+		let match;
+		while ((match = linkRe.exec(html)) !== null) {
+			urls.add(`${baseUrl}${match[1]}`);
+		}
+
+		// Also check paginated tag pages
+		for (let page = 2; page <= 10; page++) {
+			try {
+				await Bun.sleep(CRAWL_DELAY);
+				const pageHtml = await fetchPage(`${baseUrl}/betablog/tag/taschenlampe?page=${page}`);
+				let found = false;
+				while ((match = linkRe.exec(pageHtml)) !== null) {
+					urls.add(`${baseUrl}${match[1]}`);
+					found = true;
+				}
+				if (!found) break;
+			} catch {
+				break;
+			}
+		}
+	} catch (err) {
+		console.warn(`  Error fetching sammyshp: ${err instanceof Error ? err.message : err}`);
+	}
+
+	return Array.from(urls);
+}
+
+/**
+ * Parse a sammyshp.de review page (German language).
+ * Dimensions in <table class="x-dimensions-table">.
+ * Runtime/performance in <table class="x-runtime-table">.
+ */
+function parseSammySHPReview(html: string, url: string): ParsedReview | null {
+	// Brand + model from <title>: "SammysHP Blog › Vastlite Minima Bow LED"
+	const titleMatch = html.match(/<title>[^›]*›\s*(.+?)\s*<\/title>/i);
+	if (!titleMatch) return null;
+
+	const fullTitle = titleMatch[1].trim();
+	const parts = fullTitle.split(/\s+/);
+	if (parts.length < 2) return null;
+
+	const brand = parts[0];
+	const model = parts.slice(1).join(' ');
+	const specs: Partial<ExtractedSpecs> = {};
+
+	// === Dimensions table (x-dimensions-table) ===
+	const dimTableMatch = html.match(/<table[^>]*class="x-dimensions-table"[^>]*>([\s\S]*?)<\/table>/i);
+	if (dimTableMatch) {
+		const table = dimTableMatch[1];
+		// Rows use either <td> or <th> for labels, German decimal comma
+		const rowRe = /<tr[^>]*>\s*<(?:td|th)>([\s\S]*?)<\/(?:td|th)>\s*<td>([\s\S]*?)<\/td>/gi;
+		let row;
+		while ((row = rowRe.exec(table)) !== null) {
+			const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+			// German uses comma for decimal: "120,5" → "120.5"
+			const rawValue = row[2].replace(/<[^>]+>/g, '').trim().replace(',', '.');
+
+			if (/^l[aä]nge|^h[oö]he/i.test(label) && !specs.length_mm) {
+				const m = rawValue.match(/(\d+(?:\.\d+)?)\s*mm/i);
+				if (m) {
+					const v = parseFloat(m[1]);
+					if (v >= 15 && v <= 1000) specs.length_mm = v;
+				}
+			} else if (/durchmesser.*kopf|bezel/i.test(label) && !specs.bezel_mm) {
+				const m = rawValue.match(/(\d+(?:\.\d+)?)\s*mm/i);
+				if (m) specs.bezel_mm = parseFloat(m[1]);
+			} else if (/durchmesser.*akkurohr|body/i.test(label) && !specs.body_mm) {
+				const m = rawValue.match(/(\d+(?:\.\d+)?)\s*mm/i);
+				if (m) specs.body_mm = parseFloat(m[1]);
+			} else if (/gewicht.*ohne|gewicht.*gesamt|^gewicht/i.test(label) && !specs.weight_g) {
+				const m = rawValue.match(/(\d+(?:\.\d+)?)\s*g/i);
+				if (m) specs.weight_g = parseFloat(m[1]);
+			}
+		}
+	}
+
+	// === Runtime/performance table (x-runtime-table) ===
+	const rtTableMatch = html.match(/<table[^>]*class="x-runtime-table"[^>]*>([\s\S]*?)<\/table>/i);
+	if (rtTableMatch) {
+		const table = rtTableMatch[1];
+		// Get first data row (Turbo) for max lumens/throw/intensity
+		const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>((?:\s*<td>[\s\S]*?<\/td>)+)\s*<\/tr>/gi;
+		let row;
+		let firstRow = true;
+		while ((row = rowRe.exec(table)) !== null && firstRow) {
+			const cellRe = /<td>([\s\S]*?)<\/td>/gi;
+			const cells: string[] = [];
+			let cell;
+			while ((cell = cellRe.exec(row[0])) !== null) {
+				cells.push(cell[1].replace(/<[^>]+>/g, '').replace(/<br\s*\/?>/gi, ' ').trim().replace(',', '.'));
+			}
+			// cells[0]=Mode, cells[1]=Helligkeit(lm), cells[2]=Laufzeit, cells[3]=Intensität(cd) (Reichweite)
+			if (cells[1] && !specs.lumens?.length) {
+				// May have "1500 lm" or "1500 / 1300 lm" (multiple variants)
+				const lmMatch = cells[1].match(/(\d+)\s*(?:lm)?/);
+				if (lmMatch) {
+					const lm = parseInt(lmMatch[1], 10);
+					if (lm > 0 && lm < 1_000_000) specs.lumens = [lm];
+				}
+			}
+			if (cells[3] && !specs.intensity_cd) {
+				// "4410 cd" or "4410 cd (132 m)"
+				const cdMatch = cells[3].match(/(\d+)\s*cd/i);
+				if (cdMatch) specs.intensity_cd = parseInt(cdMatch[1], 10);
+				const throwMatch = cells[3].match(/\((\d+)\s*m\)/i);
+				if (throwMatch && !specs.throw_m) {
+					const t = parseInt(throwMatch[1], 10);
+					if (t >= 5 && t <= 5000) specs.throw_m = t;
+				}
+			}
+			firstRow = false;
+		}
+	}
+
+	// === Comparison table (x-comparison-table) — may have battery, switch, LED info ===
+	const compTableMatch = html.match(/<table[^>]*class="x-comparison-table"[^>]*>([\s\S]*?)<\/table>/i);
+	if (compTableMatch) {
+		const table = compTableMatch[1];
+		const rowRe = /<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+		let row;
+		while ((row = rowRe.exec(table)) !== null) {
+			const label = row[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+			const value = row[2].replace(/<[^>]+>/g, '').trim();
+
+			if (/^akku|^batterie/i.test(label) && !specs.battery?.length) {
+				specs.battery = parseBatteryValue(value);
+			} else if (/^lichtquelle|^led|^emitter/i.test(label) && !specs.led?.length) {
+				specs.led = parseLedValue(value);
+			} else if (/^bedienung/i.test(label) && !specs.switch?.length) {
+				const switches: string[] = [];
+				if (/heckschalter|tail/i.test(value)) switches.push('tail');
+				if (/seitenschalter|side/i.test(value)) switches.push('side');
+				if (/twisty|dreh/i.test(value)) switches.push('rotary');
+				if (switches.length > 0) specs.switch = switches;
+			} else if (/^helligkeit/i.test(label) && !specs.lumens?.length) {
+				const m = value.match(/(\d+)\s*(?:lm)?/i);
+				if (m) {
+					const lm = parseInt(m[1], 10);
+					if (lm > 0 && lm < 1_000_000) specs.lumens = [lm];
+				}
+			} else if (/^reichweite/i.test(label) && !specs.throw_m) {
+				const m = value.match(/(\d+)\s*m/i);
+				if (m) {
+					const t = parseInt(m[1], 10);
+					if (t >= 5 && t <= 5000) specs.throw_m = t;
+				}
+			}
+		}
+	}
+
+	// Extract LED from text if not found in tables
+	if (!specs.led?.length) {
+		const text = htmlToText(html);
+		const ledMatch = text.match(/(?:LED|Emitter|Lichtquelle)[:\s]+([^\n]+)/i);
+		if (ledMatch) {
+			const leds = parseLedValue(ledMatch[1]);
+			if (leds.length > 0) specs.led = leds;
+		}
+	}
+
+	// Extract battery from text
+	if (!specs.battery?.length) {
+		const text = htmlToText(html);
+		const battMatch = text.match(/(?:Akku|Batterie|battery)[:\s]+([^\n]+)/i);
+		if (battMatch) specs.battery = parseBatteryValue(battMatch[1]);
+	}
+
+	const rawText = htmlToText(html.substring(0, 5000));
+	return { brand, model, specs, rawSpecText: rawText };
+}
+
 // ─── Site registry ─────────────────────────────────────────────────────────────
 
 const REVIEW_SITES: Record<string, SiteConfig> = {
@@ -408,6 +1162,30 @@ const REVIEW_SITES: Record<string, SiteConfig> = {
 		baseUrl: 'https://zakreviews.com',
 		discoverUrls: discoverZakReviewUrls,
 		parseReview: parseZakReview,
+	},
+	'1lumen': {
+		name: '1Lumen',
+		baseUrl: 'https://1lumen.com',
+		discoverUrls: discover1LumenUrls,
+		parseReview: parse1LumenReview,
+	},
+	zeroair: {
+		name: 'ZeroAir',
+		baseUrl: 'https://zeroair.org',
+		discoverUrls: discoverZeroAirUrls,
+		parseReview: parseZeroAirReview,
+	},
+	tgreviews: {
+		name: 'TG Reviews',
+		baseUrl: 'https://tgreviews.com',
+		discoverUrls: discoverTGReviewUrls,
+		parseReview: parseTGReview,
+	},
+	sammyshp: {
+		name: 'SammySHP',
+		baseUrl: 'https://sammyshp.de',
+		discoverUrls: discoverSammySHPUrls,
+		parseReview: parseSammySHPReview,
 	},
 };
 
