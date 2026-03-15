@@ -161,8 +161,8 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 		const reversedMm = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?/i);
 		if (reversedMm) result.length_mm = parseFloat(reversedMm[1]);
 		else {
-			// Centimeters format: "Length: 4.25 in. (10.8 cm)"
-			const cmMatch = text.match(/(?:length|overall)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
+			// Centimeters format: "Length: 4.25 in. (10.8 cm)" or "10.8 centimeters"
+			const cmMatch = text.match(/(?:length|overall)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\)?/i);
 			if (cmMatch) result.length_mm = Math.round(parseFloat(cmMatch[1]) * 10);
 			else {
 				// Inches-only format
@@ -183,7 +183,7 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 	// Extract battery types
 	const batteries: string[] = [];
 	const batteryPatterns: [RegExp, string][] = [
-		[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+		[/\b21700[iI]?\b/, '21700'], [/\b18650[iI]?\b/, '18650'], [/\b18350\b/, '18350'],
 		[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
 		[/\b26650\b/, '26650'], [/\b26800\b/, '26800'],
 		[/\bAA\b(?![\w])/, 'AA'], [/\bAAA\b/, 'AAA'],

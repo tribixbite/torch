@@ -84,8 +84,8 @@ function enrichFromFullPage(
 					entry.length_mm = parseFloat(m[1]);
 					fieldsAdded.push('length_mm');
 				} else {
-					// Centimeters format: "Length: 10.8 cm" or "Length: 4.25 in. (10.8 cm)"
-					m = text.match(/(?:length|overall\s*length)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
+					// Centimeters format: "Length: 10.8 cm" or "10.8 centimeters"
+					m = text.match(/(?:length|overall\s*length)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\)?/i);
 					if (m) {
 						entry.length_mm = Math.round(parseFloat(m[1]) * 10);
 						fieldsAdded.push('length_mm');
@@ -298,7 +298,7 @@ function enrichFromFullPage(
 	if (!entry.battery.length || entry.battery[0] === 'unknown') {
 		const batteries: string[] = [];
 		const patterns: [RegExp, string][] = [
-			[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+			[/\b21700[iI]?\b/, '21700'], [/\b18650[iI]?\b/, '18650'], [/\b18350\b/, '18350'],
 			[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
 			[/\b26650\b/, '26650'], [/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
 		];

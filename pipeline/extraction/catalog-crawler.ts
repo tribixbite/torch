@@ -438,6 +438,115 @@ const CRAWLERS: SiteCrawler[] = [
 			return buildEntryFromSpecs('Lumintop', model, specs, url, images);
 		},
 	},
+	{
+		brand: 'Klarus',
+		async discoverUrls() {
+			// Klarus uses numeric item IDs: /item/{id}.html (IDs 64-154 with gaps)
+			const urls: string[] = [];
+			for (let id = 60; id <= 160; id++) {
+				urls.push(`https://www.klaruslight.com/item/${id}.html`);
+			}
+			return urls;
+		},
+		extractProduct(url, html, text) {
+			// Klarus uses structured div.sme/div.pme pairs for specs
+			const specPairs: Record<string, string> = {};
+			const pairRe = /<div\s+class="sme\b[^"]*"[^>]*>(.*?)<\/div>\s*<div\s+class="pme\b[^"]*"[^>]*>(.*?)<\/div>/gis;
+			let pm;
+			while ((pm = pairRe.exec(html)) !== null) {
+				const label = pm[1].replace(/<[^>]+>/g, '').replace(/[：:]\s*$/, '').trim().toLowerCase();
+				const value = pm[2].replace(/<[^>]+>/g, '').trim();
+				if (label && value) specPairs[label] = value;
+			}
+
+			// Extract model from "Product Model" spec or page title
+			let model = specPairs['product model'] ?? '';
+			if (!model) {
+				const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+				if (titleMatch) model = titleMatch[1].replace(/<[^>]+>/g, '').trim();
+			}
+			model = model.replace(/^Klarus\s+/i, '').trim();
+			if (!model || model.length < 2) return null;
+
+			// Start with generic text extraction
+			const specs = extractSpecsFromText(text);
+
+			// Override with structured data (higher confidence)
+			const maxBrightness = specPairs['maximum brightness'] ?? specPairs['max brightness'];
+			if (maxBrightness) {
+				const lm = maxBrightness.match(/(\d[\d,]*)\s*lumen/i);
+				if (lm) specs.lumens = [parseInt(lm[1].replace(/,/g, ''), 10)];
+			}
+
+			const longestRange = specPairs['longest range'] ?? specPairs['max range'];
+			if (longestRange) {
+				const rng = longestRange.match(/(\d[\d,]*)\s*m/i);
+				if (rng) specs.throw_m = parseInt(rng[1].replace(/,/g, ''), 10);
+			}
+
+			const ledModel = specPairs['led model'] ?? specPairs['led mode']; // typo on some pages
+			if (ledModel && !specs.led?.length) {
+				specs.led = [ledModel.trim()];
+			}
+
+			// Dimensions: find the largest value as length (always largest dimension)
+			const dims = specPairs['dimensions'] ?? specPairs['dimension'];
+			if (dims) {
+				const dimNums: number[] = [];
+				const dimRe = /(\d+(?:\.\d+)?)\s*mm/gi;
+				let dm;
+				while ((dm = dimRe.exec(dims)) !== null) {
+					dimNums.push(parseFloat(dm[1]));
+				}
+				if (dimNums.length > 0) {
+					specs.length_mm = Math.max(...dimNums);
+					// If 3 dimensions, the two smaller are bezel and body
+					if (dimNums.length >= 3) {
+						const sorted = [...dimNums].sort((a, b) => a - b);
+						specs.body_mm = sorted[0];
+						specs.bezel_mm = sorted[1];
+					}
+				}
+			}
+
+			// Weight: strip parenthetical notes, handle full-width parens
+			const weightVal = specPairs['weight'] ?? specPairs['weigh'];
+			if (weightVal) {
+				const wm = weightVal.match(/(\d+(?:\.\d+)?)\s*g/i);
+				if (wm) specs.weight_g = parseFloat(wm[1]);
+			}
+
+			// Runtime
+			const maxRuntime = specPairs['maximum runtime'] ?? specPairs['max runtime'];
+			if (maxRuntime) {
+				const rt = maxRuntime.match(/(\d+(?:\.\d+)?)\s*hour/i);
+				if (rt) specs.runtime_hours = [parseFloat(rt[1])];
+			}
+
+			// IP rating
+			const waterproof = specPairs['waterproof rating'] ?? specPairs['waterproof'];
+			if (waterproof) {
+				const ipM = waterproof.match(/IP[X]?(\d{1,2})/i);
+				if (ipM) {
+					const rating = ipM[1].length === 1 ? `IPX${ipM[1]}` : `IP${ipM[1]}`;
+					specs.environment = [rating];
+				}
+			}
+
+			// Impact resistance (note: Klarus has typo "lmpact" with lowercase L)
+			const impact = specPairs['impact resistance'] ?? specPairs['lmpact resistance'];
+			if (impact) {
+				const im = impact.match(/(\d+(?:\.\d+)?)\s*m/i);
+				if (im) specs.impact = [`${im[1]}m`];
+			}
+
+			const images = extractImages(html, url);
+			const price = extractPagePrice(html);
+			if (price) specs.price_usd = price;
+
+			return buildEntryFromSpecs('Klarus', model, specs, url, images);
+		},
+	},
 ];
 
 /**

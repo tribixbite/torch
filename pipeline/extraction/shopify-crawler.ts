@@ -623,6 +623,57 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		}
 	}
 
+	// === Wuben structured tags: Emitter_SST-40, Battery Type_21700, Waterproof Level_IPX8 ===
+	for (const tag of tags) {
+		if (tag.startsWith('emitter_') && !specs.leds?.length) {
+			const emitter = tag.slice(8);
+			const emitterPatterns: [RegExp, string][] = [
+				[/^sst[\s-]?20$/i, 'SST-20'], [/^sst[\s-]?40$/i, 'SST-40'],
+				[/^sst[\s-]?70$/i, 'SST-70'],
+				[/^sft[\s-]?40$/i, 'SFT-40'], [/^sft[\s-]?70$/i, 'SFT-70'],
+				[/^xhp[\s-]?50/i, 'XHP50'], [/^xhp[\s-]?70/i, 'XHP70'],
+				[/^xp[\s-]?l/i, 'XP-L'], [/^519a$/i, '519A'],
+				[/^lh351d$/i, 'LH351D'], [/^e21a$/i, 'E21A'],
+				[/^cob$/i, 'COB'], [/^lep$/i, 'LEP'],
+			];
+			const parsedLeds: string[] = [];
+			for (const [re, name] of emitterPatterns) {
+				if (re.test(emitter)) { parsedLeds.push(name); break; }
+			}
+			if (parsedLeds.length === 0 && emitter.length > 2) parsedLeds.push(emitter);
+			if (parsedLeds.length > 0) specs.leds = parsedLeds;
+		}
+		if (tag.startsWith('battery type_') && batteries.length === 0) {
+			const batt = tag.slice(13); // "battery type_21700" → "21700"
+			const battMap: Record<string, string> = {
+				'21700': '21700', '18650': '18650', '18350': '18350', '16340': '16340',
+				'14500': '14500', 'cr123a': 'CR123A', 'cr123': 'CR123A', '26650': '26650',
+				'26800': '26800', 'aa': 'AA', 'aaa': 'AAA',
+			};
+			const mapped = battMap[batt.toLowerCase()];
+			if (mapped && !batteries.includes(mapped)) batteries.push(mapped);
+		}
+		if (tag.startsWith('waterproof level_') && environment.length === 0) {
+			const wp = tag.slice(17); // "waterproof level_ipx8" → "ipx8"
+			const ipM = wp.match(/ip[x]?(\d{1,2})/i);
+			if (ipM) {
+				const rating = ipM[1].length === 1 ? `IPX${ipM[1]}` : `IP${ipM[1]}`;
+				if (!environment.includes(rating)) environment.push(rating);
+			}
+		}
+		if (tag.startsWith('body material_') && !specs.materials?.length) {
+			const mat = tag.slice(14).toLowerCase();
+			const parsedMats: string[] = [];
+			if (/aluminum|aluminium/.test(mat)) parsedMats.push('aluminum');
+			else if (mat === 'titanium') parsedMats.push('titanium');
+			else if (mat === 'copper') parsedMats.push('copper');
+			else if (mat === 'brass') parsedMats.push('brass');
+			else if (/stainless/.test(mat)) parsedMats.push('stainless steel');
+			else if (/polymer|plastic|polycarbonate/.test(mat)) parsedMats.push('polymer');
+			if (parsedMats.length > 0) specs.materials = parsedMats;
+		}
+	}
+
 	// === Ledlenser encoded tags: max-light-output-lumens-*, beam-distance-m-*, weight-g-* ===
 	for (const tag of tags) {
 		const llLumens = tag.match(/^max-light-output-lumens-(\d+)$/);
@@ -805,8 +856,8 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 			const reversedMm = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?/i);
 			if (reversedMm) specs.length_mm = parseFloat(reversedMm[1]);
 			else {
-				// Centimeters: "Length: 4.25 in. (10.8 cm)"
-				const cmMatch = text.match(/length[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
+				// Centimeters: "Length: 4.25 in. (10.8 cm)" or "10.8 centimeters"
+				const cmMatch = text.match(/length[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\)?/i);
 				if (cmMatch) specs.length_mm = Math.round(parseFloat(cmMatch[1]) * 10);
 				else {
 					// Inches-only: "Length: 5.74 inches" or "Length: 5.74""
@@ -880,7 +931,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	// Battery types from body text
 	const batteries: string[] = [];
 	const batteryPatterns: [RegExp, string][] = [
-		[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+		[/\b21700[iI]?\b/, '21700'], [/\b18650[iI]?\b/, '18650'], [/\b18350\b/, '18350'],
 		[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
 		[/\b26650\b/, '26650'], [/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
 	];
