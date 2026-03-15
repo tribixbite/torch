@@ -2339,12 +2339,12 @@ function enrichFromFullPage(
 
 	// === BEAM DISTANCE / THROW ===
 	if (!entry.performance.claimed.throw_m) {
-		// Priority 1: labeled "throw|beam distance: NNNm" format
-		let m = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?(?!Ah)\b/i);
+		// Priority 1: labeled "throw|beam distance: NNNm" format — year filter NOT applied here
+		// because "beam distance: 2000m" is a real throw, not a year
+		let m = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?(?![Aa][Hh]?)\b/i);
 		if (m) {
 			const throwVal = parseInt(m[1].replace(/,/g, ''), 10);
-			// Reject values that look like years (2000-2030) or are unreasonably small (<5m)
-			if (throwVal >= 5 && throwVal <= 5000 && !(throwVal >= 2000 && throwVal <= 2030)) {
+			if (throwVal >= 5 && throwVal <= 5000) {
 				entry.performance.claimed.throw_m = throwVal;
 				fieldsAdded.push('throw_m');
 			}
