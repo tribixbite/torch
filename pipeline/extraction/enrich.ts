@@ -255,15 +255,19 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 	if (!entry.led?.length) {
 		const ledPatterns: [RegExp, string][] = [
 			[/\bXHP\d+(?:\.\d+)?(?:\s*HI)?\b/i, ''], // Use matched text
-			[/\bXP[\s-]?L2?\b/i, 'XP-L'], [/\bXP[\s-]?G[23]?\b/i, 'XP-G'],
-			[/\bXP[\s-]?E2?\b/i, 'XP-E'], [/\bSST[\s-]?\d+\b/i, ''],
-			[/\bSFT[\s-]?\d+\b/i, ''], [/\bSBT[\s-]?\d+\b/i, ''],
+			[/\bXM[\s-]?L2?\b/i, 'XM-L2'], [/\bXP[\s-]?L\w?\b/i, 'XP-L'],
+			[/\bXP[\s-]?G[23S]?\b/i, 'XP-G'], [/\bXP[\s-]?E2?\b/i, 'XP-E'],
+			[/\bXP[\s-]?C\b/i, 'XP-C'], [/\bXQ[\s-]?E\b/i, 'XQ-E'],
+			[/\bXPH[\s-]?\d+/i, 'XHP35'],
+			[/\bSST[\s-]?\d+\w?\b/i, ''], [/\bSFT[\s-]?\d+\w?\b/i, ''],
+			[/\bSBT[\s-]?\d+\w?\b/i, ''],
 			[/\b519A\b/, '519A'], [/\b219[BCF]\b/, ''],
 			[/\bLH351D\b/i, 'LH351D'], [/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bNichia\b/i, 'Nichia'], [/\bOsram\b/i, 'Osram'],
 			[/\bLuminus\b/i, 'Luminus'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
 			[/\bC4\s*LED\b/i, 'C4 LED'], [/\bUV\s*LED\b/i, 'UV LED'],
 			[/\bRGB\s*LED\b/i, 'RGB LED'],
+			[/\bWhite\s*Laser\b/i, 'White Laser'],
 		];
 		for (const [re, name] of ledPatterns) {
 			const m = title.match(re);
