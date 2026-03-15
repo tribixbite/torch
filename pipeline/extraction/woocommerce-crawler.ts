@@ -289,7 +289,9 @@ function wooToEntry(product: WooProduct, brand: string): FlashlightEntry | null 
 				intensity_cd: specs.intensity_cd,
 				throw_m: specs.throw_m,
 				beam_angle: specs.beam_angle,
-				runtime_hours: specs.runtime_hours ?? [],
+				cri: specs.cri,
+			cct: specs.cct,
+			runtime_hours: specs.runtime_hours ?? [],
 			},
 			measured: {},
 		},
@@ -325,6 +327,8 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	intensity_cd?: number;
 	throw_m?: number;
 	beam_angle?: number;
+	cri?: number;
+	cct?: number;
 	runtime_hours?: number[];
 	weight_g?: number;
 	length_mm?: number;
@@ -381,6 +385,20 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	const cdMatch = t.match(/(\d[\d,]*)\s*(?:cd|candela)\b/i);
 	if (cdMatch) specs.intensity_cd = parseInt(cdMatch[1].replace(/,/g, ''), 10);
 
+	// CRI
+	const criMatch = t.match(/CRI[:\s>]*(\d+)/i);
+	if (criMatch) {
+		const cri = parseInt(criMatch[1], 10);
+		if (cri >= 50 && cri <= 100) specs.cri = cri;
+	}
+
+	// CCT
+	const cctMatch = t.match(/(\d{4,5})\s*K\b/);
+	if (cctMatch) {
+		const cct = parseInt(cctMatch[1], 10);
+		if (cct >= 1800 && cct <= 10000) specs.cct = cct;
+	}
+
 	// Runtime
 	const runtimes: number[] = [];
 	const rtRe = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/gi;
@@ -417,15 +435,23 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	}
 	if (batteries.length > 0) specs.batteries = batteries;
 
-	// LED
+	// LED — comprehensive pattern list (synced with manufacturer-scraper)
 	const leds: string[] = [];
 	const ledPatterns: [RegExp, string][] = [
-		[/\bSST[\s-]?20\b/i, 'SST-20'], [/\bSST[\s-]?40\b/i, 'SST-40'],
-		[/\bSFT[\s-]?40\b/i, 'SFT-40'], [/\bSFT[\s-]?70\b/i, 'SFT-70'],
-		[/\bXHP[\s-]?50/i, 'XHP50'], [/\bXHP[\s-]?70/i, 'XHP70'],
-		[/\bXM[\s-]?L2?\b/i, 'XM-L2'], [/\bXP[\s-]?L/i, 'XP-L'],
-		[/\b519A\b/, '519A'], [/\b219[BCF]\b/, '219B'],
+		[/\bLuminus\s+SFT[\s-]?70\b/i, 'Luminus SFT70'],
+		[/\bLuminus\s+SFT[\s-]?40\b/i, 'Luminus SFT40'],
+		[/\bSST[\s-]?10\b/i, 'SST-10'], [/\bSST[\s-]?20\b/i, 'SST-20'],
+		[/\bSST[\s-]?40\b/i, 'SST-40'], [/\bSST[\s-]?70\b/i, 'SST-70'],
+		[/\bSFT[\s-]?40\b/i, 'SFT-40'], [/\bSFT[\s-]?42\w?\b/i, 'SFT-42'],
+		[/\bSFT[\s-]?70\b/i, 'SFT-70'], [/\bSFT[\s-]?90\w?\b/i, 'SFT-90'],
+		[/\bXHP[\s-]?50(?:\.\d)?\b/i, 'XHP50'], [/\bXHP[\s-]?70(?:\.\d)?\b/i, 'XHP70'],
+		[/\bXM[\s-]?L2?\b/i, 'XM-L2'], [/\bXP[\s-]?L\s*(?:HI|HD|V6)?\b/i, 'XP-L'],
+		[/\bXP[\s-]?G[23S]?\b/i, 'XP-G'], [/\bXP[\s-]?E2?\b/i, 'XP-E'],
+		[/\b519A\b/, '519A'], [/\b219[BCF]\b/, '219B'], [/\b319A\b/, '319A'],
 		[/\bLH351D\b/i, 'LH351D'], [/\bE21A\b/, 'E21A'],
+		[/\bCree\s+XHP/i, 'Cree XHP'], [/\bOSRAM\b/i, 'Osram'],
+		[/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
+		[/\b7070\b/, '7070'], [/\bNichia\b/i, 'Nichia'],
 	];
 	for (const [re, name] of ledPatterns) {
 		if (re.test(t) && !leds.includes(name)) leds.push(name);
@@ -469,9 +495,13 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	if (/\bmagnet/i.test(t) && !/magnetic\s*charg/i.test(t)) features.push('magnet');
 	if (/\blanyard/i.test(t)) features.push('lanyard');
 	if (/\blockout/i.test(t)) features.push('lockout');
-	if (/\bmemory/i.test(t)) features.push('mode memory');
+	if (/\bmemory/i.test(t) && !/card|flash\s*memory|storage/i.test(t)) features.push('mode memory');
 	if (/\banduril/i.test(t)) features.push('Anduril');
 	if (/\brechargeable/i.test(t)) features.push('rechargeable');
+	if (/\bpower\s*bank\b/i.test(t)) features.push('power bank');
+	if (/\banti[\s-]?roll\b/i.test(t)) features.push('anti-roll');
+	if (/\bthermal\s*(?:regulation|management|step)/i.test(t)) features.push('thermal stepdown');
+	if (/\bstrike\s*bezel\b|\bglass\s*break/i.test(t)) features.push('strike bezel');
 	if (features.length > 0) specs.features = features;
 
 	// Environment/IP

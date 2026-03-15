@@ -804,7 +804,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 		if (compound) specs.throw_m = parseInt(compound[2].replace(/,/g, ''), 10);
 		else {
 			// Priority 3: reverse "NNNm throw" or "NNN meters beam"
-			const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)\b/i);
+			const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
 			if (reverseThrow) specs.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
 			else {
 				// Priority 4: yards with conversion
@@ -971,7 +971,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	if (/\bmagnet(?:ic)?\b/i.test(text) && !/magnetic\s*charg/i.test(text)) features.push('magnet');
 	if (/\blanyard\b/i.test(text)) features.push('lanyard');
 	if (/\blockout\b/i.test(text)) features.push('lockout');
-	if (/\bmemory\b/i.test(text)) features.push('mode memory');
+	if (/\bmemory\b/i.test(text) && !/card|flash\s*memory|storage/i.test(text)) features.push('mode memory');
 	if (/\banduril\b/i.test(text)) features.push('Anduril');
 	if (/\bpower\s*bank\b/i.test(text)) features.push('power bank');
 	if (/\banti[\s-]?roll\b/i.test(text)) features.push('anti-roll');

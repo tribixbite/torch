@@ -352,10 +352,32 @@ function enrichFromFullPage(
 		if (/\brechargeable\b/i.test(text)) features.push('rechargeable');
 		if (/\bpower\s*bank\b/i.test(text)) features.push('power bank');
 		if (/\banti[\s-]?roll\b/i.test(text)) features.push('anti-roll');
+		if (/\bthermal\s*(?:regulation|management|step)/i.test(text)) features.push('thermal stepdown');
 		if (/\bstrike\s*bezel\b|\bglass\s*break/i.test(text)) features.push('strike bezel');
 		if (features.length > 0) {
 			entry.features = features;
 			fieldsAdded.push('features');
+		}
+	}
+
+	// === BLINK MODES — was missing from detail-scraper ===
+	if (!entry.blink?.length) {
+		const blink: string[] = [];
+		if (/\bstrobe\b/i.test(text)) blink.push('strobe');
+		if (/\bsos\b/i.test(text)) blink.push('SOS');
+		if (/\bbeacon\b/i.test(text)) blink.push('beacon');
+		if (blink.length > 0) {
+			entry.blink = blink;
+			fieldsAdded.push('blink');
+		}
+	}
+
+	// === IMPACT RESISTANCE — was missing from detail-scraper ===
+	if (!entry.impact?.length) {
+		const impactMatch = text.match(/(\d+(?:\.\d+)?)\s*m(?:eter)?s?\s*(?:impact|drop)/i);
+		if (impactMatch) {
+			entry.impact = [`${impactMatch[1]}m`];
+			fieldsAdded.push('impact');
 		}
 	}
 
