@@ -1630,6 +1630,277 @@ function enrichFromStructuredHtml(
 			}
 		}
 	}
+
+	// === ACEBEAM nopCommerce: id="features" tab with <h4> sections (SIZE, OUTPUTS, BATTERIES, DETAILS) ===
+	if (/id="features"/i.test(html) && /acebeam/i.test(html)) {
+		// Extract just the features tab content
+		const featMatch = html.match(/id="features"[^>]*>([\s\S]*?)(?:<div[^>]*id="(?:faq|product-reviews|description)"|<\/article>)/i);
+		if (featMatch) {
+			const feat = featMatch[1];
+			const text = feat.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+
+			// SIZE section — "Length: 154mm/6.06 inches"
+			if (!entry.length_mm || entry.length_mm <= 0) {
+				const lenMatch = text.match(/Length:\s*([\d.]+)\s*mm/i);
+				if (lenMatch) {
+					const mm = parseFloat(lenMatch[1]);
+					if (mm > 20 && mm < 1000) {
+						entry.length_mm = mm;
+						fieldsAdded.push('length_mm');
+					}
+				}
+			}
+			if (!entry.bezel_mm || entry.bezel_mm <= 0) {
+				const headMatch = text.match(/Head\s*(?:Diameter|dia\.?):\s*([\d.]+)\s*mm/i);
+				if (headMatch) {
+					const mm = parseFloat(headMatch[1]);
+					if (mm > 5 && mm < 200) {
+						entry.bezel_mm = mm;
+						fieldsAdded.push('bezel_mm');
+					}
+				}
+			}
+			if (!entry.body_mm || entry.body_mm <= 0) {
+				const bodyMatch = text.match(/(?:Body|Tube)\s*(?:Diameter|dia\.?):\s*([\d.]+)\s*mm/i);
+				if (bodyMatch) {
+					const mm = parseFloat(bodyMatch[1]);
+					if (mm > 5 && mm < 200) {
+						entry.body_mm = mm;
+						fieldsAdded.push('body_mm');
+					}
+				}
+			}
+			if (!entry.weight_g) {
+				const wMatch = text.match(/Weight:\s*([\d.]+)\s*g/i);
+				if (wMatch) {
+					const g = parseFloat(wMatch[1]);
+					if (g > 1 && g < 10000) {
+						entry.weight_g = g;
+						fieldsAdded.push('weight_g');
+					}
+				}
+			}
+
+			// OUTPUTS section — LED, lumens, throw, runtime, intensity
+			if (!entry.led.length || entry.led[0] === 'unknown') {
+				// "1 x OSRAM KW CSLPM1.TG LED" or "Nichia 519A ... LED"
+				const ledMatch = feat.match(/(?:\d+\s*x\s+)?((?:OSRAM|Luminus|Nichia|Cree|Samsung|SBT|SFT|SFN|SFP|SST|XHP|XP-?[LEGS]|GT-FC)\s*[\w.\-\s]+?)\s*LED/i);
+				if (ledMatch) {
+					entry.led = [ledMatch[1].trim()];
+					fieldsAdded.push('led');
+				}
+			}
+			if (!entry.performance.claimed.lumens?.length) {
+				const lmMatch = text.match(/Max\.?\s*output[:\s]*([\d,]+)\s*(?:lumens?|lm)/i);
+				if (lmMatch) {
+					const lm = parseInt(lmMatch[1].replace(/,/g, ''), 10);
+					if (lm > 0 && lm < 1000000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+			}
+			if (!entry.performance.claimed.throw_m) {
+				const throwMatch = text.match(/Max\.?\s*(?:beam\s*distance|throw)[:\s]*([\d,]+)\s*(?:meters?|m\b)/i);
+				if (throwMatch) {
+					const tv = parseInt(throwMatch[1].replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+			}
+			if (!entry.performance.claimed.intensity_cd) {
+				const cdMatch = text.match(/Peak\s*beam\s*intensity[:\s]*([\d,]+)\s*cd/i);
+				if (cdMatch) {
+					const cd = parseInt(cdMatch[1].replace(/,/g, ''), 10);
+					if (cd > 0 && cd < 100000000) {
+						entry.performance.claimed.intensity_cd = cd;
+						fieldsAdded.push('intensity_cd');
+					}
+				}
+			}
+			if (!entry.performance.claimed.runtime_hours?.length) {
+				const rtMatch = text.match(/Max\.?\s*runtime[:\s]*([\d.]+)\s*(days?|hours?|h\b)/i);
+				if (rtMatch) {
+					let hours = parseFloat(rtMatch[1]);
+					if (/days?/i.test(rtMatch[2])) hours *= 24;
+					if (hours > 0 && hours < 100000) {
+						entry.performance.claimed.runtime_hours = [Math.round(hours * 100) / 100];
+						fieldsAdded.push('runtime_hours');
+					}
+				}
+			}
+
+			// BATTERIES section
+			if (!entry.battery.length || entry.battery[0] === 'unknown') {
+				const batteries: string[] = [];
+				if (/\b21700\b/.test(text)) batteries.push('21700');
+				if (/\b18650\b/.test(text)) batteries.push('18650');
+				if (/\b18350\b/.test(text)) batteries.push('18350');
+				if (/\b26650\b/.test(text)) batteries.push('26650');
+				if (/\b26800\b/.test(text)) batteries.push('26800');
+				if (/\b14500\b/.test(text)) batteries.push('14500');
+				if (/\bCR123/i.test(text)) batteries.push('CR123A');
+				if (/\b16340\b/.test(text)) batteries.push('16340');
+				if (/\bAAA\b/.test(text)) batteries.push('AAA');
+				if (/\bAA\b/.test(text) && !/AAA/.test(text)) batteries.push('AA');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+
+			// DETAILS section — material, IP rating
+			if (!entry.material.length) {
+				if (/A[Ll]?6061|aluminum\s*alloy|alumin/i.test(text)) {
+					const mats: string[] = ['aluminum'];
+					if (/titanium/i.test(text)) mats.push('titanium');
+					if (/copper/i.test(text)) mats.push('copper');
+					entry.material = mats;
+					fieldsAdded.push('material');
+				}
+			}
+			if (!entry.environment.length) {
+				const ipMatch = text.match(/\bIP(\d{2})\b/i);
+				if (ipMatch) {
+					entry.environment = [`IP${ipMatch[1]}`];
+					fieldsAdded.push('environment');
+				}
+			}
+		}
+	}
+
+	// === KLARUS custom CMS: div.sme.s16 (label) + div.pme.s16 (value) spec rows ===
+	if (/sme s16/i.test(html) && /klaruslight/i.test(html)) {
+		// Labels use full-width colon ： (U+FF1A) or ASCII :
+		const specRowPattern = /<div\s+class="sme s16">([^<]+)[：:]\s*<\/div>\s*<div\s+class="pme s16">([^<]+)<\/div>/gi;
+		for (const match of html.matchAll(specRowPattern)) {
+			const label = match[1].trim().toLowerCase();
+			const value = match[2].trim();
+
+			// Maximum Brightness: "4400lumen"
+			if (/maximum\s*brightness|max.*lumens/i.test(label) && !entry.performance.claimed.lumens?.length) {
+				const lmMatch = value.match(/(\d+)\s*lumen/i);
+				if (lmMatch) {
+					const lm = parseInt(lmMatch[1], 10);
+					if (lm > 0 && lm < 1000000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+			}
+
+			// Longest Range: "336m"
+			if (/longest\s*range|beam\s*distance/i.test(label) && !entry.performance.claimed.throw_m) {
+				const throwMatch = value.match(/(\d+)\s*m/i);
+				if (throwMatch) {
+					const tv = parseInt(throwMatch[1], 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+			}
+
+			// Maximum Runtime: "200hour"
+			if (/maximum\s*runtime|max.*runtime/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+				const rtMatch = value.match(/([\d.]+)\s*hour/i);
+				if (rtMatch) {
+					const hours = parseFloat(rtMatch[1]);
+					if (hours > 0 && hours < 100000) {
+						entry.performance.claimed.runtime_hours = [Math.round(hours * 100) / 100];
+						fieldsAdded.push('runtime_hours');
+					}
+				}
+			}
+
+			// Dimensions: "163.1mm * 41mm * 29.2mm" (length * head * body)
+			if (/dimensions/i.test(label)) {
+				const dimMatch = value.match(/([\d.]+)\s*mm\s*[*x×]\s*([\d.]+)\s*mm\s*[*x×]\s*([\d.]+)\s*mm/i);
+				if (dimMatch) {
+					if (!entry.length_mm || entry.length_mm <= 0) {
+						const mm = parseFloat(dimMatch[1]);
+						if (mm > 20 && mm < 1000) {
+							entry.length_mm = mm;
+							fieldsAdded.push('length_mm');
+						}
+					}
+					if (!entry.bezel_mm || entry.bezel_mm <= 0) {
+						const mm = parseFloat(dimMatch[2]);
+						if (mm > 5 && mm < 200) {
+							entry.bezel_mm = mm;
+							fieldsAdded.push('bezel_mm');
+						}
+					}
+					if (!entry.body_mm || entry.body_mm <= 0) {
+						const mm = parseFloat(dimMatch[3]);
+						if (mm > 5 && mm < 200) {
+							entry.body_mm = mm;
+							fieldsAdded.push('body_mm');
+						}
+					}
+				}
+			}
+
+			// Led Model: "CREE XHP-70.2", "LUMINUS SST- 40"
+			if (/led\s*model/i.test(label) && (!entry.led.length || entry.led[0] === 'unknown')) {
+				const ledVal = value.replace(/\s+/g, ' ').trim();
+				if (ledVal && ledVal.length > 2) {
+					entry.led = [ledVal];
+					fieldsAdded.push('led');
+				}
+			}
+
+			// Weight: "158g（w/o battery）" or "55±2g(w/o battery)"
+			if (/^weight$/i.test(label) && !entry.weight_g) {
+				const gMatch = value.match(/([\d.]+)\s*g/i);
+				if (gMatch) {
+					const g = parseFloat(gMatch[1]);
+					if (g > 1 && g < 10000) {
+						entry.weight_g = g;
+						fieldsAdded.push('weight_g');
+					}
+				}
+			}
+
+			// Waterproof Rating: "IPX8"
+			if (/waterproof|water\s*resist/i.test(label) && !entry.environment.length) {
+				const ipMatch = value.match(/\bIP[X]?(\d{1,2})\b/i);
+				if (ipMatch) {
+					const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+					entry.environment = [rating];
+					fieldsAdded.push('environment');
+				}
+			}
+
+			// Battery type: "1*16340 / 1*18350/1*CR123A"
+			if (/^battery$/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+				const batteries: string[] = [];
+				if (/21700/.test(value)) batteries.push('21700');
+				if (/18650/.test(value)) batteries.push('18650');
+				if (/18350/.test(value)) batteries.push('18350');
+				if (/16340/.test(value)) batteries.push('16340');
+				if (/14500/.test(value)) batteries.push('14500');
+				if (/CR123/i.test(value)) batteries.push('CR123A');
+				if (/\bAAA\b/.test(value)) batteries.push('AAA');
+				if (/\bAA\b/.test(value) && !/AAA/.test(value)) batteries.push('AA');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+		}
+
+		// Material from page text: Klarus lights are typically aluminum
+		if (!entry.material.length) {
+			const fullText = html.replace(/<[^>]+>/g, ' ');
+			if (/alumin|AL6061|A6061|Aerospace.*alloy/i.test(fullText)) {
+				entry.material = ['aluminum'];
+				fieldsAdded.push('material');
+			}
+		}
+	}
 }
 
 /**
