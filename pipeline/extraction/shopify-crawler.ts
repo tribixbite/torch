@@ -414,6 +414,15 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 				!/battery|charger|filter|case|pouch/i.test(text);
 		},
 	},
+	{
+		brand: 'Loop Gear',
+		baseUrl: 'https://loopgear.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''} ${p.tags.join(' ')}`.toLowerCase();
+			return /flashlight|torch|edc|light|lantern/i.test(text) &&
+				!/battery|charger|case|pouch|clip|strap/i.test(text);
+		},
+	},
 ];
 
 /**

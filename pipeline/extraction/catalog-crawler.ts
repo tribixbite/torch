@@ -341,14 +341,34 @@ const CRAWLERS: SiteCrawler[] = [
 	{
 		brand: 'Wurkkos',
 		async discoverUrls() {
+			// UeeShop platform — sitemap redirects to /, so paginate collection pages
 			const urls: string[] = [];
-			const sitemapUrls = await parseSitemap('https://wurkkos.com/sitemap.xml');
-			urls.push(...sitemapUrls.filter((u) => /\/products\//.test(u)));
+			const categories = ['flashlight', 'edc-light', 'underwater-torch', 'tractical-light', 'headlamp', 'powerful-torch', 'mini-torch'];
 
-			return [...new Set(urls)];
+			for (const cat of categories) {
+				for (let page = 1; page <= 5; page++) {
+					try {
+						const listUrl = `https://wurkkos.com/collections/${cat}?page=${page}`;
+						const html = await fetchPage(listUrl);
+						// Extract product links: /products/product-slug
+						const re = /href=["'](\/products\/[a-z0-9][a-z0-9_,.-]*?)["']/gi;
+						let m;
+						while ((m = re.exec(html)) !== null) {
+							const productUrl = `https://wurkkos.com${m[1]}`;
+							if (!urls.includes(productUrl)) urls.push(productUrl);
+						}
+						// Stop pagination when no products on page
+						if (!/\/products\//i.test(html)) break;
+						await Bun.sleep(CRAWL_DELAY);
+					} catch { break; }
+				}
+			}
+
+			// Exclude accessory/battery URLs
+			return urls.filter((u) => !/batter|charger|accessor|cable|case|strap|clip|diffuser|mount/i.test(u));
 		},
 		extractProduct(url, html, text) {
-			const model = modelFromPath(url).replace(/^Wurkkos\s+/i, '');
+			const model = modelFromPath(url).replace(/^Wurkkos[-\s]+/i, '');
 			const specs = extractSpecsFromText(text);
 			const images = extractImages(html, url);
 			const price = extractPagePrice(html);
@@ -361,14 +381,37 @@ const CRAWLERS: SiteCrawler[] = [
 	{
 		brand: 'Sofirn',
 		async discoverUrls() {
+			// Shoplazza platform — sitemap blocked by Cloudflare, paginate collection pages
 			const urls: string[] = [];
-			const sitemapUrls = await parseSitemap('https://www.sofirnlight.com/sitemap.xml');
-			urls.push(...sitemapUrls.filter((u) => /\/products\//.test(u)));
+			const categories = ['sofirn-flashlights', 'powerful-flashlights', 'tactical-flashlight',
+				'diving-flashlights', 'edc-flashlights', 'mini-flashlights', 'headlamps', 'lanterns'];
 
-			return [...new Set(urls)];
+			for (const cat of categories) {
+				for (let page = 1; page <= 10; page++) {
+					try {
+						const listUrl = `https://www.sofirnlight.com/collections/${cat}?page=${page}`;
+						const html = await fetchPage(listUrl);
+						const re = /href=["'](\/products\/[a-z0-9][a-z0-9_.-]*?)["']/gi;
+						let m;
+						let found = 0;
+						while ((m = re.exec(html)) !== null) {
+							const productUrl = `https://www.sofirnlight.com${m[1]}`;
+							if (!urls.includes(productUrl)) {
+								urls.push(productUrl);
+								found++;
+							}
+						}
+						if (found === 0) break; // No new products, stop pagination
+						await Bun.sleep(CRAWL_DELAY);
+					} catch { break; }
+				}
+			}
+
+			// Exclude accessories
+			return urls.filter((u) => !/batter|charger|accessor|case|strap|clip|diffuser/i.test(u));
 		},
 		extractProduct(url, html, text) {
-			const model = modelFromPath(url).replace(/^Sofirn\s+/i, '');
+			const model = modelFromPath(url).replace(/^Sofirn[-\s]+/i, '');
 			const specs = extractSpecsFromText(text);
 			const images = extractImages(html, url);
 			const price = extractPagePrice(html);
@@ -1024,6 +1067,104 @@ const CRAWLERS: SiteCrawler[] = [
 			if (price) specs.price_usd = price;
 
 			return buildEntryFromSpecs('Armytek', model, specs, url, images);
+		},
+	},
+	{
+		brand: 'Zebralight',
+		async discoverUrls() {
+			// Shift4Shop (3dcart) — has sitemap with product URLs
+			const sitemapUrls = await parseSitemap('https://www.zebralight.com/sitemap.xml');
+			return sitemapUrls.filter((u) => /_p_\d+\.html/.test(u));
+		},
+		extractProduct(url, html, text) {
+			// Extract model from <h1> product title
+			let model = '';
+			const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+			if (h1Match) {
+				model = h1Match[1].replace(/<[^>]+>/g, '').trim();
+			}
+			if (!model) model = modelFromPath(url);
+
+			// Skip accessories: holders, clips, batteries, headbands
+			if (/\b(?:holder|clip|headband|battery|batteries|lanyard|charger)\b/i.test(model) &&
+				!/flashlight|headlamp/i.test(model)) {
+				return null;
+			}
+
+			const specs = extractSpecsFromText(text);
+
+			// Zebralight dimension format: "Length: 4.2 inch (106 mm)" or "4.2 inches (106 mm)"
+			const lenM = text.match(/length[:\s]*(\d+(?:\.\d+)?)\s*inch(?:es)?\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+			if (lenM) specs.length_mm = parseFloat(lenM[2]);
+
+			const headM = text.match(/head\s*(?:diameter)?[:\s]*(\d+(?:\.\d+)?)\s*inch(?:es)?\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+			if (headM) specs.bezel_mm = parseFloat(headM[2]);
+
+			const bodyM = text.match(/body\s*(?:diameter)?[:\s]*(\d+(?:\.\d+)?)\s*inch(?:es)?\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+			if (bodyM) specs.body_mm = parseFloat(bodyM[2]);
+
+			// Weight: "3.2 oz (91 grams)"
+			const wtM = text.match(/(\d+(?:\.\d+)?)\s*oz\.?\s*\((\d+(?:\.\d+)?)\s*grams?\)/i);
+			if (wtM) specs.weight_g = parseFloat(wtM[2]);
+
+			// LED from title: "XHP70.3 HI" "XHP50.2" "XHP35" "LH351D"
+			const ledM = model.match(/\b(XHP\d+(?:\.\d+)?(?:\s*HI)?|LH351D|SST-?\d+|519A|SFT\d+)\b/i);
+			if (ledM && !specs.led?.length) specs.led = [ledM[1]];
+
+			// Battery from text
+			if (!specs.battery?.length) {
+				if (/21700/i.test(text)) specs.battery = ['21700'];
+				else if (/18650/i.test(text)) specs.battery = ['18650'];
+				else if (/\bAA\b/.test(text)) specs.battery = ['AA'];
+				else if (/\bCR123A?\b/i.test(text)) specs.battery = ['CR123A'];
+			}
+
+			// Material: always aluminum for Zebralight
+			if (!specs.material?.length && /alumin/i.test(text)) {
+				specs.material = ['aluminum'];
+			}
+
+			// Switch: electronic side switch
+			if (!specs.switch?.length) {
+				if (/electronic\s*(?:soft[- ]?touch\s*)?switch/i.test(text)) {
+					specs.switch = ['side'];
+				}
+			}
+
+			// IP rating
+			const ipM = text.match(/IPX?(\d{1,2})/i);
+			if (ipM) specs.environment = [`IPX${ipM[1]}`];
+
+			// Zebralight features: PID thermal regulation, programmable
+			if (!specs.features?.length) specs.features = [];
+			if (/PID\s*thermal/i.test(text)) specs.features.push('thermal regulation');
+			if (/programmable/i.test(text)) specs.features.push('programmable');
+
+			// Parse multiple lumen levels from "H1: 2600 Lm"
+			const lumens: number[] = [];
+			const lmRe = /(\d{2,5})\s*Lm\b/gi;
+			let lm;
+			while ((lm = lmRe.exec(text)) !== null) {
+				const val = parseInt(lm[1], 10);
+				if (val > 0 && val < 100000 && !lumens.includes(val)) lumens.push(val);
+			}
+			if (lumens.length > 0) specs.lumens = lumens.sort((a, b) => b - a);
+
+			// Type from model name
+			if (/^H\d/i.test(model)) specs.type = ['headlamp'];
+			else if (/^SC/i.test(model)) specs.type = ['flashlight'];
+
+			// CCT and CRI
+			const cctM = text.match(/(\d{4,5})\s*K\b/);
+			if (cctM) specs.cct_k = parseInt(cctM[1], 10);
+			const criM = text.match(/(\d+)\+?\s*CRI\b/i);
+			if (criM) specs.cri = parseInt(criM[1], 10);
+
+			const images = extractImages(html, url);
+			const price = extractPagePrice(html);
+			if (price) specs.price_usd = price;
+
+			return buildEntryFromSpecs('Zebralight', model, specs, url, images);
 		},
 	},
 ];

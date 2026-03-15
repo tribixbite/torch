@@ -79,7 +79,7 @@ function enrichFromFullPage(
 	// === LENGTH / DIMENSIONS ===
 	if (!entry.length_mm || entry.length_mm <= 0) {
 		// Fenix format: 'Length: 5.74" (145.8mm)' — with smart quotes normalized
-		let m = text.match(/length[:\s]*(\d+(?:\.\d+)?)["\s]*(?:inches?|in\.?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*mm\)?/i);
+		let m = text.match(/length[:\s]*(\d+(?:\.\d+)?)["\s]*(?:inch(?:es)?|in\.?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*mm\)?/i);
 		if (m) {
 			entry.length_mm = parseFloat(m[2]);
 			fieldsAdded.push('length_mm');
@@ -97,13 +97,13 @@ function enrichFromFullPage(
 					fieldsAdded.push('length_mm');
 				} else {
 					// Centimeters format: "Length: 10.8 cm" or "10.8 centimeters"
-					m = text.match(/(?:length|overall\s*length)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\)?/i);
+					m = text.match(/(?:length|overall\s*length)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inch(?:es)?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\)?/i);
 					if (m) {
 						entry.length_mm = Math.round(parseFloat(m[1]) * 10);
 						fieldsAdded.push('length_mm');
 					} else {
 						// Inches only: "Length: 5.74 inches"
-						m = text.match(/(?:length|overall\s*length)[:\s]*(\d+(?:\.\d+)?)\s*(?:inches?|in\b|")/i);
+						m = text.match(/(?:length|overall\s*length)[:\s]*(\d+(?:\.\d+)?)\s*(?:inch(?:es)?|in\b|")/i);
 						if (m) {
 							entry.length_mm = Math.round(parseFloat(m[1]) * 25.4);
 							fieldsAdded.push('length_mm');
@@ -442,7 +442,7 @@ function captureRawSpecText(entry: FlashlightEntry, text: string, url: string): 
 				case 'lumens': return /\blumen|lm\b/i.test(section);
 				case 'throw_m': return /\bthrow|distance|beam|range|meter|yard|feet\b/i.test(section);
 				case 'runtime_hours': return /\bruntime|run\s*time|hour|battery\s*life\b/i.test(section);
-				case 'length_mm': return /\blength|dimension|size|mm\b|inches?\b|cm\b/i.test(section);
+				case 'length_mm': return /\blength|dimension|size|mm\b|inch(?:es)?\b|cm\b/i.test(section);
 				case 'weight_g': return /\bweight|mass|gram|oz\b|ounce/i.test(section);
 				case 'led': return /\bled|emitter|cree|luminus|nichia|osram|sst|xhp/i.test(section);
 				case 'battery': return /\bbattery|cell|18650|21700|cr123|14500/i.test(section);
