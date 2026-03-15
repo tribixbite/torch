@@ -89,6 +89,15 @@ export const WOOCOMMERCE_STORES: WooStore[] = [
 			return /flashlight|headlamp|lantern|torch|light|lumen/i.test(text);
 		},
 	},
+	{
+		brand: 'JETBeam',
+		baseUrl: 'https://www.jetbeamlight.com',
+		isFlashlight: (p) => {
+			const text = `${p.name} ${p.short_description} ${p.categories.map((c) => c.name).join(' ')}`.toLowerCase();
+			return /flashlight|headlamp|lantern|torch|light|lumen/i.test(text) &&
+				!/battery|charger|case|holster|filter|accessory/i.test(text);
+		},
+	},
 ];
 
 /**
@@ -399,7 +408,7 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	// Battery
 	const batteries: string[] = [];
 	const battPatterns: [RegExp, string][] = [
-		[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+		[/\b21700[iI]?\b/, '21700'], [/\b18650[iI]?\b/, '18650'], [/\b18350\b/, '18350'],
 		[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
 		[/\b26650\b/, '26650'], [/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
 	];
