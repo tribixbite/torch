@@ -243,10 +243,84 @@ async function enrichFromManufacturer(entry: FlashlightEntry): Promise<boolean> 
 }
 
 /**
+ * Extract observable specs from the product title/model name.
+ * These are NOT guesses — the data is literally in the product name.
+ * E.g., "Fenix PD36R 21700 XHP50 2800lm" → battery=21700, led=XHP50
+ */
+function enrichFromTitle(entry: FlashlightEntry): boolean {
+	const title = entry.model;
+	let changed = false;
+
+	// LED from title (only if empty)
+	if (!entry.led?.length) {
+		const ledPatterns: [RegExp, string][] = [
+			[/\bXHP\d+(?:\.\d+)?(?:\s*HI)?\b/i, ''], // Use matched text
+			[/\bXP[\s-]?L2?\b/i, 'XP-L'], [/\bXP[\s-]?G[23]?\b/i, 'XP-G'],
+			[/\bXP[\s-]?E2?\b/i, 'XP-E'], [/\bSST[\s-]?\d+\b/i, ''],
+			[/\bSFT[\s-]?\d+\b/i, ''], [/\bSBT[\s-]?\d+\b/i, ''],
+			[/\b519A\b/, '519A'], [/\b219[BCF]\b/, ''],
+			[/\bLH351D\b/i, 'LH351D'], [/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
+			[/\bNichia\b/i, 'Nichia'], [/\bOsram\b/i, 'Osram'],
+			[/\bLuminus\b/i, 'Luminus'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
+		];
+		for (const [re, name] of ledPatterns) {
+			const m = title.match(re);
+			if (m) {
+				entry.led = [name || m[0]];
+				changed = true;
+				break;
+			}
+		}
+	}
+
+	// Battery from title (only if empty)
+	if (!entry.battery?.length) {
+		const batPatterns: [RegExp, string][] = [
+			[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+			[/\b14500\b/, '14500'], [/\b26650\b/, '26650'], [/\b26800\b/, '26800'],
+			[/\b16340\b/, '16340'], [/\bCR123A?\b/i, 'CR123A'],
+			[/\b(?:AA|1xAA|2xAA)\b(?!A)/, 'AA'], [/\bAAA\b/, 'AAA'],
+		];
+		for (const [re, name] of batPatterns) {
+			if (re.test(title)) {
+				entry.battery = [name];
+				changed = true;
+				break;
+			}
+		}
+	}
+
+	// Throw from title: "500m Range" or "500 meters beam distance" in model name
+	if (!entry.performance?.claimed?.throw_m) {
+		const throwM = title.match(/(\d{2,4})\s*m(?:eters?)?\s*(?:range|beam|throw|distance)/i)
+			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m\b/i);
+		if (throwM) {
+			const val = parseInt(throwM[1], 10);
+			if (val >= 20 && val <= 5000) {
+				if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+				entry.performance.claimed.throw_m = val;
+				changed = true;
+			}
+		}
+	}
+
+	// Material from title
+	if (!entry.material?.length) {
+		if (/\btitanium\b/i.test(title)) { entry.material = ['titanium']; changed = true; }
+		else if (/\bcopper\b/i.test(title)) { entry.material = ['copper']; changed = true; }
+		else if (/\bbrass\b/i.test(title)) { entry.material = ['brass']; changed = true; }
+		else if (/\bstainless\s*steel\b/i.test(title)) { entry.material = ['stainless steel']; changed = true; }
+	}
+
+	return changed;
+}
+
+/**
  * Run enrichment on all entries.
  * Phase 1: Manufacturer website scraping (real data)
  * Phase 2: ANSI FL1 derivation (throw ↔ intensity)
  * Phase 3: Color detection from model name (observable fact)
+ * Phase 4: Extract specs from title (observable fact)
  *
  * NO PHASE FOR: guessing, estimating, defaulting, or inferring.
  */
@@ -285,6 +359,11 @@ export async function enrichAllEntries(options: {
 
 		// Phase 3: Color from model name (observable, not fabricated)
 		if (detectColorFromModelName(entry)) {
+			wasEnriched = true;
+		}
+
+		// Phase 4: Extract LED, battery, throw from product title (observable fact)
+		if (enrichFromTitle(entry)) {
 			wasEnriched = true;
 		}
 
