@@ -124,6 +124,14 @@ function enrichFromFullPage(
 		}
 	}
 
+	// Validate extracted length — reject clearly wrong values
+	if (fieldsAdded.includes('length_mm') && entry.length_mm != null) {
+		if (entry.length_mm < 15 || entry.length_mm > 1000) {
+			entry.length_mm = 0; // Reset to invalid; will be ignored by downstream
+			fieldsAdded.splice(fieldsAdded.indexOf('length_mm'), 1);
+		}
+	}
+
 	// === BEZEL/HEAD DIAMETER ===
 	if (!entry.bezel_mm || entry.bezel_mm <= 0) {
 		const m = text.match(/(?:head|bezel)[:\s]*(?:\d+(?:\.\d+)?\s*(?:"|in\.?)\s*\(?\s*)?(\d+(?:\.\d+)?)\s*mm/i);
@@ -210,6 +218,8 @@ function enrichFromFullPage(
 			[/\b2835\s*LED/i, '2835'], [/\b5050\s*LED/i, '5050'],
 			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'], [/\bFC40\b/, 'FC40'],
 			[/\bNichia\b/i, 'Nichia'],
+			[/\bC4\s*LED\b/i, 'C4 LED'], [/\bUV\s*LED\b/i, 'UV LED'],
+			[/\bRGB\s*LED\b/i, 'RGB LED'],
 		];
 		for (const [re, name] of ledPatterns) {
 			if (re.test(text) && !leds.includes(name)) leds.push(name);
@@ -225,26 +235,39 @@ function enrichFromFullPage(
 		// Priority 1: labeled "throw|beam distance: NNNm" format
 		let m = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?(?!Ah)\b/i);
 		if (m) {
-			entry.performance.claimed.throw_m = parseInt(m[1].replace(/,/g, ''), 10);
-			fieldsAdded.push('throw_m');
+			const throwVal = parseInt(m[1].replace(/,/g, ''), 10);
+			// Reject values that look like years (2000-2030) or are unreasonably small (<5m)
+			if (throwVal >= 5 && throwVal <= 5000 && !(throwVal >= 2000 && throwVal <= 2030)) {
+				entry.performance.claimed.throw_m = throwVal;
+				fieldsAdded.push('throw_m');
+			}
 		} else {
 			// Priority 2: compound "NNN feet (NNN meters)" — require explicit feet/ft label
 			m = text.match(/(\d[\d,]*)\s*(?:feet|ft)\s*\(?\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)?/i);
 			if (m) {
-				entry.performance.claimed.throw_m = parseInt(m[2].replace(/,/g, ''), 10);
-				fieldsAdded.push('throw_m');
+				const tv = parseInt(m[2].replace(/,/g, ''), 10);
+				if (tv >= 5 && tv <= 5000) {
+					entry.performance.claimed.throw_m = tv;
+					fieldsAdded.push('throw_m');
+				}
 			} else {
 				// Priority 3: reverse "NNNm throw|beam"
 				m = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
 				if (m) {
-					entry.performance.claimed.throw_m = parseInt(m[1].replace(/,/g, ''), 10);
-					fieldsAdded.push('throw_m');
+					const tv = parseInt(m[1].replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000 && !(tv >= 2000 && tv <= 2030)) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
 				} else {
 					// Priority 4: yards with conversion
 					m = text.match(/(?:throw|beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
 					if (m) {
-						entry.performance.claimed.throw_m = Math.round(parseInt(m[1].replace(/,/g, ''), 10) * 0.9144);
-						fieldsAdded.push('throw_m');
+						const tv = Math.round(parseInt(m[1].replace(/,/g, ''), 10) * 0.9144);
+						if (tv >= 5 && tv <= 5000) {
+							entry.performance.claimed.throw_m = tv;
+							fieldsAdded.push('throw_m');
+						}
 					}
 				}
 			}

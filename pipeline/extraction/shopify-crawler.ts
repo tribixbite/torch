@@ -727,6 +727,36 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		}
 	}
 
+	// === Plain tag matching for material/LED (non-prefixed tags, e.g. Loop Gear) ===
+	if (!specs.materials?.length) {
+		const matTagMap: Record<string, string> = {
+			'titanium': 'titanium', 'aluminum': 'aluminum', 'aluminium': 'aluminum',
+			'copper': 'copper', 'brass': 'brass', 'stainless steel': 'stainless steel',
+			'stainless': 'stainless steel', 'polymer': 'polymer', 'polycarbonate': 'polycarbonate',
+			'titanium damascus': 'titanium', 'zirconium damascus': 'zirconium',
+			'damascus': 'damascus steel', 'super conductor': 'copper',
+		};
+		for (const tag of tags) {
+			const mapped = matTagMap[tag];
+			if (mapped) { specs.materials = [mapped]; break; }
+		}
+	}
+	if (!specs.leds?.length) {
+		const ledTagPatterns: [RegExp, string][] = [
+			[/^nichia\s*519a$/i, '519A'], [/^nichia\s*219[bcf]$/i, 'Nichia'],
+			[/^sst[\s-]?20$/i, 'SST-20'], [/^sst[\s-]?40$/i, 'SST-40'],
+			[/^sft[\s-]?40$/i, 'SFT-40'], [/^sft[\s-]?70$/i, 'SFT-70'],
+			[/^xhp[\s-]?50/i, 'XHP50'], [/^xhp[\s-]?70/i, 'XHP70'],
+			[/^cob$/i, 'COB'], [/^lep$/i, 'LEP'],
+		];
+		for (const tag of tags) {
+			for (const [re, name] of ledTagPatterns) {
+				if (re.test(tag)) { specs.leds = [name]; break; }
+			}
+			if (specs.leds?.length) break;
+		}
+	}
+
 	// === Emitter variant parsing (e.g. Fireflies: "FFL5009R 5000K CRI95 2200lm 220m") ===
 	if (emitterSpecOption) {
 		const emitterOption = product.options.find((o) => o.name === emitterSpecOption);
@@ -1162,14 +1192,19 @@ export async function crawlShopifyStore(store: ShopifyStore): Promise<{
 		const publicUrl = store.publicUrl ?? store.baseUrl;
 		const entry = shopifyToEntry(product, store.brand, publicUrl, store.isRetailer, store.emitterSpecOption);
 		if (entry) {
-			upsertFlashlight(entry);
-			addSource(entry.id, {
-				source: `shopify:${store.isRetailer ? entry.brand : store.brand}`,
-				url: `${publicUrl}/products/${product.handle}`,
-				scraped_at: new Date().toISOString(),
-				confidence: 0.9,
-			});
-			saved++;
+			try {
+				upsertFlashlight(entry);
+				addSource(entry.id, {
+					source: `shopify:${store.isRetailer ? entry.brand : store.brand}`,
+					url: `${publicUrl}/products/${product.handle}`,
+					scraped_at: new Date().toISOString(),
+					confidence: 0.9,
+				});
+				saved++;
+			} catch {
+				// Skip entries that violate unique constraints (duplicate brand+model+led)
+				skipped++;
+			}
 		} else {
 			skipped++;
 		}

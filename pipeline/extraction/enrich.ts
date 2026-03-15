@@ -262,6 +262,8 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 			[/\bLH351D\b/i, 'LH351D'], [/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bNichia\b/i, 'Nichia'], [/\bOsram\b/i, 'Osram'],
 			[/\bLuminus\b/i, 'Luminus'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
+			[/\bC4\s*LED\b/i, 'C4 LED'], [/\bUV\s*LED\b/i, 'UV LED'],
+			[/\bRGB\s*LED\b/i, 'RGB LED'],
 		];
 		for (const [re, name] of ledPatterns) {
 			const m = title.match(re);
@@ -290,10 +292,12 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 		}
 	}
 
-	// Throw from title: "500m Range" or "500 meters beam distance" in model name
+	// Throw from title: "500m Range", "500 meters beam distance", "1600Lumen 500 Meters"
 	if (!entry.performance?.claimed?.throw_m) {
 		const throwM = title.match(/(\d{2,4})\s*m(?:eters?)?\s*(?:range|beam|throw|distance)/i)
-			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m\b/i);
+			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m\b/i)
+			// "1000Lumens 120 Meters" — lumens followed by meters
+			?? title.match(/\d+\s*lumens?\s+(\d{2,4})\s*meters?\b/i);
 		if (throwM) {
 			const val = parseInt(throwM[1], 10);
 			if (val >= 20 && val <= 5000) {
@@ -310,6 +314,11 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 		else if (/\bcopper\b/i.test(title)) { entry.material = ['copper']; changed = true; }
 		else if (/\bbrass\b/i.test(title)) { entry.material = ['brass']; changed = true; }
 		else if (/\bstainless\s*steel\b/i.test(title)) { entry.material = ['stainless steel']; changed = true; }
+		else if (/\b(?:alumin(?:um|ium))\b/i.test(title)) { entry.material = ['aluminum']; changed = true; }
+		else if (/\bdamascus\b/i.test(title)) { entry.material = ['damascus steel']; changed = true; }
+		else if (/\bzirconium\b/i.test(title)) { entry.material = ['zirconium']; changed = true; }
+		else if (/\bpolymer\b/i.test(title)) { entry.material = ['polymer']; changed = true; }
+		else if (/\bpolycarbonate\b/i.test(title)) { entry.material = ['polycarbonate']; changed = true; }
 	}
 
 	return changed;
