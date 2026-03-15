@@ -203,7 +203,13 @@ function enrichFromFullPage(
 			[/\bCree\s+XHP\b/i, 'Cree XHP'], [/\bCree\s+XP\b/i, 'Cree XP'],
 			[/\bOSRAM\b/i, 'Osram'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
 			[/\b319A\b/, '319A'], [/\bSST[\s-]?10\b/i, 'SST-10'],
-			[/\bSFT[\s-]?42\b/i, 'SFT-42'], [/\b7070\b/, '7070'],
+			[/\bSFT[\s-]?42\b/i, 'SFT-42'], [/\bSFT[\s-]?70\b/i, 'SFT-70'],
+			[/\bSFT[\s-]?90\b/i, 'SFT-90'], [/\bSBT[\s-]?90\b/i, 'SBT-90'],
+			[/\bSFT[\s-]?25\b/i, 'SFT-25'], [/\b7070\b/, '7070'],
+			[/\bLuminus\s+\w+/i, 'Luminus'], [/\bSamsung\s+LH/i, 'Samsung LH'],
+			[/\b2835\s*LED/i, '2835'], [/\b5050\s*LED/i, '5050'],
+			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'], [/\bFC40\b/, 'FC40'],
+			[/\bNichia\b/i, 'Nichia'],
 		];
 		for (const [re, name] of ledPatterns) {
 			if (re.test(text) && !leds.includes(name)) leds.push(name);
@@ -296,10 +302,11 @@ function enrichFromFullPage(
 	// === SWITCH (from full page HTML) ===
 	if (!entry.switch.length) {
 		const switches: string[] = [];
-		if (/tail[\s-]?switch|tail[\s-]?cap|tail\s*click/i.test(text)) switches.push('tail');
-		if (/side[\s-]?switch|side\s*button/i.test(text)) switches.push('side');
-		if (/dual[\s-]?switch/i.test(text)) switches.push('dual');
-		if (/rotary\b|twist/i.test(text)) switches.push('rotary');
+		if (/tail[\s-]?switch|tail[\s-]?cap|tail\s*click|rear\s*switch/i.test(text)) switches.push('tail');
+		if (/side[\s-]?switch|side\s*button|e[\s-]?switch|electronic\s*switch|soft[\s-]?touch\s*switch/i.test(text)) switches.push('side');
+		if (/dual[\s-]?switch|two\s*switch/i.test(text)) switches.push('dual');
+		if (/rotary\b|twist|magnetic\s*(?:control\s*)?ring/i.test(text)) switches.push('rotary');
+		if (/push[\s-]?button|momentary/i.test(text) && switches.length === 0) switches.push('side');
 		if (switches.length > 0) {
 			entry.switch = switches;
 			fieldsAdded.push('switch');
