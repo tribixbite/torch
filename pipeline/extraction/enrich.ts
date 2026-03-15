@@ -190,6 +190,34 @@ async function enrichFromManufacturer(entry: FlashlightEntry): Promise<boolean> 
 				entry.price_usd = specs.price_usd;
 				enriched = true;
 			}
+			if (specs.runtime_hours?.length && (!entry.performance.claimed.runtime_hours?.length)) {
+				entry.performance.claimed.runtime_hours = specs.runtime_hours;
+				enriched = true;
+			}
+			if (specs.switch?.length && !entry.switch.length) {
+				entry.switch = specs.switch;
+				enriched = true;
+			}
+			if (specs.material?.length && !entry.material.length) {
+				entry.material = specs.material;
+				enriched = true;
+			}
+			if (specs.features?.length && !entry.features.length) {
+				entry.features = specs.features;
+				enriched = true;
+			}
+			if (specs.environment?.length && !entry.environment.length) {
+				entry.environment = specs.environment;
+				enriched = true;
+			}
+			if (specs.charging?.length && !entry.charging.length) {
+				entry.charging = specs.charging;
+				enriched = true;
+			}
+			if (specs.blink?.length && !entry.blink.length) {
+				entry.blink = specs.blink;
+				enriched = true;
+			}
 
 			return enriched;
 		} catch {
