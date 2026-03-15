@@ -527,6 +527,16 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 			if (cleaned && !colors.includes(cleaned)) colors.push(cleaned);
 		}
 	}
+	// Colors from tags: "COLOR_Black" (Ledlenser format) or "Color: Black"
+	if (!colors.length) {
+		for (const tag of tags) {
+			const colorTagMatch = tag.match(/^color[_:]\s*(.+)/i);
+			if (colorTagMatch) {
+				const cleaned = normalizeColor(colorTagMatch[1]);
+				if (cleaned && !colors.includes(cleaned)) colors.push(cleaned);
+			}
+		}
+	}
 
 	// Images (filter out spec charts, icons)
 	const imageUrls = product.images
