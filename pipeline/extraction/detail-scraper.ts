@@ -1240,6 +1240,396 @@ function enrichFromStructuredHtml(
 			}
 		}
 	}
+
+	// === MAGLITE product__block--feature: <strong>Label</strong> + <p>Value</p> with icon images ===
+	if (/Maglite_Icons|maglite\.com/i.test(html)) {
+		// Extract spec pairs: <strong>Label</strong> followed by <p>Value</p>
+		const magliteSpecs = html.matchAll(/<strong>([^<]+)<\/strong>\s*(?:<\/\w+>\s*)*<p>([^<]+)<\/p>/gi);
+		for (const match of magliteSpecs) {
+			const label = match[1].replace(/:$/, '').trim().toLowerCase();
+			const value = match[2].trim();
+
+			if (/brightness/i.test(label) && !entry.performance.claimed.lumens?.length) {
+				const lm = parseInt(value.replace(/[,\s]/g, ''), 10);
+				if (lm > 0 && lm < 200000) {
+					entry.performance.claimed.lumens = [lm];
+					fieldsAdded.push('lumens');
+				}
+			}
+
+			if (/beam\s*distance/i.test(label) && !entry.performance.claimed.throw_m) {
+				const mMatch = value.match(/(\d[\d,]*)\s*m(?:eters?)?/i);
+				if (mMatch) {
+					const tv = parseInt(mMatch[1].replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+			}
+
+			if (/peak\s*intensity|candela/i.test(label) && !entry.performance.claimed.intensity_cd) {
+				const cd = parseInt(value.replace(/[,\s]/g, ''), 10);
+				if (cd > 0) {
+					entry.performance.claimed.intensity_cd = cd;
+					fieldsAdded.push('intensity_cd');
+				}
+			}
+
+			if (/water\s*resist/i.test(label) && !entry.environment.length) {
+				const ipMatch = value.match(/\bIPX?(\d{1,2})\b/i);
+				if (ipMatch) {
+					const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+					entry.environment = [rating];
+					fieldsAdded.push('environment');
+				}
+			}
+
+			if (/^runtime$/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+				// "260 Hours on Eco" or "4 Hours" — take the first number as max runtime
+				const hrMatch = value.match(/(\d+(?:\.\d+)?)\s*hours?/i);
+				if (hrMatch) {
+					entry.performance.claimed.runtime_hours = [parseFloat(hrMatch[1])];
+					fieldsAdded.push('runtime_hours');
+				}
+			}
+
+			if (/^battery$/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+				const batteries: string[] = [];
+				if (/\bD\b/.test(value)) batteries.push('D');
+				if (/\bC\b/.test(value)) batteries.push('C');
+				if (/\bAA\b(?!A)/.test(value)) batteries.push('AA');
+				if (/\bAAA\b/.test(value)) batteries.push('AAA');
+				if (/CR123/i.test(value)) batteries.push('CR123A');
+				if (/18650/i.test(value)) batteries.push('18650');
+				if (/LiFePO4/i.test(value)) batteries.push('LiFePO4');
+				if (/li[\s-]*ion\s*recharg/i.test(value)) batteries.push('Li-ion');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+
+			if (/weight/i.test(label) && !entry.weight_g) {
+				const gMatch = value.match(/(\d+(?:\.\d+)?)\s*(?:g(?:rams?)?)\b/i);
+				const ozMatch = value.match(/(\d+(?:\.\d+)?)\s*oz/i);
+				const lbMatch = value.match(/(\d+(?:\.\d+)?)\s*lbs?/i);
+				if (gMatch) {
+					entry.weight_g = parseFloat(gMatch[1]);
+					fieldsAdded.push('weight_g');
+				} else if (ozMatch) {
+					entry.weight_g = Math.round(parseFloat(ozMatch[1]) * 28.35);
+					fieldsAdded.push('weight_g');
+				} else if (lbMatch) {
+					entry.weight_g = Math.round(parseFloat(lbMatch[1]) * 453.6);
+					fieldsAdded.push('weight_g');
+				}
+			}
+		}
+
+		// Maglite dimensions in metafield: <strong>Flashlight Dimensions:</strong> <span class="metafield...">9.13" x 2.25"</span>
+		if (!entry.length_mm || entry.length_mm <= 0) {
+			const dimMatch = html.match(/<strong>Flashlight\s*Dimensions[:\s]*<\/strong>\s*<span[^>]*>([^<]+)<\/span>/i);
+			if (dimMatch) {
+				const dims = dimMatch[1].replace(/&quot;/g, '"');
+				// "9.13" x 2.25"" — first number is length in inches, second is body diameter
+				const parts = dims.match(/(\d+(?:\.\d+)?)/g);
+				if (parts && parts.length >= 1) {
+					const lengthIn = parseFloat(parts[0]);
+					if (lengthIn > 1 && lengthIn < 40) {
+						entry.length_mm = Math.round(lengthIn * 25.4);
+						fieldsAdded.push('length_mm');
+					}
+				}
+				if (parts && parts.length >= 2 && (!entry.body_mm || entry.body_mm <= 0)) {
+					const bodyIn = parseFloat(parts[1]);
+					if (bodyIn > 0.3 && bodyIn < 5) {
+						entry.body_mm = Math.round(bodyIn * 25.4 * 10) / 10;
+						fieldsAdded.push('body_mm');
+					}
+				}
+			}
+		}
+
+		// Maglite material — all Maglite flashlights are aluminum
+		// Not setting — this would be fabrication. Only set from page text.
+		if (!entry.material.length) {
+			const matText = html.replace(/<[^>]+>/g, ' ');
+			if (/anodized\s*(?:aluminum|aluminium)|aluminum\s*alloy|aircraft[\s-]*grade\s*aluminum/i.test(matText)) {
+				entry.material = ['aluminum'];
+				fieldsAdded.push('material');
+			}
+		}
+	}
+
+	// === ARMYTEK CS-Cart: ty-product-feature blocks with label/value pairs ===
+	if (/ty-product-feature/i.test(html)) {
+		const featureBlocks = html.matchAll(
+			/<div\s+class="ty-product-feature">\s*<div\s+class="ty-product-feature__label"><span>([\s\S]*?)<\/span>[\s\S]*?<div\s+class="ty-product-feature__value">([\s\S]*?)<\/div>/gi,
+		);
+		for (const match of featureBlocks) {
+			const label = match[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+			const rawValue = match[2]
+				.replace(/<input[^>]*>/g, '') // Remove checkbox inputs
+				.replace(/<span[^>]*class="ty-product-feature__suffix"[^>]*>(.*?)<\/span>/gi, '$1') // Keep suffix text
+				.replace(/<[^>]+>/g, '') // Strip remaining HTML
+				.trim();
+
+			if (/light\s*output/i.test(label) && !entry.performance.claimed.lumens?.length) {
+				const lm = parseInt(rawValue.replace(/[,\s]/g, ''), 10);
+				if (lm > 0 && lm < 200000) {
+					entry.performance.claimed.lumens = [lm];
+					fieldsAdded.push('lumens');
+				}
+			}
+
+			if (/beam\s*distance/i.test(label) && !entry.performance.claimed.throw_m) {
+				const tv = parseInt(rawValue.replace(/[,\s]/g, ''), 10);
+				if (tv >= 5 && tv <= 5000) {
+					entry.performance.claimed.throw_m = tv;
+					fieldsAdded.push('throw_m');
+				}
+			}
+
+			if (/^length$/i.test(label) && (!entry.length_mm || entry.length_mm <= 0)) {
+				const mm = parseFloat(rawValue);
+				if (mm > 10 && mm < 1000) {
+					entry.length_mm = mm;
+					fieldsAdded.push('length_mm');
+				}
+			}
+
+			if (/weight.*without\s*batt/i.test(label) && !entry.weight_g) {
+				const g = parseFloat(rawValue);
+				if (g > 1 && g < 10000) {
+					entry.weight_g = g;
+					fieldsAdded.push('weight_g');
+				}
+			}
+
+			if (/head\s*diameter/i.test(label) && (!entry.bezel_mm || entry.bezel_mm <= 0)) {
+				const mm = parseFloat(rawValue);
+				if (mm > 5 && mm < 200) {
+					entry.bezel_mm = mm;
+					fieldsAdded.push('bezel_mm');
+				}
+			}
+
+			if (/body\s*diameter/i.test(label) && (!entry.body_mm || entry.body_mm <= 0)) {
+				const mm = parseFloat(rawValue);
+				if (mm > 5 && mm < 200) {
+					entry.body_mm = mm;
+					fieldsAdded.push('body_mm');
+				}
+			}
+
+			if (/^material$/i.test(label) && !entry.material.length) {
+				const materials: string[] = [];
+				if (/alumin/i.test(rawValue)) materials.push('aluminum');
+				if (/titanium/i.test(rawValue)) materials.push('titanium');
+				if (/polymer|plastic|nylon|polycarbonate/i.test(rawValue)) materials.push('polymer');
+				if (materials.length > 0) {
+					entry.material = materials;
+					fieldsAdded.push('material');
+				}
+			}
+
+			if (/waterproof|dustproof|ip\s*rating/i.test(label) && !entry.environment.length) {
+				const ipMatch = rawValue.match(/\bIP[X]?(\d{1,2})\b/i);
+				if (ipMatch) {
+					const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+					entry.environment = [rating];
+					fieldsAdded.push('environment');
+				}
+			}
+
+			if (/battery\s*compat/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+				const batteries: string[] = [];
+				if (/21700/i.test(rawValue)) batteries.push('21700');
+				if (/18650/i.test(rawValue)) batteries.push('18650');
+				if (/18350/i.test(rawValue)) batteries.push('18350');
+				if (/CR123/i.test(rawValue)) batteries.push('CR123A');
+				if (/14500/i.test(rawValue)) batteries.push('14500');
+				if (/16340/i.test(rawValue)) batteries.push('16340');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+
+			if (/runtime.*max/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+				// "3 h 15 min (900 lm after 50 sec)" → 3.25 hours
+				const rtMatch = rawValue.match(/(\d+)\s*h(?:\s*(\d+)\s*min)?/i);
+				if (rtMatch) {
+					const hours = parseInt(rtMatch[1]) + (rtMatch[2] ? parseInt(rtMatch[2]) / 60 : 0);
+					if (hours > 0) {
+						entry.performance.claimed.runtime_hours = [Math.round(hours * 100) / 100];
+						fieldsAdded.push('runtime_hours');
+					}
+				}
+			}
+		}
+	}
+
+	// === LEDLENSER technical-data: <li class="item2"><span class="name">Label</span> <span class="value">Value</span></li> ===
+	if (/technical-data/i.test(html) && /ledlenser/i.test(html)) {
+		const itemPattern = /<li\s+class="item2">\s*<span\s+class="name">([\s\S]*?)<\/span>\s*<span\s*class="value">([\s\S]*?)<\/span>\s*<\/li>/gi;
+		for (const match of html.matchAll(itemPattern)) {
+			// Strip HTML tags (including <sup>) and normalize whitespace
+			const label = match[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+			const value = match[2].replace(/<[^>]+>/g, '').trim();
+
+			// LED Configuration: "1 x Xtreme LED", "3 x Xtreme LED", "1 x P-Chip LED"
+			if (/led\s*config/i.test(label) && (!entry.led.length || entry.led[0] === 'unknown')) {
+				const ledVal = value.replace(/^\d+\s*x\s*/i, '').trim();
+				if (ledVal) {
+					entry.led = [ledVal];
+					fieldsAdded.push('led');
+				}
+			}
+
+			// Luminosity: "MAX 1000 lm - MIN 10 lm"
+			if (/luminosity/i.test(label) && !entry.performance.claimed.lumens?.length) {
+				const lmMatch = value.match(/MAX\s+(\d+)\s+lm/i);
+				if (lmMatch) {
+					const lm = parseInt(lmMatch[1], 10);
+					if (lm > 0 && lm < 1000000) {
+						entry.performance.claimed.lumens = [lm];
+						fieldsAdded.push('lumens');
+					}
+				}
+			}
+
+			// Lighting Range: "MAX 320 m - MIN 30 m"
+			if (/lighting\s*range/i.test(label) && !entry.performance.claimed.throw_m) {
+				const throwMatch = value.match(/MAX\s+(\d+)\s+m/i);
+				if (throwMatch) {
+					const tv = parseInt(throwMatch[1], 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+			}
+
+			// Battery Duration: "MAX 192 h - MIN 9 h"
+			if (/battery\s*duration/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+				const rtMatch = value.match(/MIN\s+([\d.]+)\s+h/i);
+				if (rtMatch) {
+					// Use MIN runtime (at max brightness) as the primary runtime
+					const hours = parseFloat(rtMatch[1]);
+					if (hours > 0 && hours < 10000) {
+						entry.performance.claimed.runtime_hours = [Math.round(hours * 100) / 100];
+						fieldsAdded.push('runtime_hours');
+					}
+				}
+			}
+
+			// CRI
+			if (/^cri$/i.test(label) && !entry.performance.claimed.cri) {
+				const criVal = parseInt(value, 10);
+				if (criVal >= 50 && criVal <= 100) {
+					entry.performance.claimed.cri = criVal;
+					fieldsAdded.push('cri');
+				}
+			}
+
+			// Color Temperature
+			if (/color\s*temp/i.test(label) && !entry.performance.claimed.cct) {
+				const cctVal = parseInt(value, 10);
+				if (cctVal >= 1800 && cctVal <= 10000) {
+					entry.performance.claimed.cct = cctVal;
+					fieldsAdded.push('cct');
+				}
+			}
+
+			// Length: "151 mm"
+			if (/^length/i.test(label) && (!entry.length_mm || entry.length_mm <= 0)) {
+				const mmMatch = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+				if (mmMatch) {
+					const mm = parseFloat(mmMatch[1]);
+					if (mm > 20 && mm < 1000) {
+						entry.length_mm = mm;
+						fieldsAdded.push('length_mm');
+					}
+				}
+			}
+
+			// Head Diameter: "39 mm"
+			if (/head\s*diameter/i.test(label) && (!entry.bezel_mm || entry.bezel_mm <= 0)) {
+				const mmMatch = value.match(/(\d+(?:\.\d+)?)\s*mm/i);
+				if (mmMatch) {
+					const mm = parseFloat(mmMatch[1]);
+					if (mm > 5 && mm < 200) {
+						entry.bezel_mm = mm;
+						fieldsAdded.push('bezel_mm');
+					}
+				}
+			}
+
+			// Weight: "253 g"
+			if (/^weight$/i.test(label) && !entry.weight_g) {
+				const gMatch = value.match(/([\d.]+)\s*g/i);
+				if (gMatch) {
+					const g = parseFloat(gMatch[1]);
+					if (g > 1 && g < 10000) {
+						entry.weight_g = g;
+						fieldsAdded.push('weight_g');
+					}
+				}
+			}
+
+			// Battery: "1 x 26650 3.7V", "1 x Li-ion 11.1V", "3 x AAA"
+			if (/^battery$/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+				const batteries: string[] = [];
+				if (/26650/i.test(value)) batteries.push('26650');
+				if (/21700/i.test(value)) batteries.push('21700');
+				if (/18650/i.test(value)) batteries.push('18650');
+				if (/14500/i.test(value)) batteries.push('14500');
+				if (/CR123/i.test(value)) batteries.push('CR123A');
+				if (/16340/i.test(value)) batteries.push('16340');
+				if (/\bAAA\b/i.test(value)) batteries.push('AAA');
+				if (/\bAA\b/i.test(value) && !/AAA/i.test(value)) batteries.push('AA');
+				if (/\bD\b/.test(value) && /cell|batt/i.test(value)) batteries.push('D');
+				// Li-ion pack (custom rechargeable, not a standard cell size)
+				if (/Li-ion/i.test(value) && !batteries.length) batteries.push('Li-ion');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+
+			// Water Resistance: "IPX4"
+			if (/water\s*resistance/i.test(label) && !entry.environment.length) {
+				const ipMatch = value.match(/\bIP[X]?(\d{1,2})\b/i);
+				if (ipMatch) {
+					const rating = ipMatch[1].length === 1 ? `IPX${ipMatch[1]}` : `IP${ipMatch[1]}`;
+					entry.environment = [rating];
+					fieldsAdded.push('environment');
+				}
+			}
+
+			// Rechargeable: "Yes" → add to features
+			if (/rechargeable/i.test(label) && /yes/i.test(value)) {
+				if (!entry.features.includes('charging')) {
+					entry.features.push('charging');
+					fieldsAdded.push('charging');
+				}
+			}
+		}
+
+		// Material: Ledlenser lights are aluminum unless page says otherwise
+		if (!entry.material.length) {
+			const fullText = html.replace(/<[^>]+>/g, ' ');
+			if (/alumin/i.test(fullText)) {
+				entry.material = ['aluminum'];
+				fieldsAdded.push('material');
+			} else if (/polymer|polycarbonate|plastic/i.test(fullText)) {
+				entry.material = ['polymer'];
+				fieldsAdded.push('material');
+			}
+		}
+	}
 }
 
 /**
