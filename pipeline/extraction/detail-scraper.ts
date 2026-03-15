@@ -2045,6 +2045,13 @@ function enrichFromFullPage(
 					if (m) {
 						entry.weight_g = Math.round(parseFloat(m[1]) * 28.35);
 						fieldsAdded.push('weight_g');
+					} else {
+						// "weighing only 23.5g" or "weighing 57g" (common in Lumintop descriptions)
+						m = text.match(/weighing\s+(?:only\s+)?(\d+(?:\.\d+)?)\s*g(?:rams?)?\b/i);
+						if (m) {
+							entry.weight_g = parseFloat(m[1]);
+							fieldsAdded.push('weight_g');
+						}
 					}
 				}
 			}
