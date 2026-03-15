@@ -61,6 +61,9 @@ async function main(): Promise<void> {
 		case 'enrich':
 			await cmdEnrich();
 			break;
+		case 'blf':
+			await cmdBlf();
+			break;
 		case 'cleanup':
 			cmdCleanup();
 			break;
@@ -81,6 +84,7 @@ Commands:
   shopify [brand] Crawl Shopify stores (JSON API, fast + reliable)
   detail-scrape  Scrape full product pages for missing specs (length, LED, etc.)
   enrich         Fill missing attributes via inference + manufacturer scraping
+  blf [n]        Enrich from BudgetLightForum reviews (n = max entries, default 200)
   images         Download, optimize, and build sprite sheet from product images
   cleanup        Remove dupes + entries without images
   build          Build flashlights.now.json from SQLite data
@@ -368,6 +372,21 @@ async function cmdEnrich(): Promise<void> {
 	console.log(`Enriched: ${result.enriched}`);
 	console.log(`Now valid: ${result.nowValid}`);
 	console.log(`Still invalid: ${result.stillInvalid}`);
+}
+
+/** Enrich from BudgetLightForum review threads */
+async function cmdBlf(): Promise<void> {
+	console.log('=== BudgetLightForum Enrichment ===\n');
+	const { enrichFromBlf } = await import('./extraction/blf-scraper.js');
+	const maxEntries = parseInt(process.argv[3] || '200', 10);
+	const result = await enrichFromBlf({
+		maxEntries,
+		minMissing: 3,
+	});
+	console.log(`\nProcessed: ${result.processed}`);
+	console.log(`Enriched: ${result.enriched}`);
+	console.log(`Topics searched: ${result.topicsSearched}`);
+	console.log(`Topics fetched: ${result.topicsFetched}`);
 }
 
 /** Download, optimize, and build sprite sheet from product images */
