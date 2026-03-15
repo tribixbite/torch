@@ -760,7 +760,7 @@ const CRAWLERS: SiteCrawler[] = [
 						while ((m = reRel.exec(html)) !== null) {
 							const path = m[1];
 							// Exclude non-product / navigation pages
-							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn)\/?$/i.test(path) &&
+							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn|company|filtered|full-block|accessories|parts-accessories|suppressor-accessories|weaponlight-accessories)\/?$/i.test(path) &&
 								path.length > 3 && path.length < 80) {
 								const fullUrl = `https://www.surefire.com${path}`;
 								if (!urls.includes(fullUrl)) urls.push(fullUrl);
@@ -768,7 +768,7 @@ const CRAWLERS: SiteCrawler[] = [
 						}
 						while ((m = reAbs.exec(html)) !== null) {
 							const absPath = new URL(m[1]).pathname;
-							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn)\/?$/i.test(absPath) &&
+							if (!/^\/(flashlights|weapon-lights|hands-free|helmet-lights|weaponlights|headlamps|account|cart|checkout|search|blog|about|contact|support|faq|warranty|pages|collections|categories|cdn|company|filtered|full-block|accessories|parts-accessories|suppressor-accessories|weaponlight-accessories)\/?$/i.test(absPath) &&
 								absPath.length > 3 && absPath.length < 80) {
 								const fullUrl = `https://www.surefire.com${absPath}`;
 								if (!urls.includes(fullUrl)) urls.push(fullUrl);

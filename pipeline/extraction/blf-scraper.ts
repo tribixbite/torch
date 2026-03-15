@@ -309,7 +309,7 @@ export async function enrichFromBlf(options: {
 			const modelLower = r.model.toLowerCase().trim();
 
 			// Website page names (exact match)
-			if (/^(addresses|history|login|register|wishlist|shipping|privacy|warranty|returns?|about|contact|faq|support|terms|custom|gift|sale|blog|news|policy|reviews?|info|all|search|dealer|locator|collection|affiliate|feedback|sitemap|compare)$/i.test(modelLower)) continue;
+			if (/^(addresses|history|login|register|wishlist|shipping|privacy|warranty|returns?|about|contact|faq|support|terms|custom|gift|sale|blog|news|policy|reviews?|info|all|search|dealer|locator|collection|affiliate|feedback|sitemap|compare|company|filtered|full\s*block|accessories|parts?\s*accessories|weaponlight\s*accessories|suppressor\s*accessories)$/i.test(modelLower)) continue;
 
 			// Accessory/component keywords
 			if (/\b(holster|filter|diffuser|charger|mount|strap|case|pouch|battery\s*pack|lanyard|clip|headband|replacement|spare|glass|lens|pcb|driver|o-ring|gasket|tube|extension|screwdriver|bits?|tripod|phone\s*holder|mouse\s*pad|patch|cooling\s*shell|charging\s*cable|gift\s*card|sticker|poster|hat|shirt|apparel)\b/i.test(modelLower)) continue;
