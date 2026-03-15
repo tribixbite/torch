@@ -8,7 +8,7 @@ import { hasRequiredAttributes } from '../schema/canonical.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { fetchPage, htmlToText } from './manufacturer-scraper.js';
 
-const CRAWL_DELAY = 1200; // ms between requests
+const CRAWL_DELAY = 2000; // ms between requests — increased to avoid 429s
 
 /**
  * Scrape the full product page HTML for missing specs.
