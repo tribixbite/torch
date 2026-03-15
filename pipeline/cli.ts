@@ -17,6 +17,7 @@ import { scrapeDetailsForIncomplete } from './extraction/detail-scraper.js';
 import { crawlAllBrands, crawlBrand, getCrawlerBrands } from './extraction/catalog-crawler.js';
 import { crawlAllShopifyStores, crawlShopifyStore, SHOPIFY_STORES } from './extraction/shopify-crawler.js';
 import { crawlAllWooStores, crawlWooStore, WOOCOMMERCE_STORES } from './extraction/woocommerce-crawler.js';
+import { scrapeReviewSite, scrapeZakReviews, scrapeAllReviewSites } from './extraction/review-scraper.js';
 
 const command = process.argv[2];
 
@@ -64,6 +65,9 @@ async function main(): Promise<void> {
 		case 'blf':
 			await cmdBlf();
 			break;
+		case 'reviews':
+			await cmdReviews();
+			break;
 		case 'cleanup':
 			cmdCleanup();
 			break;
@@ -84,6 +88,7 @@ Commands:
   shopify [brand] Crawl Shopify stores (JSON API, fast + reliable)
   detail-scrape  Scrape full product pages for missing specs (length, LED, etc.)
   enrich         Fill missing attributes via inference + manufacturer scraping
+  reviews [site] Scrape review sites for specs (site: zakreviews, or omit for all)
   blf [n]        Enrich from BudgetLightForum reviews (n = max entries, default 200)
   images         Download, optimize, and build sprite sheet from product images
   cleanup        Remove dupes + entries without images
@@ -388,6 +393,24 @@ async function cmdBlf(): Promise<void> {
 	console.log(`Enriched: ${result.enriched}`);
 	console.log(`Topics searched: ${result.topicsSearched}`);
 	console.log(`Topics fetched: ${result.topicsFetched}`);
+}
+
+/** Scrape review sites for spec data */
+async function cmdReviews(): Promise<void> {
+	const siteArg = process.argv[3];
+	if (siteArg) {
+		console.log(`=== Scraping Review Site: ${siteArg} ===\n`);
+		const result = await scrapeReviewSite(siteArg);
+		console.log(`\nResult: ${result.discovered} reviews discovered, ${result.enriched} DB entries enriched`);
+	} else {
+		console.log('=== Scraping All Review Sites ===\n');
+		const result = await scrapeAllReviewSites();
+		console.log(`\nTotal: ${result.totalDiscovered} discovered, ${result.totalEnriched} enriched`);
+		for (const [site, counts] of Object.entries(result.bySite)) {
+			console.log(`  ${site}: ${counts.discovered} discovered, ${counts.enriched} enriched`);
+		}
+	}
+	console.log(`\nTotal flashlights in DB: ${countFlashlights()}`);
 }
 
 /** Download, optimize, and build sprite sheet from product images */
