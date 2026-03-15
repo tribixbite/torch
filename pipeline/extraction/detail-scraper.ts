@@ -354,13 +354,135 @@ async function enrichFromOlightApi(
 
 /**
  * Extract specs from structured HTML tables/grids before falling back to text.
- * Handles Nitecore product-spec-table and Streamlight productSpecifications.
+ * Handles Fenix cus-lqd-specs, Nitecore product-spec-table, Streamlight productSpecifications,
+ * and Olight technical-table (on reseller sites).
  */
 function enrichFromStructuredHtml(
 	entry: FlashlightEntry,
 	html: string,
 	fieldsAdded: string[],
 ): void {
+	// === FENIX cus-lqd-specs: <div class="cus-lqd-specs"><strong>Label:</strong> Value</div> ===
+	if (/cus-lqd-specs/i.test(html)) {
+		const specDivs = html.matchAll(/<div[^>]*class="cus-lqd-specs"[^>]*>\s*<strong>([\s\S]*?)<\/strong>\s*([\s\S]*?)<\/div>/gi);
+		for (const div of specDivs) {
+			const label = div[1].replace(/<[^>]+>/g, '').replace(/:$/, '').trim().toLowerCase();
+			const value = div[2].replace(/<[^>]+>/g, '').trim();
+
+			if (/bulb\s*type|led/i.test(label) && (!entry.led.length || entry.led[0] === 'unknown')) {
+				const leds: string[] = [];
+				const ledPatterns: [RegExp, string][] = [
+					[/\bLuminus\s+SFT[\s-]?70\b/i, 'Luminus SFT70'],
+					[/\bLuminus\s+SFT[\s-]?40\b/i, 'Luminus SFT40'],
+					[/\bLuminus\s+SST[\s-]?40\b/i, 'SST-40'],
+					[/\bLuminus\s+SST[\s-]?70\b/i, 'SST-70'],
+					[/\bXHP[\s-]?50/i, 'XHP50'], [/\bXHP[\s-]?70/i, 'XHP70'],
+					[/\bXM[\s-]?L2?/i, 'XM-L2'], [/\bXP[\s-]?L\s*(?:HI|HD|V6)?/i, 'XP-L'],
+					[/\bXP[\s-]?G[23S]?/i, 'XP-G'], [/\bXP[\s-]?E2?/i, 'XP-E'],
+					[/\bSST[\s-]?20/i, 'SST-20'], [/\bSST[\s-]?40/i, 'SST-40'],
+					[/\bSFT[\s-]?40/i, 'SFT-40'], [/\bSFT[\s-]?70/i, 'SFT-70'],
+					[/\bOsram/i, 'Osram'], [/\bNichia/i, 'Nichia'],
+					[/\bCOB/i, 'COB'], [/\bLEP/i, 'LEP'],
+					[/\bWhite\s*Laser/i, 'White Laser'],
+				];
+				for (const [re, name] of ledPatterns) {
+					if (re.test(value) && !leds.includes(name)) leds.push(name);
+				}
+				if (leds.length > 0) {
+					entry.led = leds;
+					fieldsAdded.push('led');
+				}
+			}
+
+			if (/^size$/i.test(label)) {
+				// Fenix "Size: Length: 5.35" (136mm) Body: 0.91" (23.2mm) Head: 1.00" (25.4mm)"
+				if (!entry.length_mm || entry.length_mm <= 0) {
+					const lenMatch = value.match(/Length[:\s]*\d+(?:\.\d+)?["\u2033]\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+					if (lenMatch) {
+						entry.length_mm = parseFloat(lenMatch[1]);
+						fieldsAdded.push('length_mm');
+					}
+				}
+				if (!entry.body_mm || entry.body_mm <= 0) {
+					const bodyMatch = value.match(/Body[:\s]*\d+(?:\.\d+)?["\u2033]\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+					if (bodyMatch) {
+						entry.body_mm = parseFloat(bodyMatch[1]);
+						fieldsAdded.push('body_mm');
+					}
+				}
+				if (!entry.bezel_mm || entry.bezel_mm <= 0) {
+					const headMatch = value.match(/Head[:\s]*\d+(?:\.\d+)?["\u2033]\s*\((\d+(?:\.\d+)?)\s*mm\)/i);
+					if (headMatch) {
+						entry.bezel_mm = parseFloat(headMatch[1]);
+						fieldsAdded.push('bezel_mm');
+					}
+				}
+			}
+
+			if (/^weight$/i.test(label) && !entry.weight_g) {
+				const gMatch = value.match(/(\d+(?:\.\d+)?)\s*g\b/i);
+				if (gMatch) {
+					entry.weight_g = parseFloat(gMatch[1]);
+					fieldsAdded.push('weight_g');
+				}
+			}
+
+			if (/max\s*(?:beam\s*)?distance/i.test(label) && !entry.performance.claimed.throw_m) {
+				// "1158 feet (353 meters)"
+				const mMatch = value.match(/(\d[\d,]*)\s*m(?:eters?)?\)?/i);
+				if (mMatch) {
+					const tv = parseInt(mMatch[1].replace(/,/g, ''), 10);
+					if (tv >= 5 && tv <= 5000) {
+						entry.performance.claimed.throw_m = tv;
+						fieldsAdded.push('throw_m');
+					}
+				}
+			}
+
+			if (/max\s*lumens/i.test(label) && !entry.performance.claimed.lumens?.length) {
+				const lm = parseInt(value.replace(/,/g, ''), 10);
+				if (lm > 0 && lm < 1000000) {
+					entry.performance.claimed.lumens = [lm];
+					fieldsAdded.push('lumens');
+				}
+			}
+
+			if (/color\s*temp/i.test(label) && !entry.performance.claimed.cct) {
+				const cctMatch = value.match(/(\d{4,5})\s*K/i);
+				if (cctMatch) {
+					const cct = parseInt(cctMatch[1], 10);
+					if (cct >= 1800 && cct <= 10000) {
+						entry.performance.claimed.cct = cct;
+						fieldsAdded.push('cct');
+					}
+				}
+			}
+
+			if (/^battery$/i.test(label) && (!entry.battery.length || entry.battery[0] === 'unknown')) {
+				const batteries: string[] = [];
+				if (/21700/i.test(value)) batteries.push('21700');
+				if (/18650/i.test(value)) batteries.push('18650');
+				if (/CR123/i.test(value)) batteries.push('CR123A');
+				if (/14500/i.test(value)) batteries.push('14500');
+				if (/16340/i.test(value)) batteries.push('16340');
+				if (/\bAA\b(?!A)/i.test(value)) batteries.push('AA');
+				if (/\bAAA\b/i.test(value)) batteries.push('AAA');
+				if (batteries.length > 0) {
+					entry.battery = batteries;
+					fieldsAdded.push('battery');
+				}
+			}
+
+			if (/^max\s*runtime$/i.test(label) && !entry.performance.claimed.runtime_hours?.length) {
+				const hrMatch = value.match(/(\d+(?:\.\d+)?)\s*hours?/i);
+				if (hrMatch) {
+					entry.performance.claimed.runtime_hours = [parseFloat(hrMatch[1])];
+					fieldsAdded.push('runtime_hours');
+				}
+			}
+		}
+	}
+
 	// === NITECORE product-spec-table: <th>Label</th><td>Value</td> rows ===
 	if (/product-spec-table/i.test(html)) {
 		const tableMatch = html.match(/<table[^>]*class="[^"]*product-spec-table[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
