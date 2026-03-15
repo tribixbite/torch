@@ -106,9 +106,20 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 	const cdMatch = text.match(/(\d[\d,]*)\s*(?:cd|candela)\b/i);
 	if (cdMatch) result.intensity_cd = parseInt(cdMatch[1].replace(/,/g, ''), 10);
 
-	// Extract throw distance
-	const throwMatch = text.match(/(?:throw|beam\s*distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
-	if (throwMatch) result.throw_m = parseInt(throwMatch[1].replace(/,/g, ''), 10);
+	// Extract throw distance — try labeled patterns first, then contextual
+	const throwMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
+	if (throwMatch) {
+		result.throw_m = parseInt(throwMatch[1].replace(/,/g, ''), 10);
+	} else {
+		// Reverse format: "187m throw" or "380 meters beam distance"
+		const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)\b/i);
+		if (reverseThrow) result.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
+		else {
+			// Yards format: "546 yards" — convert to meters
+			const yardsMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
+			if (yardsMatch) result.throw_m = Math.round(parseInt(yardsMatch[1].replace(/,/g, ''), 10) * 0.9144);
+		}
+	}
 
 	// Extract CRI
 	const criMatch = text.match(/(?:CRI|color\s*rendering)[:\s]*(?:>?\s*)?(\d+)/i);
@@ -124,20 +135,36 @@ export function extractSpecsFromText(text: string): Partial<ExtractionResult> {
 		if (cct >= 1800 && cct <= 10000) result.cct = cct;
 	}
 
-	// Extract weight
+	// Extract weight — multiple formats
 	const weightGMatch = text.match(/(?:weight|mass)[:\s]*(\d+(?:\.\d+)?)\s*(?:g(?:rams?)?)\b/i);
 	if (weightGMatch) result.weight_g = parseFloat(weightGMatch[1]);
 	else {
-		const weightOzMatch = text.match(/(?:weight)[:\s]*(\d+(?:\.\d+)?)\s*(?:oz|ounces?)\b/i);
-		if (weightOzMatch) result.weight_g = Math.round(parseFloat(weightOzMatch[1]) * 28.35);
+		// Slash format: "1.64 oz. / 46.9 g"
+		const slashMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\s*[/|]\s*(\d+(?:\.\d+)?)\s*g\b/i);
+		if (slashMatch) result.weight_g = parseFloat(slashMatch[2]);
+		else {
+			const weightOzMatch = text.match(/(?:weight)[:\s]*(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\b/i);
+			if (weightOzMatch) result.weight_g = Math.round(parseFloat(weightOzMatch[1]) * 28.35);
+		}
 	}
 
-	// Extract length
+	// Extract length — multiple formats including cm, reversed, and dimension triplets
 	const lengthMmMatch = text.match(/(?:length|overall)[:\s]*(\d+(?:\.\d+)?)\s*mm\b/i);
 	if (lengthMmMatch) result.length_mm = parseFloat(lengthMmMatch[1]);
 	else {
-		const lengthInMatch = text.match(/(?:length|overall)[:\s]*(\d+(?:\.\d+)?)\s*(?:in(?:ches?)?|")\b/i);
-		if (lengthInMatch) result.length_mm = Math.round(parseFloat(lengthInMatch[1]) * 25.4);
+		// Reversed format: "114mm(length)" or "72.6mm (length)"
+		const reversedMm = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?/i);
+		if (reversedMm) result.length_mm = parseFloat(reversedMm[1]);
+		else {
+			// Centimeters format: "Length: 4.25 in. (10.8 cm)"
+			const cmMatch = text.match(/(?:length|overall)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
+			if (cmMatch) result.length_mm = Math.round(parseFloat(cmMatch[1]) * 10);
+			else {
+				// Inches-only format
+				const lengthInMatch = text.match(/(?:length|overall)[:\s]*(\d+(?:\.\d+)?)\s*(?:in(?:ches?)?|")\b/i);
+				if (lengthInMatch) result.length_mm = Math.round(parseFloat(lengthInMatch[1]) * 25.4);
+			}
+		}
 	}
 
 	// Extract bezel diameter

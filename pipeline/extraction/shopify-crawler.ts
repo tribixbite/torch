@@ -93,6 +93,9 @@ function normalizeBrandName(vendor: string): string {
 		'clouddefensive': 'Cloud Defensive',
 		'nextorch': 'Nextorch',
 		'darksucks': 'FourSevens',
+		'emisar noctigon': 'Emisar',
+		'emisar': 'Emisar',
+		'noctigon': 'Noctigon',
 	};
 	const lower = vendor.toLowerCase().trim();
 	if (map[lower]) return map[lower];
@@ -193,6 +196,14 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 	{
 		brand: 'Nitecore',
 		baseUrl: 'https://www.nitecorestore.com',
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			const title = p.title.toLowerCase();
+			// Nitecore sells batteries, chargers, accessories — filter to lights only
+			return (/flashlight|headlamp|lantern|light|lamp/i.test(type) ||
+				/flashlight|headlamp|lantern|torch|lumen/i.test(title)) &&
+				!/battery|charger|adapter|case|holster|filter|diffuser|mount/i.test(type);
+		},
 	},
 	{
 		brand: 'Rovyvon',
@@ -210,6 +221,17 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 	{
 		brand: 'Maglite',
 		baseUrl: 'https://maglite.com',
+		isFlashlight: (p) => {
+			// Maglite uses Inkybay for custom engraving, creating hundreds of duplicates
+			// Filter out PD Custom Products and bundles
+			const type = (p.product_type ?? '').toLowerCase();
+			const tags = p.tags.map((t) => t.toLowerCase());
+			if (type === 'pd custom product' || tags.some((t) => t.includes('inkybay'))) return false;
+			if (type.includes('bundle') || type.includes('combo')) return false;
+			return /flashlight|headlamp|lantern|light|lamp|solitaire|mag-tac|maglite/i.test(
+				`${p.title} ${type}`
+			);
+		},
 	},
 	{
 		brand: 'Ledlenser',
@@ -485,9 +507,10 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		.map((img) => img.src.replace(/\?v=\d+/, ''))
 		.slice(0, 8);
 
-	// Price from first available variant
+	// Price from first available variant (filter out $0 catalog-only stores)
 	const availableVariant = product.variants.find((v) => v.available) ?? product.variants[0];
-	const price = availableVariant ? parseFloat(availableVariant.price) : undefined;
+	const rawPrice = availableVariant ? parseFloat(availableVariant.price) : undefined;
+	const price = rawPrice && rawPrice > 0 ? rawPrice : undefined;
 
 	// Weight from variant (grams)
 	const weight_g = availableVariant?.grams > 0
@@ -558,6 +581,77 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		}
 	}
 
+	// === Killzone structured tags: Battery_21700, Metal_Aluminum, Emitter_SST-40, Brand_Wurkkos ===
+	for (const tag of tags) {
+		if (tag.startsWith('battery_') && batteries.length === 0) {
+			const batt = tag.slice(8); // "battery_21700" → "21700"
+			const battMap: Record<string, string> = {
+				'21700': '21700', '18650': '18650', '18350': '18350', '16340': '16340',
+				'14500': '14500', 'cr123a': 'CR123A', 'cr123': 'CR123A', '26650': '26650',
+				'26800': '26800', 'aa': 'AA', 'aaa': 'AAA',
+			};
+			const mapped = battMap[batt.toLowerCase()];
+			if (mapped && !batteries.includes(mapped)) batteries.push(mapped);
+		}
+		if (tag.startsWith('metal_') && !specs.materials?.length) {
+			const mat = tag.slice(6).toLowerCase(); // "metal_aluminum" → "aluminum"
+			const parsedMats: string[] = [];
+			if (/aluminum|aluminium/.test(mat)) parsedMats.push('aluminum');
+			else if (mat === 'titanium') parsedMats.push('titanium');
+			else if (mat === 'copper') parsedMats.push('copper');
+			else if (mat === 'brass') parsedMats.push('brass');
+			else if (/stainless/.test(mat)) parsedMats.push('stainless steel');
+			else if (/polymer|plastic|polycarbonate/.test(mat)) parsedMats.push('polymer');
+			if (parsedMats.length > 0) specs.materials = parsedMats;
+		}
+		if (tag.startsWith('emitter_') && !specs.leds?.length) {
+			const emitter = tag.slice(8); // "emitter_sst-40" → "sst-40"
+			const emitterPatterns: [RegExp, string][] = [
+				[/^sst[\s-]?20$/i, 'SST-20'], [/^sst[\s-]?40$/i, 'SST-40'],
+				[/^sft[\s-]?40$/i, 'SFT-40'], [/^sft[\s-]?70$/i, 'SFT-70'],
+				[/^xhp[\s-]?50/i, 'XHP50'], [/^xhp[\s-]?70/i, 'XHP70'],
+				[/^xp[\s-]?l/i, 'XP-L'], [/^519a$/i, '519A'],
+				[/^lh351d$/i, 'LH351D'], [/^e21a$/i, 'E21A'],
+			];
+			const parsedLeds: string[] = [];
+			for (const [re, name] of emitterPatterns) {
+				if (re.test(emitter)) { parsedLeds.push(name); break; }
+			}
+			// If no pattern matched, use cleaned value directly
+			if (parsedLeds.length === 0 && emitter.length > 2) parsedLeds.push(emitter);
+			if (parsedLeds.length > 0) specs.leds = parsedLeds;
+		}
+	}
+
+	// === Ledlenser encoded tags: max-light-output-lumens-*, beam-distance-m-*, weight-g-* ===
+	for (const tag of tags) {
+		const llLumens = tag.match(/^max-light-output-lumens-(\d+)$/);
+		if (llLumens && !specs.lumens?.length) {
+			const val = parseInt(llLumens[1], 10);
+			if (val > 0 && val < 1_000_000) specs.lumens = [val];
+		}
+		const llThrow = tag.match(/^beam-distance-m-(\d+)$/);
+		if (llThrow && !specs.throw_m) {
+			specs.throw_m = parseInt(llThrow[1], 10);
+		}
+		const llWeight = tag.match(/^weight-g-(\d+)$/);
+		if (llWeight && !specs.weight_g) {
+			specs.weight_g = parseFloat(llWeight[1]);
+		}
+		const llRuntime = tag.match(/^burn-time-h-(\d+)$/);
+		if (llRuntime && !specs.runtime_hours?.length) {
+			specs.runtime_hours = [parseFloat(llRuntime[1])];
+		}
+		const llIp = tag.match(/^protection-class-(ip\w+)$/i);
+		if (llIp) {
+			const rating = llIp[1].toUpperCase();
+			if (!environment.includes(rating)) environment.push(rating);
+		}
+	}
+
+	// Resolve final weight — prefer variant grams, fall back to parsed spec (including Ledlenser tags)
+	const finalWeight = weight_g ?? specs.weight_g;
+
 	const id = generateId(brand, model, specs.leds?.[0]);
 
 	return {
@@ -589,7 +683,7 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		length_mm: specs.length_mm,
 		bezel_mm: specs.bezel_mm,
 		body_mm: specs.body_mm,
-		weight_g,
+		weight_g: finalWeight,
 		material: [...new Set(specs.materials ?? [])],
 		color: [...new Set(colors)],
 		impact: specs.impact ?? [],
@@ -649,12 +743,24 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	}
 	if (lumens.length > 0) specs.lumens = lumens.sort((a, b) => b - a);
 
-	// Throw/beam distance
-	const throwMatch = text.match(/(\d[\d,]*)\s*(?:feet|ft)?\s*\(?\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)?/i);
-	if (throwMatch) specs.throw_m = parseInt(throwMatch[2].replace(/,/g, ''), 10);
+	// Throw/beam distance — try labeled patterns first to avoid false positives
+	// Priority 1: labeled "throw|beam distance: NNNm" format
+	const throwLabeled = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
+	if (throwLabeled) specs.throw_m = parseInt(throwLabeled[1].replace(/,/g, ''), 10);
 	else {
-		const throwM = text.match(/(?:beam\s*distance|throw)[:\s]*(\d[\d,]*)\s*m/i);
-		if (throwM) specs.throw_m = parseInt(throwM[1].replace(/,/g, ''), 10);
+		// Priority 2: "NNN feet (MMM meters)" or "NNN ft. (MMM m)" compound format
+		const compound = text.match(/(\d[\d,]*)\s*(?:feet|ft\.?)\s*\(\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)/i);
+		if (compound) specs.throw_m = parseInt(compound[2].replace(/,/g, ''), 10);
+		else {
+			// Priority 3: reverse "NNNm throw" or "NNN meters beam"
+			const reverseThrow = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)\b/i);
+			if (reverseThrow) specs.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
+			else {
+				// Priority 4: yards with conversion
+				const yardsMatch = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
+				if (yardsMatch) specs.throw_m = Math.round(parseInt(yardsMatch[1].replace(/,/g, ''), 10) * 0.9144);
+			}
+		}
 	}
 
 	// Intensity
@@ -688,12 +794,27 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	const modesMatch = text.match(/(\d+)\s*(?:brightness\s+)?(?:mode|level|setting)s?/i);
 	if (modesMatch) specs.levels = parseInt(modesMatch[1], 10);
 
-	// Length (mm) — parse "5.74" (145.8mm)" format
+	// Length (mm) — parse multiple formats
 	const sizeMatch = text.match(/length[:\s]*(\d+(?:\.\d+)?)["\s]*(?:inches?|in\.?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*mm\)?/i);
 	if (sizeMatch) specs.length_mm = parseFloat(sizeMatch[2]);
 	else {
-		const mmOnly = text.match(/length[:\s]*(\d+(?:\.\d+)?)\s*mm/i);
+		const mmOnly = text.match(/(?:length|overall\s*length)[:\s]*(\d+(?:\.\d+)?)\s*mm/i);
 		if (mmOnly) specs.length_mm = parseFloat(mmOnly[1]);
+		else {
+			// Reversed format: "114mm(length)" or "72.6mm (length)"
+			const reversedMm = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?/i);
+			if (reversedMm) specs.length_mm = parseFloat(reversedMm[1]);
+			else {
+				// Centimeters: "Length: 4.25 in. (10.8 cm)"
+				const cmMatch = text.match(/length[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
+				if (cmMatch) specs.length_mm = Math.round(parseFloat(cmMatch[1]) * 10);
+				else {
+					// Inches-only: "Length: 5.74 inches" or "Length: 5.74""
+					const inOnly = text.match(/length[:\s]*(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i);
+					if (inOnly) specs.length_mm = Math.round(parseFloat(inOnly[1]) * 25.4);
+				}
+			}
+		}
 	}
 
 	// Head/bezel diameter
@@ -704,12 +825,22 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	const bodyMatch = text.match(/body[:\s]*(\d+(?:\.\d+)?)["\s]*(?:inches?|in\.?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*mm\)?/i);
 	if (bodyMatch) specs.body_mm = parseFloat(bodyMatch[2]);
 
-	// Weight — parse "5.96 oz. (169g)" format
+	// Weight — parse multiple formats
 	const weightMatch = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)?\s*\(?\s*(\d+(?:\.\d+)?)\s*g(?:rams?)?\s*\)?/i);
 	if (weightMatch) specs.weight_g = parseFloat(weightMatch[2]);
 	else {
 		const gOnly = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*g(?:rams?)?/i);
 		if (gOnly) specs.weight_g = parseFloat(gOnly[1]);
+		else {
+			// Slash format: "1.64 oz. / 46.9 g"
+			const slashW = text.match(/(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\s*[/|]\s*(\d+(?:\.\d+)?)\s*g\b/i);
+			if (slashW) specs.weight_g = parseFloat(slashW[2]);
+			else {
+				// Oz-only with weight label
+				const ozOnly = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\b/i);
+				if (ozOnly) specs.weight_g = Math.round(parseFloat(ozOnly[1]) * 28.35);
+			}
+		}
 	}
 
 	// LED type from body text
@@ -728,6 +859,11 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 		[/\bLuminus\s+SST[\s-]?40\b/i, 'Luminus SST40'],
 		[/\bCree\s+XHP/i, 'Cree XHP'],
 		[/\bOsram\b.*\bW[12]\b|\bW[12]\b.*\bOsram\b/i, 'Osram'],
+		[/\bCOB\s*LED\b/i, 'COB'], [/\bLEP\b/, 'LEP'],
+		[/\b319A\b/, '319A'], [/\bSST[\s-]?10\b/i, 'SST-10'],
+		[/\bSFT[\s-]?42\w?\b/i, 'SFT-42'], [/\b7070\s*LED\b/i, '7070'],
+		[/\bLUXEON\s+TX\b/i, 'Luxeon TX'], [/\bSFN60\b/i, 'SFN60'],
+		[/\bM515S\b/i, 'M515S'],
 	];
 	for (const [re, name] of ledPatterns) {
 		if (re.test(text) && !leds.includes(name)) leds.push(name);
@@ -767,7 +903,7 @@ function parseShopifySpecs(text: string, _tags: string[]): ParsedShopifySpecs {
 	if (/\bcopper\b/i.test(text)) materials.push('copper');
 	if (/\bbrass\b/i.test(text)) materials.push('brass');
 	if (/\bstainless\b/i.test(text)) materials.push('stainless steel');
-	if (/\bpolymer\b|\bplastic\b|\bnylon\b/i.test(text)) materials.push('polymer');
+	if (/\bpolymer\b|\bplastic\b|\bnylon\b|\bpolycarbonate\b/i.test(text)) materials.push('polymer');
 	if (materials.length > 0) specs.materials = materials;
 
 	// Switches from body text

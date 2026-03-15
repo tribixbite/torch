@@ -3,7 +3,7 @@
  * not available from the Shopify JSON API (length, LED, material, etc.).
  * Runs as enrichment pass on existing DB entries.
  */
-import { getAllFlashlights, upsertFlashlight, addSource } from '../store/db.js';
+import { getAllFlashlights, upsertFlashlight, addSource, addRawSpecText } from '../store/db.js';
 import { hasRequiredAttributes } from '../schema/canonical.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { fetchPage, htmlToText } from './manufacturer-scraper.js';
@@ -30,7 +30,7 @@ export async function scrapeDetailForEntry(entry: FlashlightEntry): Promise<{
 			const text = htmlToText(html);
 
 			// Extract specs from full page HTML (more aggressive than body_html)
-			enrichFromFullPage(entry, html, text, fieldsAdded);
+			enrichFromFullPage(entry, html, text, fieldsAdded, url);
 
 			if (fieldsAdded.length > 0) {
 				entry.updated_at = new Date().toISOString();
@@ -54,6 +54,7 @@ function enrichFromFullPage(
 	html: string,
 	_text: string,
 	fieldsAdded: string[],
+	url: string = '',
 ): void {
 	// Normalize smart quotes and special chars for reliable regex matching
 	const text = _text
@@ -71,25 +72,39 @@ function enrichFromFullPage(
 			entry.length_mm = parseFloat(m[2]);
 			fieldsAdded.push('length_mm');
 		} else {
-			// Direct mm format: "Length: 145.8 mm" or "145.8mm length"
+			// Direct mm format: "Length: 145.8 mm"
 			m = text.match(/(?:length|overall\s*length|total\s*length)[:\s]*(\d+(?:\.\d+)?)\s*mm/i);
 			if (m) {
 				entry.length_mm = parseFloat(m[1]);
 				fieldsAdded.push('length_mm');
 			} else {
-				// Inches only: "Length: 5.74 inches"
-				m = text.match(/(?:length|overall\s*length)[:\s]*(\d+(?:\.\d+)?)\s*(?:inches?|in\b|")/i);
+				// Reversed format: "114mm(length)" or "72.6mm (length)"
+				m = text.match(/(\d+(?:\.\d+)?)\s*mm\s*\(?length\)?/i);
 				if (m) {
-					entry.length_mm = Math.round(parseFloat(m[1]) * 25.4);
+					entry.length_mm = parseFloat(m[1]);
 					fieldsAdded.push('length_mm');
 				} else {
-					// Generic "NNNmm" near dimension words
-					m = text.match(/(?:dimension|size|measure)[^.]*?(\d{2,4}(?:\.\d+)?)\s*mm/i);
+					// Centimeters format: "Length: 10.8 cm" or "Length: 4.25 in. (10.8 cm)"
+					m = text.match(/(?:length|overall\s*length)[:\s]*(?:\d+(?:\.\d+)?\s*(?:in\.?|inches?|")?\s*\(?\s*)?(\d+(?:\.\d+)?)\s*cm\)?/i);
 					if (m) {
-						const val = parseFloat(m[1]);
-						if (val >= 20 && val <= 800) { // Reasonable flashlight length
-							entry.length_mm = val;
+						entry.length_mm = Math.round(parseFloat(m[1]) * 10);
+						fieldsAdded.push('length_mm');
+					} else {
+						// Inches only: "Length: 5.74 inches"
+						m = text.match(/(?:length|overall\s*length)[:\s]*(\d+(?:\.\d+)?)\s*(?:inches?|in\b|")/i);
+						if (m) {
+							entry.length_mm = Math.round(parseFloat(m[1]) * 25.4);
 							fieldsAdded.push('length_mm');
+						} else {
+							// Generic "NNNmm" near dimension words
+							m = text.match(/(?:dimension|size|measure)[^.]*?(\d{2,4}(?:\.\d+)?)\s*mm/i);
+							if (m) {
+								const val = parseFloat(m[1]);
+								if (val >= 20 && val <= 800) {
+									entry.length_mm = val;
+									fieldsAdded.push('length_mm');
+								}
+							}
 						}
 					}
 				}
@@ -123,15 +138,22 @@ function enrichFromFullPage(
 			entry.weight_g = parseFloat(m[2]);
 			fieldsAdded.push('weight_g');
 		} else {
-			m = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*g(?:rams?)?\b/i);
+			// Slash format: "1.64 oz. / 46.9 g"
+			m = text.match(/(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\s*[/|]\s*(\d+(?:\.\d+)?)\s*g\b/i);
 			if (m) {
-				entry.weight_g = parseFloat(m[1]);
+				entry.weight_g = parseFloat(m[2]);
 				fieldsAdded.push('weight_g');
 			} else {
-				m = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\b/i);
+				m = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*g(?:rams?)?\b/i);
 				if (m) {
-					entry.weight_g = Math.round(parseFloat(m[1]) * 28.35);
+					entry.weight_g = parseFloat(m[1]);
 					fieldsAdded.push('weight_g');
+				} else {
+					m = text.match(/weight[:\s]*(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\b/i);
+					if (m) {
+						entry.weight_g = Math.round(parseFloat(m[1]) * 28.35);
+						fieldsAdded.push('weight_g');
+					}
 				}
 			}
 		}
@@ -167,7 +189,9 @@ function enrichFromFullPage(
 			[/\b519A\b/, '519A'], [/\b219[BCF]\b/, '219B'],
 			[/\bLH351D\b/i, 'LH351D'], [/\bE21A\b/, 'E21A'],
 			[/\bCree\s+XHP\b/i, 'Cree XHP'], [/\bCree\s+XP\b/i, 'Cree XP'],
-			[/\bOSRAM\b/i, 'Osram'],
+			[/\bOSRAM\b/i, 'Osram'], [/\bCOB\b/, 'COB'], [/\bLEP\b/, 'LEP'],
+			[/\b319A\b/, '319A'], [/\bSST[\s-]?10\b/i, 'SST-10'],
+			[/\bSFT[\s-]?42\b/i, 'SFT-42'], [/\b7070\b/, '7070'],
 		];
 		for (const [re, name] of ledPatterns) {
 			if (re.test(text) && !leds.includes(name)) leds.push(name);
@@ -180,16 +204,31 @@ function enrichFromFullPage(
 
 	// === BEAM DISTANCE / THROW ===
 	if (!entry.performance.claimed.throw_m) {
-		// "1247 feet (380 meters)" format
-		let m = text.match(/(\d[\d,]*)\s*(?:feet|ft)?\s*\(?\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)?/i);
+		// Priority 1: labeled "throw|beam distance: NNNm" format
+		let m = text.match(/(?:throw|beam\s*distance|peak\s*beam\s*distance|max(?:imum)?\s*(?:beam\s*)?distance|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?(?!Ah)\b/i);
 		if (m) {
-			entry.performance.claimed.throw_m = parseInt(m[2].replace(/,/g, ''), 10);
+			entry.performance.claimed.throw_m = parseInt(m[1].replace(/,/g, ''), 10);
 			fieldsAdded.push('throw_m');
 		} else {
-			m = text.match(/(?:beam\s*distance|throw|range)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
+			// Priority 2: compound "NNN feet (NNN meters)" — require explicit feet/ft label
+			m = text.match(/(\d[\d,]*)\s*(?:feet|ft)\s*\(?\s*(\d[\d,]*)\s*m(?:eters?)?\s*\)?/i);
 			if (m) {
-				entry.performance.claimed.throw_m = parseInt(m[1].replace(/,/g, ''), 10);
+				entry.performance.claimed.throw_m = parseInt(m[2].replace(/,/g, ''), 10);
 				fieldsAdded.push('throw_m');
+			} else {
+				// Priority 3: reverse "NNNm throw|beam"
+				m = text.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)(?!Ah)\b/i);
+				if (m) {
+					entry.performance.claimed.throw_m = parseInt(m[1].replace(/,/g, ''), 10);
+					fieldsAdded.push('throw_m');
+				} else {
+					// Priority 4: yards with conversion
+					m = text.match(/(?:throw|beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
+					if (m) {
+						entry.performance.claimed.throw_m = Math.round(parseInt(m[1].replace(/,/g, ''), 10) * 0.9144);
+						fieldsAdded.push('throw_m');
+					}
+				}
 			}
 		}
 	}
@@ -235,7 +274,7 @@ function enrichFromFullPage(
 		if (/copper/i.test(text)) materials.push('copper');
 		if (/brass/i.test(text)) materials.push('brass');
 		if (/stainless/i.test(text)) materials.push('stainless steel');
-		if (/polymer|plastic|nylon|polycarbonate/i.test(text)) materials.push('polymer');
+		if (/polymer|plastic|nylon|polycarbonate|polyamide|abs\b/i.test(text)) materials.push('polymer');
 		if (materials.length > 0) {
 			entry.material = materials;
 			fieldsAdded.push('material');
@@ -285,6 +324,87 @@ function enrichFromFullPage(
 			fieldsAdded.push('environment');
 		}
 	}
+
+	// === RAW SPEC TEXT CAPTURE for future AI parsing ===
+	// Extract text segments that look like spec data but weren't fully parsed by regex.
+	// These get stored in raw_spec_text table for batch AI processing later.
+	captureRawSpecText(entry, text, url);
+}
+
+/**
+ * Identify and store spec-like text segments that regex couldn't parse.
+ * Categories: specs (tables/lists), modes (output levels), runtime, features.
+ */
+function captureRawSpecText(entry: FlashlightEntry, text: string, url: string): void {
+	const { valid, missing } = hasRequiredAttributes(entry);
+	if (valid || missing.length === 0) return; // Nothing to parse
+
+	// Extract spec table/list sections — look for "Specifications" headers and structured data
+	const specSections = extractSpecSections(text);
+
+	for (const section of specSections) {
+		// Determine category based on content
+		let category = 'specs';
+		if (/\b(?:mode|output|turbo|high|med|low|moonlight|eco)\b/i.test(section) &&
+			/\blumen|lm\b/i.test(section)) {
+			category = 'modes';
+		} else if (/\bruntime|run\s*time|battery\s*life|hours?\s*(?:of|per)\b/i.test(section)) {
+			category = 'runtime';
+		} else if (/\b(?:dimension|size|measurement|length|width|height|diameter)\b/i.test(section)) {
+			category = 'dimensions';
+		} else if (/\b(?:feature|include|package|accessory|compatible)\b/i.test(section)) {
+			category = 'features';
+		}
+
+		// Only store if it contains data relevant to missing fields
+		const relevant = missing.some((field) => {
+			switch (field) {
+				case 'lumens': return /\blumen|lm\b/i.test(section);
+				case 'throw_m': return /\bthrow|distance|beam|range|meter|yard|feet\b/i.test(section);
+				case 'runtime_hours': return /\bruntime|run\s*time|hour|battery\s*life\b/i.test(section);
+				case 'length_mm': return /\blength|dimension|size|mm\b|inches?\b|cm\b/i.test(section);
+				case 'weight_g': return /\bweight|mass|gram|oz\b|ounce/i.test(section);
+				case 'led': return /\bled|emitter|cree|luminus|nichia|osram|sst|xhp/i.test(section);
+				case 'battery': return /\bbattery|cell|18650|21700|cr123|14500/i.test(section);
+				case 'switch': return /\bswitch|button|click|tail|side\b/i.test(section);
+				case 'material': return /\bmaterial|body|alloy|aluminum|titanium|steel/i.test(section);
+				case 'features': return /\bfeature|waterproof|magnetic|pocket\s*clip|usb|charging/i.test(section);
+				default: return true;
+			}
+		});
+
+		if (relevant && section.length >= 30 && section.length <= 5000) {
+			addRawSpecText(entry.id, url, category, section.trim());
+		}
+	}
+}
+
+/** Extract structured spec sections from page text */
+function extractSpecSections(text: string): string[] {
+	const sections: string[] = [];
+
+	// Match spec table sections: "Specifications", "Technical Data", "Features" headers
+	const sectionPattern = /(?:^|\n)\s*(?:specification|technical\s*(?:data|detail|spec)|feature|performance|detail|key\s*spec)[s:]?\s*\n([\s\S]{30,2000}?)(?=\n\s*(?:specification|technical|feature|review|related|share|add\s*to\s*cart|description|about)|$)/gi;
+	let m;
+	while ((m = sectionPattern.exec(text)) !== null) {
+		sections.push(m[1].trim());
+	}
+
+	// Also capture mode tables — lines with lumen values paired with runtime
+	const modeLines: string[] = [];
+	const lines = text.split('\n');
+	for (const line of lines) {
+		// Lines like "Turbo: 2500 lumens (1.5 hours)" or "High\t1200lm\t3h"
+		if (/\b(?:turbo|high|med|low|moon|eco|strobe|sos)\b/i.test(line) &&
+			/\d+\s*(?:lumen|lm|hour|hr|min)\b/i.test(line)) {
+			modeLines.push(line.trim());
+		}
+	}
+	if (modeLines.length >= 2) {
+		sections.push(modeLines.join('\n'));
+	}
+
+	return sections;
 }
 
 /**

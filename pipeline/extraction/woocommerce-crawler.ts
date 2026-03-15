@@ -156,11 +156,12 @@ function wooToEntry(product: WooProduct, brand: string): FlashlightEntry | null 
 	const text = htmlToText(`${product.description} ${product.short_description}`);
 	const specs = parseWooSpecs(text, product);
 
-	// Price (from minor units)
+	// Price (from minor units, filter $0 for catalog-only stores)
 	const minorUnit = product.prices?.currency_minor_unit ?? 2;
-	const price = product.prices?.price
+	const rawPrice = product.prices?.price
 		? parseFloat(product.prices.price) / Math.pow(10, minorUnit)
 		: undefined;
+	const price = rawPrice && rawPrice > 0 ? rawPrice : undefined;
 
 	// Weight (WooCommerce stores it in kg)
 	let weight_g = specs.weight_g;
@@ -190,6 +191,67 @@ function wooToEntry(product: WooProduct, brand: string): FlashlightEntry | null 
 			const c = term.name.toLowerCase();
 			if (!colors.includes(c)) colors.push(c);
 		}
+	}
+
+	// Extract LED from WooCommerce structured attributes (e.g., pa_led)
+	const ledAttr = product.attributes.find((a) => /^pa_led$|^led$/i.test(a.name) || /\bLED\b|emitter/i.test(a.name));
+	if (ledAttr && (!specs.leds || specs.leds.length === 0)) {
+		const attrLeds: string[] = [];
+		for (const term of ledAttr.terms) {
+			// Extract LED model from attribute terms like "Luminus SFT-90X LED" or "SST40"
+			const ledText = term.name;
+			const ledPatterns: [RegExp, string][] = [
+				[/\bSST[\s-]?20\b/i, 'SST-20'], [/\bSST[\s-]?40\b/i, 'SST-40'],
+				[/\bSFT[\s-]?40\b/i, 'SFT-40'], [/\bSFT[\s-]?70\b/i, 'SFT-70'],
+				[/\bSFT[\s-]?90\w?\b/i, 'SFT-90'], [/\bXHP[\s-]?50/i, 'XHP50'],
+				[/\bXHP[\s-]?70/i, 'XHP70'], [/\bXP[\s-]?L/i, 'XP-L'],
+				[/\b519A\b/, '519A'], [/\bLH351D\b/i, 'LH351D'],
+				[/\bLEP\b/, 'LEP'], [/\bNichia\b/i, 'Nichia'],
+			];
+			for (const [re, name] of ledPatterns) {
+				if (re.test(ledText) && !attrLeds.includes(name)) attrLeds.push(name);
+			}
+			// If no pattern matched but term has meaningful LED name, use it cleaned
+			if (attrLeds.length === 0 && ledText.length > 2 && !/default|n\/a/i.test(ledText)) {
+				attrLeds.push(ledText.trim());
+			}
+		}
+		if (attrLeds.length > 0) specs.leds = attrLeds;
+	}
+
+	// Extract battery from WooCommerce attributes (e.g., pa_battery)
+	const battAttr = product.attributes.find((a) => /^pa_battery$|^battery$/i.test(a.name));
+	if (battAttr && (!specs.batteries || specs.batteries.length === 0)) {
+		const attrBatts: string[] = [];
+		for (const term of battAttr.terms) {
+			const battPatterns: [RegExp, string][] = [
+				[/\b21700\b/, '21700'], [/\b18650\b/, '18650'], [/\b18350\b/, '18350'],
+				[/\b16340\b/, '16340'], [/\b14500\b/, '14500'], [/\bCR123A?\b/i, 'CR123A'],
+				[/\b26650\b/, '26650'], [/\b26800\b/, '26800'], [/\b33140\b/, '33140'],
+				[/\b46950\b/, '46950'],
+				[/\bAA\b(?!\w)/, 'AA'], [/\bAAA\b/, 'AAA'],
+			];
+			for (const [re, name] of battPatterns) {
+				if (re.test(term.name) && !attrBatts.includes(name)) attrBatts.push(name);
+			}
+		}
+		if (attrBatts.length > 0) specs.batteries = attrBatts;
+	}
+
+	// Extract material from WooCommerce attributes (e.g., pa_material)
+	const matAttr = product.attributes.find((a) => /^pa_material$|^material$/i.test(a.name));
+	if (matAttr && (!specs.materials || specs.materials.length === 0)) {
+		const attrMats: string[] = [];
+		for (const term of matAttr.terms) {
+			const t = term.name.toLowerCase();
+			if (/aluminum|aluminium/i.test(t)) attrMats.push('aluminum');
+			else if (/titanium/i.test(t)) attrMats.push('titanium');
+			else if (/copper/i.test(t)) attrMats.push('copper');
+			else if (/brass/i.test(t)) attrMats.push('brass');
+			else if (/stainless/i.test(t)) attrMats.push('stainless steel');
+			else if (/polymer|plastic|pc\b|polycarbonate/i.test(t)) attrMats.push('polymer');
+		}
+		if (attrMats.length > 0) specs.materials = attrMats;
 	}
 
 	// Type from categories
@@ -292,9 +354,19 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	}
 	if (lumens.length > 0) specs.lumens = lumens.sort((a, b) => b - a);
 
-	// Throw/beam distance
-	const throwMatch = t.match(/(?:throw|beam\s*distance|max\s*distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b/i);
+	// Throw/beam distance — avoid mAh false positive by requiring word boundary after 'm'
+	const throwMatch = t.match(/(?:throw|beam\s*distance|max\s*distance|peak\s*beam\s*distance)[:\s]*(\d[\d,]*)\s*m(?:eters?)?\b(?!Ah)/i);
 	if (throwMatch) specs.throw_m = parseInt(throwMatch[1].replace(/,/g, ''), 10);
+	else {
+		// Reverse format: "187m throw" or "380 meters beam"
+		const reverseThrow = t.match(/(\d[\d,]*)\s*m(?:eters?)?\s*(?:throw|beam\s*distance|beam)\b/i);
+		if (reverseThrow) specs.throw_m = parseInt(reverseThrow[1].replace(/,/g, ''), 10);
+		else {
+			// Yards format with conversion
+			const yardsMatch = t.match(/(?:throw|beam\s*distance)[:\s]*(\d[\d,]*)\s*(?:yards?|yds?)\b/i);
+			if (yardsMatch) specs.throw_m = Math.round(parseInt(yardsMatch[1].replace(/,/g, ''), 10) * 0.9144);
+		}
+	}
 
 	// Intensity
 	const cdMatch = t.match(/(\d[\d,]*)\s*(?:cd|candela)\b/i);
@@ -371,7 +443,7 @@ function parseWooSpecs(text: string, product: WooProduct): {
 	if (/titanium/i.test(t)) materials.push('titanium');
 	if (/copper/i.test(t)) materials.push('copper');
 	if (/stainless/i.test(t)) materials.push('stainless steel');
-	if (/polymer|plastic|nylon/i.test(t)) materials.push('polymer');
+	if (/polymer|plastic|nylon|polycarbonate/i.test(t)) materials.push('polymer');
 	if (materials.length > 0) specs.materials = materials;
 
 	// Switch

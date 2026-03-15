@@ -163,6 +163,22 @@ function initSchema(db: Database): void {
 
 		CREATE INDEX IF NOT EXISTS idx_disc_brand ON discovered_asins(brand);
 		CREATE INDEX IF NOT EXISTS idx_disc_scraped ON discovered_asins(scraped);
+
+		-- Raw spec text segments that couldn't be parsed by regex.
+		-- Stored for future AI-assisted parsing.
+		CREATE TABLE IF NOT EXISTS raw_spec_text (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			flashlight_id TEXT NOT NULL REFERENCES flashlights(id),
+			source_url TEXT NOT NULL,
+			-- Category of unparsed content: 'specs', 'modes', 'features', 'runtime', 'dimensions'
+			category TEXT NOT NULL DEFAULT 'specs',
+			-- Raw text content (cleaned HTML-to-text, trimmed to relevant section)
+			text_content TEXT NOT NULL,
+			scraped_at TEXT NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_raw_spec_flash ON raw_spec_text(flashlight_id);
+		CREATE INDEX IF NOT EXISTS idx_raw_spec_cat ON raw_spec_text(category);
 	`);
 }
 
@@ -316,6 +332,54 @@ export function upsertDiscoveredAsin(asin: string, brand: string, title?: string
 		$title: title ?? null,
 		$now: new Date().toISOString(),
 	});
+}
+
+/** Store raw spec text for future AI parsing */
+export function addRawSpecText(
+	flashlightId: string,
+	sourceUrl: string,
+	category: string,
+	textContent: string,
+): void {
+	const db = getDb();
+	// Avoid duplicate entries for same flashlight+url+category
+	const existing = db.prepare(`
+		SELECT id FROM raw_spec_text
+		WHERE flashlight_id = $fid AND source_url = $url AND category = $cat
+	`).get({ $fid: flashlightId, $url: sourceUrl, $cat: category });
+	if (existing) return;
+
+	db.prepare(`
+		INSERT INTO raw_spec_text (flashlight_id, source_url, category, text_content, scraped_at)
+		VALUES ($fid, $url, $cat, $text, $now)
+	`).run({
+		$fid: flashlightId,
+		$url: sourceUrl,
+		$cat: category,
+		$text: textContent,
+		$now: new Date().toISOString(),
+	});
+}
+
+/** Get raw spec text entries for a flashlight */
+export function getRawSpecText(flashlightId: string): {
+	category: string;
+	text_content: string;
+	source_url: string;
+}[] {
+	const db = getDb();
+	return db.prepare(`
+		SELECT category, text_content, source_url FROM raw_spec_text
+		WHERE flashlight_id = $fid
+	`).all({ $fid: flashlightId }) as { category: string; text_content: string; source_url: string }[];
+}
+
+/** Count raw spec text entries by category */
+export function countRawSpecText(): { category: string; count: number }[] {
+	const db = getDb();
+	return db.prepare(`
+		SELECT category, COUNT(*) as count FROM raw_spec_text GROUP BY category ORDER BY count DESC
+	`).all() as { category: string; count: number }[];
 }
 
 /** Mark an ASIN as scraped */
