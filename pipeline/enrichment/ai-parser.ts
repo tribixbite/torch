@@ -1,6 +1,6 @@
 /**
  * AI-powered spec parser — extracts structured flashlight specs from raw text
- * using OpenRouter API (Claude Haiku). Designed to fill gaps that regex couldn't parse.
+ * using OpenRouter API (healer-alpha). Designed to fill gaps that regex couldn't parse.
  *
  * Reads raw_spec_text entries from DB, sends to LLM with targeted extraction prompt,
  * validates responses, and merges ONLY missing fields into existing entries.
@@ -10,7 +10,7 @@ import type { FlashlightEntry, ExtractionResult } from '../schema/canonical.js';
 import { getAllFlashlights, getRawSpecText, upsertFlashlight, getDb } from '../store/db.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'anthropic/claude-haiku-4-5';
+const MODEL = 'openrouter/healer-alpha';
 const MAX_INPUT_CHARS = 3000;
 const RATE_LIMIT_MS = 600; // ~1.7 req/s
 

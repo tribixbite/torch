@@ -14,6 +14,25 @@ import { hasRequiredAttributes } from '../schema/canonical.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { htmlToText } from './manufacturer-scraper.js';
 
+/** Retry addRawSpecText on SQLITE_BUSY errors (concurrent writers) */
+function addRawSpecTextSafe(id: string, url: string, category: string, text: string): boolean {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		try {
+			addRawSpecText(id, url, category, text);
+			return true;
+		} catch (err: any) {
+			if (err?.code === 'SQLITE_BUSY' && attempt < 4) {
+				// Wait 2-10s with jitter before retrying
+				const waitMs = 2000 + Math.random() * 2000 * (attempt + 1);
+				Bun.sleepSync(waitMs);
+				continue;
+			}
+			throw err; // Re-throw non-BUSY errors or final attempt
+		}
+	}
+	return false;
+}
+
 const CRAWL_DELAY = 3000; // ms between requests to same domain
 const MIN_TEXT_LENGTH = 100; // skip pages with very little content
 const MAX_TEXT_LENGTH = 15000; // cap stored text to prevent bloat
@@ -243,7 +262,7 @@ export async function fetchRawTextBatch(opts: {
 			} else {
 				const text = htmlToText(html);
 				if (text.length >= MIN_TEXT_LENGTH) {
-					addRawSpecText(entry.id, entry.url, 'full-page', text.slice(0, MAX_TEXT_LENGTH));
+					addRawSpecTextSafe(entry.id, entry.url, 'full-page', text.slice(0, MAX_TEXT_LENGTH));
 					saved++;
 					consecutive429s = 0; // Reset on success
 				} else {
