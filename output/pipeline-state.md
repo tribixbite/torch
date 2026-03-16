@@ -1,25 +1,25 @@
 # Pipeline State — 2026-03-16
 
-## Current Status: AI parse 64% complete, raw text fetch done
+## Current Status: AI parse 73% complete, raw text fetch done
 
 ### Coverage (12,650 entries)
-| Field | Current | Previous | Δ |
-|-------|---------|----------|---|
-| lumens | 80.0% | 78.7% | +1.3% |
-| throw_m | 63.4% | 59.3% | +4.1% |
-| runtime | 58.1% | 54.7% | +3.4% |
-| length_mm | 55.6% | 50.4% | +5.2% |
-| weight_g | 90.7% | 89.4% | +1.3% |
-| led | 48.5% | 44.0% | +4.5% |
-| material | 65.1% | 60.2% | +4.9% |
-| switch | 61.5% | 55.3% | +6.2% |
-| battery | 75.9% | 69.2% | +6.7% |
-| color | 48.0% | 41.6% | +6.4% |
-| features | 79.4% | 72.8% | +6.6% |
+| Field | Current | Pre-AI | Δ |
+|-------|---------|--------|---|
+| lumens | 80.2% | 78.7% | +1.5% |
+| throw_m | 64.1% | 59.3% | +4.8% |
+| runtime | 58.4% | 54.7% | +3.7% |
+| length_mm | 57.6% | 50.4% | +7.2% |
+| weight_g | 90.8% | 89.4% | +1.4% |
+| led | 51.1% | 44.0% | +7.1% |
+| material | 65.9% | 60.2% | +5.7% |
+| switch | 63.3% | 55.3% | +8.0% |
+| battery | 78.2% | 69.2% | +9.0% |
+| color | 49.8% | 41.6% | +8.2% |
+| features | 80.3% | 72.8% | +7.5% |
 | price | 94.5% | 94.5% | — |
 | purchase_url | 90.1% | 90.1% | — |
 
-Fully valid: **2,011 entries (15.9%)** — was 532 (4.2%), **3.8x improvement**
+Fully valid: **2,243 entries (17.7%)** — was 532 (4.2%), **4.2x improvement**
 
 ### Raw Text Fetcher — COMPLETE
 - **12,737 / 12,650** entries now have raw_spec_text (100%+ coverage)
@@ -27,11 +27,11 @@ Fully valid: **2,011 entries (15.9%)** — was 532 (4.2%), **3.8x improvement**
 - Built `pipeline/extraction/raw-text-fetcher.ts` for bulk HTTP page text capture
 - Added SQLITE_BUSY retry wrapper + 30s busy_timeout for concurrent writes
 
-### AI Parser — 64% complete
-- Processing 10,911 entries: **6,950 done, 3,097 enriched, 6,489 fields, 0 errors**
+### AI Parser — 73% complete
+- Processing 10,911 entries: **7,925 done, 3,818 enriched, 8,201 fields, 0 errors**
 - Model: `openrouter/healer-alpha` (free, 262K ctx)
-- Rate: ~25 entries/min, ETA ~2.5 hours
-- Enrichment rate: 44.5% of processed entries gain new fields
+- Rate: ~20 entries/min, ETA ~2.5 hours
+- Enrichment rate: 48.2% of processed entries gain new fields
 
 ### AI Parser Improvements (this session)
 - Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
