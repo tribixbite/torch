@@ -1,35 +1,44 @@
 # Pipeline State — 2026-03-16
 
-## Current Status: AI parse 85% complete, raw text fetch done
+## Current Status: AI parse COMPLETE, data rebuilt
 
-### Coverage (12,650 entries) — snapshot at 85% parse
-| Field | Current | Pre-AI | Δ |
-|-------|---------|--------|---|
-| length_mm | 58.7% | 50.4% | +8.3% |
-| led | 53.1% | 44.0% | +9.1% |
-| battery | 80.5% | 69.2% | +11.3% |
-| switch | 65.1% | 55.3% | +9.8% |
-| color | 51.8% | 41.6% | +10.2% |
+### Coverage (12,650 entries)
+| Field | Final | Pre-AI | Δ |
+|-------|-------|--------|---|
+| lumens | 81.2% | 78.7% | +2.5% |
+| throw_m | 65.5% | 59.3% | +6.2% |
+| runtime | 59.8% | 54.7% | +5.1% |
+| length_mm | 60.1% | 50.4% | **+9.7%** |
+| weight_g | 91.1% | 89.4% | +1.7% |
+| led | 55.0% | 44.0% | **+11.0%** |
+| battery | 82.5% | 69.2% | **+13.3%** |
+| switch | 66.2% | 55.3% | **+10.9%** |
+| material | 67.2% | 60.2% | +7.0% |
+| color | 53.3% | 41.6% | **+11.7%** |
+| features | 83.5% | 72.8% | **+10.7%** |
+| price | 94.5% | 94.5% | — |
 
-Fully valid: **2,372 entries (18.7%)** — was 532 (4.2%), **4.5x improvement**
+Fully valid: **2,497 entries (19.7%)** — was 532 (4.2%), **4.7x improvement**
+
+### AI Parser — COMPLETE
+- Processed: 10,428 / 10,911 (483 skipped)
+- Enriched: 5,291 entries (50.7% enrichment rate)
+- Fields added: 11,573
+- Errors: 0
+- Tokens: 14.0M input + 418K output (free via healer-alpha)
+- Model: `openrouter/healer-alpha` (free, 262K ctx)
 
 ### Raw Text Fetcher — COMPLETE
-- **12,737 / 12,650** entries now have raw_spec_text (100%+ coverage)
+- **12,737 / 12,650** entries have raw_spec_text (100%+ coverage)
 - All 3 fetchers finished: main (3,538/3,553), BJ1 (1,769/1,782), BJ2 (2,178/2,191)
-- Built `pipeline/extraction/raw-text-fetcher.ts` for bulk HTTP page text capture
-- Added SQLITE_BUSY retry wrapper + 30s busy_timeout for concurrent writes
 
-### AI Parser — 85% complete
-- Processing 10,911 entries: **9,325 done, 4,615 enriched, 10,054 fields, 0 errors**
-- Model: `openrouter/healer-alpha` (free, 262K ctx)
-- Rate: ~20 entries/min, ETA ~1.3 hours
-- Enrichment rate: 49.5% of processed entries gain new fields
+### FL1 Enrichment — COMPLETE
+- 1,314 entries enriched via FL1 derivation (throw ↔ intensity)
 
-### AI Parser Improvements (this session)
-- Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
-- Increased MAX_INPUT_CHARS: 3000 → 8000 (healer-alpha can handle more context)
-- Added `stripBoilerplate()`: removes WooCommerce/CS-Cart/Magento nav/footer
-- Added segment priority: 'specs' category before 'full-page' in prompt
+### Data Build — COMPLETE
+- 12,317 entries (333 accessories filtered)
+- JSON: 7,712 KB
+- SPA built successfully
 
 ### Shadow Verification Results (12 domains)
 | Domain | Entries | Grade | Key Finding |
@@ -47,14 +56,19 @@ Fully valid: **2,372 entries (18.7%)** — was 532 (4.2%), **4.5x improvement**
 | intl-outdoor | 58 | GOOD | LED/switch present, multi-variant format |
 | skilhunt | 39 | GOOD | 4/5 missing fields in text (boilerplate was hiding them) |
 
+### AI Parser Improvements (this session)
+- Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
+- Increased MAX_INPUT_CHARS: 3000 → 8000 (healer-alpha can handle more context)
+- Added `stripBoilerplate()`: removes WooCommerce/CS-Cart/Magento nav/footer
+- Added segment priority: 'specs' category before 'full-page' in prompt
+
 ### Code Changes (this session)
 1. `be495b1` — feat: add bulk raw text fetcher for AI parser input
 2. `1eaf7ac` — fix: switch AI parser to healer-alpha, add SQLITE_BUSY retry
 3. `240353d` — feat: improve AI parser with boilerplate stripping and 8K char limit
 
 ### Next Steps
-1. Wait for AI parse to complete (~2.5h remaining)
-2. Run `bun run pipeline/cli.ts enrich` for FL1 derivation
-3. Rebuild data: `bun run pipeline/cli.ts build`
-4. Update stats and compare
-5. SPA rebuild: `bun run scripts/vite-cli.ts build`
+1. Consider second AI parse pass on entries that weren't enriched
+2. CFC headless scraping for JS-rendered pages (Pelican, Olight, Wurkkos, Sofirn)
+3. Run `bun run pipeline/cli.ts stats` for detailed per-brand breakdown
+4. Deploy SPA update
