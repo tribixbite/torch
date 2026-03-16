@@ -1,25 +1,17 @@
 # Pipeline State — 2026-03-16
 
-## Current Status: AI parse 73% complete, raw text fetch done
+## Current Status: AI parse 85% complete, raw text fetch done
 
-### Coverage (12,650 entries)
+### Coverage (12,650 entries) — snapshot at 85% parse
 | Field | Current | Pre-AI | Δ |
 |-------|---------|--------|---|
-| lumens | 80.2% | 78.7% | +1.5% |
-| throw_m | 64.1% | 59.3% | +4.8% |
-| runtime | 58.4% | 54.7% | +3.7% |
-| length_mm | 57.6% | 50.4% | +7.2% |
-| weight_g | 90.8% | 89.4% | +1.4% |
-| led | 51.1% | 44.0% | +7.1% |
-| material | 65.9% | 60.2% | +5.7% |
-| switch | 63.3% | 55.3% | +8.0% |
-| battery | 78.2% | 69.2% | +9.0% |
-| color | 49.8% | 41.6% | +8.2% |
-| features | 80.3% | 72.8% | +7.5% |
-| price | 94.5% | 94.5% | — |
-| purchase_url | 90.1% | 90.1% | — |
+| length_mm | 58.7% | 50.4% | +8.3% |
+| led | 53.1% | 44.0% | +9.1% |
+| battery | 80.5% | 69.2% | +11.3% |
+| switch | 65.1% | 55.3% | +9.8% |
+| color | 51.8% | 41.6% | +10.2% |
 
-Fully valid: **2,243 entries (17.7%)** — was 532 (4.2%), **4.2x improvement**
+Fully valid: **2,372 entries (18.7%)** — was 532 (4.2%), **4.5x improvement**
 
 ### Raw Text Fetcher — COMPLETE
 - **12,737 / 12,650** entries now have raw_spec_text (100%+ coverage)
@@ -27,11 +19,11 @@ Fully valid: **2,243 entries (17.7%)** — was 532 (4.2%), **4.2x improvement**
 - Built `pipeline/extraction/raw-text-fetcher.ts` for bulk HTTP page text capture
 - Added SQLITE_BUSY retry wrapper + 30s busy_timeout for concurrent writes
 
-### AI Parser — 73% complete
-- Processing 10,911 entries: **7,925 done, 3,818 enriched, 8,201 fields, 0 errors**
+### AI Parser — 85% complete
+- Processing 10,911 entries: **9,325 done, 4,615 enriched, 10,054 fields, 0 errors**
 - Model: `openrouter/healer-alpha` (free, 262K ctx)
-- Rate: ~20 entries/min, ETA ~2.5 hours
-- Enrichment rate: 48.2% of processed entries gain new fields
+- Rate: ~20 entries/min, ETA ~1.3 hours
+- Enrichment rate: 49.5% of processed entries gain new fields
 
 ### AI Parser Improvements (this session)
 - Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
