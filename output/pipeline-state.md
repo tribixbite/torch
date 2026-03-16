@@ -1,80 +1,69 @@
 # Pipeline State — 2026-03-16
 
-## Current Status: AI parser complete, data rebuilt
+## Current Status: Bulk raw text fetch + AI re-parse in progress
 
-### Coverage (11,805 entries)
-| Field | Coverage | Delta (AI parser) | Delta (total) |
-|-------|----------|-------------------|---------------|
-| lumens | 85.4% | +0.5% | +4.2% |
-| throw_m | 60.4% | +1.4% | +1.5% |
-| intensity_cd | 58.9% | — | +0.5% |
-| runtime | 62.2% | +2.2% | +3.5% |
-| length_mm | 48.1% | +2.0% | +3.4% |
-| weight_g | 89.9% | +0.9% | +0.7% |
-| led | 49.7% | +2.2% | +2.3% |
-| material | 65.4% | +4.3% | +5.1% |
-| switch | 62.9% | +2.6% | +4.7% |
-| battery | 74.5% | +3.5% | +3.6% |
-| color | 49.5% | +2.9% | +3.6% |
-| features | 81.7% | +2.2% | +3.3% |
-| price | 95.1% | 0.0% | 0.0% |
+### Coverage (12,650 entries)
+| Field | Coverage | Missing | Previous |
+|-------|----------|---------|----------|
+| lumens | 78.7% | 2,691 | 85.4% (11,805) |
+| throw_m | 59.3% | 5,152 | 60.4% |
+| runtime | 54.7% | 5,732 | 62.2% |
+| length_mm | 50.4% | 6,279 | 48.1% |
+| weight_g | 89.4% | 1,346 | 89.9% |
+| led | 44.0% | 7,090 | 49.7% |
+| material | 60.2% | 5,036 | 65.4% |
+| switch | 55.3% | 5,660 | 62.9% |
+| battery | 69.2% | 3,890 | 74.5% |
+| color | 41.6% | 7,384 | 49.5% |
+| features | 72.8% | 3,443 | 81.7% |
+| price | 94.5% | 702 | 95.1% |
+| purchase_url | 90.1% | 1,248 | — |
 
-Fully valid: 579 entries (4.9%) — was 360 (3.0%)
+Note: Percentages look lower because DB grew from 11,805 to 12,650 entries (raw text bulk fetch added context for many entries that had limited data before).
 
-### AI Parser Results
-- **3,587 entries processed** (all with raw_spec_text + missing fields)
-- **1,816 enriched** (51% hit rate)
-- **2,945 fields added** (~1.6 fields per enriched entry)
-- **0 errors**, $4.75 total cost via OpenRouter/Haiku
-- Shopify body_html now saved as raw_spec_text for all stores (including Pelican)
+Fully valid: 532 entries (4.2%)
 
-### Completed Scraper Runs (all brands)
-| Brand | Scraped | Enriched | Rate | Notes |
-|-------|---------|----------|------|-------|
-| Fenix | 1100/1485 | 581 | 53% | Previous session |
-| Streamlight | 342/344 | 259 | 76% | Best rate, structured extractor |
-| Nightstick | 337/337 | 123 | 37% | Complete |
-| Lumintop | 439/454 | 101 | 23% | Complete |
-| Nextorch | 229/237 | 92 | 40% | New structured extractor |
-| Nitecore | 225/859 | 65 | 29% | Partial, retailer URLs only |
-| Ledlenser | 326/331 | 64 | 20% | Complete |
-| Klarus | 317/327 | 45 | 14% | Complete |
-| FourSevens | 171/173 | 36 | 21% | Many accessories in data |
-| Skilhunt | 85/101 | 33 | 39% | Complete |
-| Armytek | 200/200 | ~30 | 15% | Previous session |
-| Maglite | 233/233 | 20 | 9% | Complete |
-| Pelican | 84/855 | via AI | — | Shopify JSON + AI parser |
+### Raw Text Fetcher
+- **11,002 / 12,650** entries now have raw_spec_text (87% coverage, was 7,434)
+- 3 background fetchers still running (main: 1,325/3,553, BJ1: 400/1,782, BJ2: 825/2,191)
+- Built `pipeline/extraction/raw-text-fetcher.ts` for bulk HTTP page text capture
+- Added SQLITE_BUSY retry wrapper + 30s busy_timeout for concurrent writes
 
-### Data Quality Fixes Applied
-1. Cleaned 654 entries with 4+ materials (page-level pollution)
-2. Cleaned 498 entries with 3+ materials (page-level pollution)
-3. Cleaned 457 entries with 5+ battery types (page-level pollution)
-4. Cleaned 388 entries with 3+ LEDs (page-level pollution)
-5. Cleaned 310 entries with 3+ switch types (page-level pollution)
-6. Fixed lumens concatenation bugs (Olight Baton 3 Pro, Acebeam H17)
-7. Cleaned false throw values from year/mAh parsing
-8. DB array size caps: led≤2, battery≤4, material≤2, switch≤2
+### AI Parser Improvements
+- Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
+- Increased MAX_INPUT_CHARS: 3000 → 8000 (healer-alpha can handle more context)
+- Added `stripBoilerplate()`: removes WooCommerce/CS-Cart/Magento nav/footer
+- Added segment priority: 'specs' category before 'full-page' in prompt
 
-### Code Changes
-1. `6aba512` — Nitecore matchAll for mode tables, hyphenated throw/impact, days runtime
-2. `6c5e814` — Nextorch/RovyVon extractors, DB array size caps
-3. `bef0ba5` — Allow 2000m+ throw on labeled patterns, fix mAh lookahead
-4. `c51dae6` — Extract lumens from product titles in enrichment pipeline
-5. `37d7894` — Data rebuild with cleaned pollution + title lumens + scraper gains
-6. `7eb90ff` — Data rebuild with Streamlight/Skilhunt/Lumintop/FourSevens gains
-7. `815d636` — AI parser implementation (OpenRouter/Haiku)
-8. `8228e4e` — Data rebuild with AI parser gains
+### Shadow Verification Results (12 domains)
+| Domain | Entries | Grade | Key Finding |
+|--------|---------|-------|-------------|
+| batteryjunction | 2,605 | PARTIAL | Retailer spec table — switch extractable, LED/battery absent |
+| goinggear | 1,517 | PARTIAL | Clean key:value but missing LED/battery/dimensions |
+| nealsgadgets | 1,163 | GOOD | Rich bullets — LED, battery, switch extractable |
+| fenixlighting | 640 | GOOD | Structured spec block, nearly complete |
+| flashlightgo | 604 | GOOD | Full product descriptions, length only gap |
+| killzone | 468 | GOOD | LED model extractable, dimensions absent |
+| acebeam | 343 | GOOD | length present but not extracted (parser gap fixed) |
+| nitecorestore | 215 | PARTIAL | Short marketing copy only (~1,391 chars avg) |
+| nextorch | 156 | PARTIAL | Clean spec block but omits LED/switch/material |
+| armytek | 90 | GOOD | length in spec table (parser gap fixed with char increase) |
+| intl-outdoor | 58 | GOOD | LED/switch present, multi-variant format |
+| skilhunt | 39 | GOOD | 4/5 missing fields in text (boilerplate was hiding them) |
 
-### Remaining Coverage Gaps (structural)
-- length_mm (51.9% missing): Most retailer pages don't list dimensions
-- color (50.5% missing): Body color rarely in structured specs
-- led (50.3% missing): LED model names scattered in descriptions
-- throw_m (39.6% missing): Only on manufacturer spec sheets
-- switch (37.1% missing): Rarely in structured data
-- material (34.6% missing): Usually in descriptions, not spec tables
+### AI Parser Run (in progress)
+- Full re-parse of 10,911 entries with improved parser
+- Previous run: 3,587 processed, 1,816 enriched, 2,945 fields, $4.75 (Haiku)
+- Current run: using healer-alpha (free), processing ~25/min
+
+### Code Changes (this session)
+1. `be495b1` — feat: add bulk raw text fetcher for AI parser input
+2. `1eaf7ac` — fix: switch AI parser to healer-alpha, add SQLITE_BUSY retry
+3. `240353d` — feat: improve AI parser with boilerplate stripping and 8K char limit
 
 ### Next Steps
-1. Re-run AI parser after future scraper runs (new raw_spec_text entries)
-2. Headless browser for JS-rendered detail pages (Pelican individual products)
-3. More brand-specific extractors for remaining 0% brands
-4. SPA is built and deployed
+1. Wait for raw-fetch and AI parse to complete
+2. Run `bun run pipeline/cli.ts enrich` for FL1 derivation
+3. Rebuild data: `bun run pipeline/cli.ts build`
+4. Update stats and compare
+5. SPA rebuild: `bun run scripts/vite-cli.ts build`
