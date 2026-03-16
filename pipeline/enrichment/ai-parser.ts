@@ -11,7 +11,7 @@ import { getAllFlashlights, getRawSpecText, upsertFlashlight, getDb } from '../s
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'openrouter/healer-alpha';
-const MAX_INPUT_CHARS = 3000;
+const MAX_INPUT_CHARS = 8000;
 const RATE_LIMIT_MS = 600; // ~1.7 req/s
 
 /** System prompt: extraction-focused, no guessing */
@@ -130,16 +130,114 @@ async function callOpenRouter(
 	throw lastError ?? new Error('OpenRouter call failed');
 }
 
+/** Strip common navigation/footer boilerplate from raw page text */
+function stripBoilerplate(text: string): string {
+	const lines = text.split('\n');
+	const cleaned: string[] = [];
+	let inNav = false;
+	let foundProduct = false;
+
+	// Phase 1: Find the product content start by scanning for the product name or specs
+	// Common anchors: "Description", "Specifications", "Features", product model in title
+	let contentStartIdx = 0;
+	for (let i = 0; i < lines.length; i++) {
+		const t = lines[i].trim();
+		// WooCommerce/Shopify product sections typically start after nav
+		if (/^(Description|Specifications|Features|Technical|Overview|Product Details|Additional information)/i.test(t)) {
+			contentStartIdx = i;
+			break;
+		}
+		// Long paragraph with spec keywords = product content
+		if (t.length > 100 && /\b(lumen|beam|battery|LED|waterproof|ANSI|candela|runtime|throw)\b/i.test(t)) {
+			contentStartIdx = i;
+			break;
+		}
+		// "Add to cart" / "Add to wishlist" precedes product description on many stores
+		if (/^Add to (cart|wishlist|bag)/i.test(t)) {
+			contentStartIdx = i + 1;
+			// Don't break — keep scanning for better anchor
+		}
+	}
+
+	// Phase 2: Scan from content start, skip nav/footer lines
+	for (let i = contentStartIdx; i < lines.length; i++) {
+		const trimmed = lines[i].trim();
+
+		// Skip empty lines (collapse runs)
+		if (trimmed === '') {
+			if (cleaned.length > 0 && cleaned[cleaned.length - 1] === '') continue;
+			cleaned.push('');
+			continue;
+		}
+
+		// Skip navigation/menu items: short lines that look like nav links
+		if (!foundProduct && trimmed.length < 30 && /^(Home|Shop|Cart|Account|Login|Sign [Ii]n|Register|Search|Menu|Close|Skip to)/i.test(trimmed)) {
+			continue;
+		}
+
+		// Skip ecommerce UI elements
+		if (/^(Choose an option|Select options|Add to (cart|wishlist)|Quantity|SKU:|Category:|Tags?:|\$\d|Quick View|Share|Tweet|Pin)/i.test(trimmed)) {
+			continue;
+		}
+
+		// Skip currency/language selectors
+		if (/^(Select your currency|USD |EUR |GBP |AUD |CAD |CNY )/i.test(trimmed)) {
+			break; // Usually in footer
+		}
+
+		// Footer markers — stop processing
+		if (/^(Copyright|©|\d{4} All Rights|Privacy Policy|Terms of (Service|Use)|Sitemap|Customer Service|Contact Us|Returns Policy|Shipping Info|Footer|Powered by)/i.test(trimmed)) {
+			break;
+		}
+
+		// Social media footer
+		if (/^(Facebook|Twitter|Instagram|YouTube|LinkedIn|Pinterest|TikTok)\s*$/i.test(trimmed)) {
+			continue;
+		}
+
+		// "Related Products" or "You may also like" — stop, everything after is noise
+		if (/^(Related Products|You may also like|Customers also viewed|Recently Viewed|Similar Products)/i.test(trimmed)) {
+			break;
+		}
+
+		// Review sections — stop (already have review data separately)
+		if (/^\d+ reviews? for /i.test(trimmed)) {
+			break;
+		}
+
+		// Mark that we've found product content
+		if (/\b(lumen|LED|battery|beam|throw|waterproof|runtime|candela|specification|feature)\b/i.test(trimmed)) {
+			foundProduct = true;
+		}
+
+		cleaned.push(lines[i]);
+	}
+
+	return cleaned.join('\n').trim();
+}
+
 /** Build user prompt from entry data and raw text segments */
 function buildUserPrompt(
 	entry: FlashlightEntry,
 	rawTexts: { category: string; text_content: string }[],
 	missingFields: string[],
 ): string {
-	// Combine raw text segments with category labels
+	// Sort segments: 'specs' first, then by text length descending — prioritize quality data
+	const sortedTexts = [...rawTexts].sort((a, b) => {
+		if (a.category === 'specs' && b.category !== 'specs') return -1;
+		if (b.category === 'specs' && a.category !== 'specs') return 1;
+		return b.text_content.length - a.text_content.length;
+	});
+
+	// Combine raw text segments with category labels, stripping boilerplate
 	let combinedText = '';
-	for (const segment of rawTexts) {
-		combinedText += `[${segment.category.toUpperCase()}]\n${segment.text_content}\n\n`;
+	for (const segment of sortedTexts) {
+		const cleanedText = segment.category === 'specs'
+			? segment.text_content  // specs category already curated by detail scraper
+			: stripBoilerplate(segment.text_content);
+		if (cleanedText.length > 30) { // Skip nearly-empty segments after cleaning
+			combinedText += `[${segment.category.toUpperCase()}]\n${cleanedText}\n\n`;
+		}
 	}
 
 	// Truncate to max chars
@@ -538,13 +636,11 @@ export async function aiParseAllEntries(options: {
 
 			// Progress report every 25 items
 			if (processCount % 25 === 0) {
-				const costIn = (result.inputTokens / 1_000_000) * 0.80;
-				const costOut = (result.outputTokens / 1_000_000) * 4.0;
-				const totalCost = costIn + costOut;
+				const kTokens = ((result.inputTokens + result.outputTokens) / 1000).toFixed(1);
 				console.log(
 					`  Progress: ${processCount}/${Math.min(flashlightIds.length, maxItems)} processed, ` +
 					`${result.enriched} enriched (+${result.fieldsAdded} fields), ` +
-					`${result.errors} errors, est. cost: $${totalCost.toFixed(3)}`,
+					`${result.errors} errors, ${kTokens}K tokens`,
 				);
 			}
 
