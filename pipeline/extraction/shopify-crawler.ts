@@ -7,7 +7,7 @@
  */
 import { generateId } from '../schema/canonical.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
-import { upsertFlashlight, addSource, countFlashlights } from '../store/db.js';
+import { upsertFlashlight, addSource, addRawSpecText, countFlashlights } from '../store/db.js';
 import { htmlToText } from './manufacturer-scraper.js';
 
 const CRAWL_DELAY = 800; // ms between requests
@@ -1216,6 +1216,12 @@ export async function crawlShopifyStore(store: ShopifyStore): Promise<{
 					scraped_at: new Date().toISOString(),
 					confidence: 0.9,
 				});
+				// Save body_html as raw spec text for AI parsing (especially useful for
+				// JS-rendered stores like Pelican where detail scraper can't extract specs)
+				const bodyText = product.body_html ? htmlToText(product.body_html) : '';
+				if (bodyText.length > 50) {
+					addRawSpecText(entry.id, `${publicUrl}/products/${product.handle}`, 'specs', bodyText);
+				}
 				saved++;
 			} catch {
 				// Skip entries that violate unique constraints (duplicate brand+model+led)

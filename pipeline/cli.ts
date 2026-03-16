@@ -74,6 +74,9 @@ async function main(): Promise<void> {
 		case 'images':
 			await cmdImages();
 			break;
+		case 'ai-parse':
+			await cmdAiParse();
+			break;
 		case 'run':
 			await cmdRun();
 			break;
@@ -98,6 +101,7 @@ Commands:
   search <q>     Search flashlights by text query
   check-dupes    Check for duplicate entries
   verify-all     Run full verification suite
+  ai-parse [n]   AI-extract specs from raw_spec_text (n = max items, --dry-run, --brand=X, --min-missing=N)
   run            Run full pipeline (discover → scrape → enrich → build)
 `);
 	}
@@ -476,6 +480,45 @@ async function cmdRun(): Promise<void> {
 	// Step 6: Verify
 	console.log('\nStep 6: Verification...');
 	await cmdVerifyAll();
+}
+
+/** AI-extract specs from raw_spec_text using OpenRouter */
+async function cmdAiParse(): Promise<void> {
+	const maxItems = parseInt(process.argv[3] || '500', 10);
+	const dryRun = process.argv.includes('--dry-run');
+	const brandFlag = process.argv.find((a) => a.startsWith('--brand='));
+	const brand = brandFlag?.split('=')[1];
+	const minMissingFlag = process.argv.find((a) => a.startsWith('--min-missing='));
+	const minMissing = minMissingFlag ? parseInt(minMissingFlag.split('=')[1], 10) : 1;
+
+	const apiKey = process.env.OPENROUTER_API_KEY;
+	if (!apiKey) {
+		console.error('Error: OPENROUTER_API_KEY not set. Run: source ~/.secrets');
+		process.exit(1);
+	}
+
+	console.log(`=== AI Spec Parser${dryRun ? ' (DRY RUN)' : ''} ===`);
+	console.log(`  Max items: ${maxItems}, min missing: ${minMissing}${brand ? `, brand: ${brand}` : ''}\n`);
+
+	// Lazy import to avoid loading when running other commands
+	const { aiParseAllEntries } = await import('./enrichment/ai-parser.js');
+
+	const result = await aiParseAllEntries({ apiKey, maxItems, dryRun, brand, minMissing });
+
+	const costIn = (result.inputTokens / 1_000_000) * 0.80;
+	const costOut = (result.outputTokens / 1_000_000) * 4.0;
+	const totalCost = costIn + costOut;
+
+	console.log(`\n=== AI Parse Results ===`);
+	console.log(`  Processed: ${result.processed}`);
+	console.log(`  Enriched:  ${result.enriched}`);
+	console.log(`  Fields added: ${result.fieldsAdded}`);
+	console.log(`  Skipped:   ${result.skipped}`);
+	console.log(`  Errors:    ${result.errors}`);
+	if (!dryRun) {
+		console.log(`  Tokens:    ${result.inputTokens} in / ${result.outputTokens} out`);
+		console.log(`  Est. cost: $${totalCost.toFixed(3)}`);
+	}
 }
 
 main().catch((err) => {
