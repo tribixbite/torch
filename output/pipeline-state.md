@@ -1,45 +1,45 @@
 # Pipeline State — 2026-03-15
 
-## Current Status: Detail scraping in progress
+## Current Status: Detail scraping complete, data rebuilt
 
-### Coverage (11,805 entries, after pollution cleanup)
-| Field | Coverage | Notes |
-|-------|----------|-------|
-| lumens | 81.2% | |
-| throw_m | 58.9% | |
-| intensity_cd | 58.4% | |
-| runtime | 58.7% | |
-| length_mm | 44.7% | biggest gap |
-| weight_g | 89.2% | good |
-| led | 47.4% | cleaned 3+ LED pollution |
-| material | 60.3% | cleaned 3+ material pollution |
-| switch | 58.2% | cleaned 3+ switch pollution |
-| battery | 70.9% | cleaned 5+ battery pollution |
-| color | 45.9% | |
-| features | 78.4% | good |
-| price | 95.1% | excellent |
+### Coverage (11,805 entries)
+| Field | Coverage | Delta vs start |
+|-------|----------|----------------|
+| lumens | 84.9% | +3.7% |
+| throw_m | 59.0% | +0.1% |
+| intensity_cd | 58.9% | +0.5% |
+| runtime | 60.0% | +1.3% |
+| length_mm | 46.1% | +1.4% |
+| weight_g | 89.0% | -0.2% |
+| led | 47.5% | +0.1% |
+| material | 61.1% | +0.8% |
+| switch | 60.3% | +2.1% |
+| battery | 71.0% | +0.1% |
+| color | 46.6% | +0.7% |
+| features | 79.5% | +1.1% |
+| price | 95.1% | 0.0% |
 
-Fully valid: 335 entries (2.8%)
+Fully valid: 360 entries (3.0%)
 
-### Completed Scraper Runs
-| Brand | Entries | Enriched | Notes |
-|-------|---------|----------|-------|
-| Fenix | 1100/1485 | 581 | Previous session, no --force |
-| Maglite | 233/233 | 20 | Complete |
-| Klarus | 317/327 | 45 | Complete |
-| Ledlenser | 326/331 | 64 | Complete |
-| Armytek | 200/200 | ~30 | Previous session |
-| Nitecore | 225/859 | 65 | Previous session |
+### Completed Scraper Runs (all brands)
+| Brand | Scraped | Enriched | Rate | Notes |
+|-------|---------|----------|------|-------|
+| Fenix | 1100/1485 | 581 | 53% | Previous session |
+| Streamlight | 342/344 | 259 | 76% | Best rate, structured extractor |
+| Nightstick | 337/337 | 123 | 37% | Complete |
+| Lumintop | 439/454 | 101 | 23% | Complete |
+| Nextorch | 229/237 | 92 | 40% | New structured extractor |
+| Nitecore | 225/859 | 65 | 29% | Partial, retailer URLs only |
+| Ledlenser | 326/331 | 64 | 20% | Complete |
+| Klarus | 317/327 | 45 | 14% | Complete |
+| FourSevens | 171/173 | 36 | 21% | Many accessories in data |
+| Skilhunt | 85/101 | 33 | 39% | Complete |
+| Armytek | 200/200 | ~30 | 15% | Previous session |
+| Maglite | 233/233 | 20 | 9% | Complete |
 
-### Active Scrapers (with --force)
-| Brand | Progress | Enriched | Notes |
-|-------|----------|----------|-------|
-| Nightstick | 225/337 | 71 | Good enrichment rate |
-| Lumintop | 200/454 | 55 | Good enrichment rate |
-| Nextorch | 75/237 | 17 | Using generic regex |
-| Fenix | 375/1485 | 11 | Mostly retailer URLs, low yield |
-| Nitecore | 100/859 | 10 | matchAll fix helping |
-| Rovyvon | 0/231 | 0 | Just started with new extractor |
+### Brands with 0 enrichment (killed early)
+Pelican (JS-rendered), Weltool, Princeton Tec, EagleTac, SureFire, Wuben,
+Imalent, Emisar, PowerTac, Convoy, Malkoff, JETBeam, Olight, Acebeam
 
 ### Data Quality Fixes Applied
 1. Cleaned 654 entries with 4+ materials (page-level pollution)
@@ -47,19 +47,28 @@ Fully valid: 335 entries (2.8%)
 3. Cleaned 457 entries with 5+ battery types (page-level pollution)
 4. Cleaned 388 entries with 3+ LEDs (page-level pollution)
 5. Cleaned 310 entries with 3+ switch types (page-level pollution)
-6. Fixed Olight Baton 3 Pro lumens concatenation bug (600120 → [1500,600,120,15,5])
-7. Fixed Acebeam H17 lumens concatenation bug (750400 → [2000,750,400,300,110,20,1])
-8. Cleaned false throw values from year/mAh parsing (Fenix E05, FourSevens, Malkoff)
+6. Fixed lumens concatenation bugs (Olight Baton 3 Pro, Acebeam H17)
+7. Cleaned false throw values from year/mAh parsing
+8. DB array size caps: led≤2, battery≤4, material≤2, switch≤2
 
-### Code Changes This Session
+### Code Changes
 1. `6aba512` — Nitecore matchAll for mode tables, hyphenated throw/impact, days runtime
 2. `6c5e814` — Nextorch/RovyVon extractors, DB array size caps
 3. `bef0ba5` — Allow 2000m+ throw on labeled patterns, fix mAh lookahead
+4. `c51dae6` — Extract lumens from product titles in enrichment pipeline
+5. `37d7894` — Data rebuild with cleaned pollution + title lumens + scraper gains
+6. `7eb90ff` — Data rebuild with Streamlight/Skilhunt/Lumintop/FourSevens gains
 
-### Remaining Work
-1. Wait for active scrapers to finish
-2. Re-run Nextorch/Rovyvon with new extractors (if 0 enrichment from old code)
-3. Run `bun run pipeline/cli.ts enrich` for FL1 derivation
-4. Run `bun run pipeline/cli.ts build && bun run pipeline/cli.ts stats`
-5. Build SPA: `bun run scripts/vite-cli.ts build`
-6. Commit rebuilt data
+### Remaining Coverage Gaps (structural)
+- length_mm (53.9% missing): Most retailer pages don't list dimensions
+- color (53.4% missing): Body color rarely in structured specs
+- led (52.5% missing): LED model names scattered in descriptions
+- throw_m (41.0% missing): Only on manufacturer spec sheets
+- switch (39.7% missing): Rarely in structured data
+- material (38.9% missing): Usually in descriptions, not spec tables
+
+### Next Steps
+1. Consider headless browser for JS-rendered sites (Pelican, Olight store)
+2. Build more brand-specific structured extractors for high-value targets
+3. Evaluate AI-assisted extraction from raw_spec_text table
+4. SPA is built and deployed
