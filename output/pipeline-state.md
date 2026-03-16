@@ -1,25 +1,32 @@
-# Pipeline State — 2026-03-15
+# Pipeline State — 2026-03-16
 
-## Current Status: Detail scraping complete, data rebuilt
+## Current Status: AI parser complete, data rebuilt
 
 ### Coverage (11,805 entries)
-| Field | Coverage | Delta vs start |
-|-------|----------|----------------|
-| lumens | 84.9% | +3.7% |
-| throw_m | 59.0% | +0.1% |
-| intensity_cd | 58.9% | +0.5% |
-| runtime | 60.0% | +1.3% |
-| length_mm | 46.1% | +1.4% |
-| weight_g | 89.0% | -0.2% |
-| led | 47.5% | +0.1% |
-| material | 61.1% | +0.8% |
-| switch | 60.3% | +2.1% |
-| battery | 71.0% | +0.1% |
-| color | 46.6% | +0.7% |
-| features | 79.5% | +1.1% |
-| price | 95.1% | 0.0% |
+| Field | Coverage | Delta (AI parser) | Delta (total) |
+|-------|----------|-------------------|---------------|
+| lumens | 85.4% | +0.5% | +4.2% |
+| throw_m | 60.4% | +1.4% | +1.5% |
+| intensity_cd | 58.9% | — | +0.5% |
+| runtime | 62.2% | +2.2% | +3.5% |
+| length_mm | 48.1% | +2.0% | +3.4% |
+| weight_g | 89.9% | +0.9% | +0.7% |
+| led | 49.7% | +2.2% | +2.3% |
+| material | 65.4% | +4.3% | +5.1% |
+| switch | 62.9% | +2.6% | +4.7% |
+| battery | 74.5% | +3.5% | +3.6% |
+| color | 49.5% | +2.9% | +3.6% |
+| features | 81.7% | +2.2% | +3.3% |
+| price | 95.1% | 0.0% | 0.0% |
 
-Fully valid: 360 entries (3.0%)
+Fully valid: 579 entries (4.9%) — was 360 (3.0%)
+
+### AI Parser Results
+- **3,587 entries processed** (all with raw_spec_text + missing fields)
+- **1,816 enriched** (51% hit rate)
+- **2,945 fields added** (~1.6 fields per enriched entry)
+- **0 errors**, $4.75 total cost via OpenRouter/Haiku
+- Shopify body_html now saved as raw_spec_text for all stores (including Pelican)
 
 ### Completed Scraper Runs (all brands)
 | Brand | Scraped | Enriched | Rate | Notes |
@@ -36,10 +43,7 @@ Fully valid: 360 entries (3.0%)
 | Skilhunt | 85/101 | 33 | 39% | Complete |
 | Armytek | 200/200 | ~30 | 15% | Previous session |
 | Maglite | 233/233 | 20 | 9% | Complete |
-
-### Brands with 0 enrichment (killed early)
-Pelican (JS-rendered), Weltool, Princeton Tec, EagleTac, SureFire, Wuben,
-Imalent, Emisar, PowerTac, Convoy, Malkoff, JETBeam, Olight, Acebeam
+| Pelican | 84/855 | via AI | — | Shopify JSON + AI parser |
 
 ### Data Quality Fixes Applied
 1. Cleaned 654 entries with 4+ materials (page-level pollution)
@@ -58,17 +62,19 @@ Imalent, Emisar, PowerTac, Convoy, Malkoff, JETBeam, Olight, Acebeam
 4. `c51dae6` — Extract lumens from product titles in enrichment pipeline
 5. `37d7894` — Data rebuild with cleaned pollution + title lumens + scraper gains
 6. `7eb90ff` — Data rebuild with Streamlight/Skilhunt/Lumintop/FourSevens gains
+7. `815d636` — AI parser implementation (OpenRouter/Haiku)
+8. `8228e4e` — Data rebuild with AI parser gains
 
 ### Remaining Coverage Gaps (structural)
-- length_mm (53.9% missing): Most retailer pages don't list dimensions
-- color (53.4% missing): Body color rarely in structured specs
-- led (52.5% missing): LED model names scattered in descriptions
-- throw_m (41.0% missing): Only on manufacturer spec sheets
-- switch (39.7% missing): Rarely in structured data
-- material (38.9% missing): Usually in descriptions, not spec tables
+- length_mm (51.9% missing): Most retailer pages don't list dimensions
+- color (50.5% missing): Body color rarely in structured specs
+- led (50.3% missing): LED model names scattered in descriptions
+- throw_m (39.6% missing): Only on manufacturer spec sheets
+- switch (37.1% missing): Rarely in structured data
+- material (34.6% missing): Usually in descriptions, not spec tables
 
 ### Next Steps
-1. Consider headless browser for JS-rendered sites (Pelican, Olight store)
-2. Build more brand-specific structured extractors for high-value targets
-3. Evaluate AI-assisted extraction from raw_spec_text table
+1. Re-run AI parser after future scraper runs (new raw_spec_text entries)
+2. Headless browser for JS-rendered detail pages (Pelican individual products)
+3. More brand-specific extractors for remaining 0% brands
 4. SPA is built and deployed
