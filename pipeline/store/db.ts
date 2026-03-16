@@ -18,6 +18,7 @@ export function getDb(): Database {
 		Bun.spawnSync(['mkdir', '-p', dir]);
 		_db = new Database(DB_PATH, { create: true });
 		_db.exec('PRAGMA journal_mode = WAL');
+		_db.exec('PRAGMA busy_timeout = 10000'); // Wait up to 10s for concurrent writes
 		_db.exec('PRAGMA foreign_keys = ON');
 		initSchema(_db);
 	}

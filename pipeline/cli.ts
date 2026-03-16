@@ -77,6 +77,9 @@ async function main(): Promise<void> {
 		case 'ai-parse':
 			await cmdAiParse();
 			break;
+		case 'raw-fetch':
+			await cmdRawFetch();
+			break;
 		case 'run':
 			await cmdRun();
 			break;
@@ -102,6 +105,7 @@ Commands:
   check-dupes    Check for duplicate entries
   verify-all     Run full verification suite
   ai-parse [n]   AI-extract specs from raw_spec_text (n = max items, --dry-run, --brand=X, --min-missing=N)
+  raw-fetch [n]  Bulk-fetch product pages for raw text (n = max items, --domain=X, --dry-run)
   run            Run full pipeline (discover → scrape → enrich → build)
 `);
 	}
@@ -518,6 +522,30 @@ async function cmdAiParse(): Promise<void> {
 	if (!dryRun) {
 		console.log(`  Tokens:    ${result.inputTokens} in / ${result.outputTokens} out`);
 		console.log(`  Est. cost: $${totalCost.toFixed(3)}`);
+	}
+}
+
+async function cmdRawFetch(): Promise<void> {
+	const maxItems = parseInt(process.argv[3] || '500', 10);
+	const dryRun = process.argv.includes('--dry-run');
+	const domainFlag = process.argv.find((a) => a.startsWith('--domain='));
+	const domain = domainFlag?.split('=')[1];
+
+	console.log(`=== Raw Text Fetcher${dryRun ? ' (DRY RUN)' : ''} ===`);
+	console.log(`  Max items: ${maxItems}${domain ? `, domain: ${domain}` : ''}\n`);
+
+	const { fetchRawTextBatch } = await import('./extraction/raw-text-fetcher.js');
+	const result = await fetchRawTextBatch({ maxItems, domain, dryRun });
+
+	console.log(`\n=== Raw Fetch Results ===`);
+	console.log(`  Processed: ${result.processed}`);
+	console.log(`  Saved:     ${result.saved}`);
+	console.log(`  Too short: ${result.tooShort} (candidates for CFC headless scraping)`);
+	console.log(`  Errors:    ${result.errors}`);
+
+	if (result.skippedDomains && result.skippedDomains.length > 0) {
+		console.log(`\n  Skipped domains (need CFC headless):`);
+		result.skippedDomains.forEach((d) => console.log(`    ${d}`));
 	}
 }
 
