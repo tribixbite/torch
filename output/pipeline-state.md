@@ -39,11 +39,15 @@ Fully valid: **1,327 entries (12.3%)** — up from 1,252 (11.7%)
 - Features from raw text: +860 entries (clip, waterproof, rechargeable, strobe, SOS, lanyard, etc.)
 - Color from raw text: +47 entries
 
-#### Feat: Pelican structured specs scrape
-- Discovered www.pelican.com serves full FL1 spec tables in static HTML
-- Scraped 50 product pages via curl (Cloudflare blocks bun fetch)
-- 92 entries enriched, 369 fields added (length, switch, material, battery, FL1 data)
-- Also imported 83 products from Shopify JSON API (price, weight, color)
+#### Feat: Pelican catalog crawler (catalog-crawler.ts)
+- Added full Pelican crawler to catalog-crawler.ts CRAWLERS array
+- Scrapes www.pelican.com/us/en/product/flashlights/* (50 products, 100% success)
+- Uses `fetchWithCurl()` to bypass Cloudflare TLS fingerprinting (bun fetch gets 403)
+- Extracts: product-specs-table (battery, switch, material, length, weight, modes)
+- Extracts: ANSI FL1 table (lumens per mode, runtime, throw, candela, IPX, drop)
+- Extracts: JSON-LD pricing, Vue :product prop (colors, Shopify purchase URLs, images)
+- All 50 entries have lumens, throw, battery, switch, material, weight, length, price
+- Pelican brand now at 220 total entries, 50 from manufacturer site with complete specs
 
 ### Previous Session Work (2026-03-16)
 
