@@ -83,6 +83,12 @@ async function main(): Promise<void> {
 		case 'run':
 			await cmdRun();
 			break;
+		case 'run-full':
+			await cmdRunFull();
+			break;
+		case 'woocommerce':
+			await cmdWooCommerce();
+			break;
 		default:
 			console.log(`
 Pipeline CLI — torch flashlight data aggregation
@@ -104,9 +110,11 @@ Commands:
   search <q>     Search flashlights by text query
   check-dupes    Check for duplicate entries
   verify-all     Run full verification suite
-  ai-parse [n]   AI-extract specs from raw_spec_text (n = max items, --dry-run, --brand=X, --min-missing=N)
+  ai-parse [n]   AI-extract specs from raw_spec_text (n = max items, --dry-run, --brand=X, --min-missing=N, --source=reviews|retailers|manufacturers)
   raw-fetch [n]  Bulk-fetch product pages for raw text (n = max items, --domain=X, --dry-run)
   run            Run full pipeline (discover → scrape → enrich → build)
+  run-full       Run complete pipeline: shopify → woo → detail → raw-fetch → reviews → ai-parse → enrich → build → stats
+  woocommerce [brand]  Crawl WooCommerce stores
 `);
 	}
 
@@ -495,6 +503,9 @@ async function cmdAiParse(): Promise<void> {
 	const minMissingFlag = process.argv.find((a) => a.startsWith('--min-missing='));
 	const minMissing = minMissingFlag ? parseInt(minMissingFlag.split('=')[1], 10) : 1;
 
+	const sourceFlag = process.argv.find((a) => a.startsWith('--source='));
+	const source = sourceFlag?.split('=')[1] as 'all' | 'reviews' | 'retailers' | 'manufacturers' | undefined;
+
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
 		console.error('Error: OPENROUTER_API_KEY not set. Run: source ~/.secrets');
@@ -502,12 +513,12 @@ async function cmdAiParse(): Promise<void> {
 	}
 
 	console.log(`=== AI Spec Parser${dryRun ? ' (DRY RUN)' : ''} ===`);
-	console.log(`  Max items: ${maxItems}, min missing: ${minMissing}${brand ? `, brand: ${brand}` : ''}\n`);
+	console.log(`  Max items: ${maxItems}, min missing: ${minMissing}${brand ? `, brand: ${brand}` : ''}${source ? `, source: ${source}` : ''}\n`);
 
 	// Lazy import to avoid loading when running other commands
 	const { aiParseAllEntries } = await import('./enrichment/ai-parser.js');
 
-	const result = await aiParseAllEntries({ apiKey, maxItems, dryRun, brand, minMissing });
+	const result = await aiParseAllEntries({ apiKey, maxItems, dryRun, brand, minMissing, source });
 
 	const costIn = (result.inputTokens / 1_000_000) * 0.80;
 	const costOut = (result.outputTokens / 1_000_000) * 4.0;
@@ -547,6 +558,78 @@ async function cmdRawFetch(): Promise<void> {
 		console.log(`\n  Skipped domains (need CFC headless):`);
 		result.skippedDomains.forEach((d) => console.log(`    ${d}`));
 	}
+}
+
+/** Crawl WooCommerce stores */
+async function cmdWooCommerce(): Promise<void> {
+	const brandArg = process.argv[3];
+	if (brandArg) {
+		const store = WOOCOMMERCE_STORES.find((s) => s.brand.toLowerCase() === brandArg.toLowerCase());
+		if (!store) {
+			console.log(`No WooCommerce store configured for ${brandArg}`);
+			console.log(`Available: ${WOOCOMMERCE_STORES.map((s) => s.brand).join(', ')}`);
+			return;
+		}
+		console.log(`=== WooCommerce Crawl: ${store.brand} ===\n`);
+		const result = await crawlWooStore(store);
+		console.log(`\nResult: ${result.saved} saved, ${result.skipped} skipped out of ${result.total}`);
+	} else {
+		console.log('=== Crawling All WooCommerce Stores ===\n');
+		console.log(`Stores: ${WOOCOMMERCE_STORES.map((s) => s.brand).join(', ')}\n`);
+		const result = await crawlAllWooStores();
+		console.log(`\nTotal saved: ${result.totalSaved}`);
+		for (const [brand, count] of Object.entries(result.byBrand)) {
+			console.log(`  ${brand}: ${count}`);
+		}
+		console.log(`\nTotal flashlights in DB: ${countFlashlights()}`);
+	}
+}
+
+/** Run full orchestrated pipeline — all steps in sequence */
+async function cmdRunFull(): Promise<void> {
+	const shadow = process.argv.includes('--shadow');
+	console.log(`=== Full Orchestrated Pipeline${shadow ? ' (with shadow verification)' : ''} ===\n`);
+
+	const step = (n: number, label: string) => console.log(`\n${'='.repeat(60)}\n  Step ${n}: ${label}\n${'='.repeat(60)}\n`);
+
+	// Step 1: Crawl Shopify stores
+	step(1, 'Shopify store crawl');
+	await cmdShopify();
+
+	// Step 2: Crawl WooCommerce stores
+	step(2, 'WooCommerce store crawl');
+	const wooResult = await crawlAllWooStores();
+	console.log(`WooCommerce: ${wooResult.totalSaved} saved`);
+
+	// Step 3: Detail scrape for missing specs
+	step(3, 'Detail scraping HTML product pages');
+	await cmdDetailScrape();
+
+	// Step 4: Raw text fetch for new entries
+	step(4, 'Raw text fetch (bulk)');
+	await cmdRawFetch();
+
+	// Step 5: Review site scraping
+	step(5, 'Review site scraping (all sites)');
+	await cmdReviews();
+
+	// Step 6: AI parse (all sources, entries with ≥1 missing field)
+	step(6, 'AI parsing all entries with missing fields');
+	await cmdAiParse();
+
+	// Step 7: FL1 derivation + title enrichment
+	step(7, 'Enrichment (FL1 derivation + title extraction)');
+	await cmdEnrich();
+
+	// Step 8: Build JSON output
+	step(8, 'Building FlashlightDB JSON');
+	await cmdBuild();
+
+	// Step 9: Final stats
+	step(9, 'Pipeline statistics');
+	cmdStats();
+
+	console.log('\n=== Full pipeline complete ===');
 }
 
 main().catch((err) => {

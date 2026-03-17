@@ -8,6 +8,7 @@
 import { ExtractionResultSchema, hasRequiredAttributes } from '../schema/canonical.js';
 import type { FlashlightEntry, ExtractionResult } from '../schema/canonical.js';
 import { getAllFlashlights, getRawSpecText, upsertFlashlight, getDb } from '../store/db.js';
+import { classifySourceUrl } from '../store/brand-aliases.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'openrouter/healer-alpha';
@@ -456,9 +457,39 @@ function mergeIntoEntry(entry: FlashlightEntry, extracted: Partial<ExtractionRes
 	return fieldsAdded;
 }
 
-/** Get flashlight IDs that have raw spec text entries */
-function getFlashlightIdsWithRawText(brand?: string): string[] {
+/** Source filter type for AI parsing — filter raw_spec_text by domain category */
+export type SourceFilter = 'all' | 'reviews' | 'retailers' | 'manufacturers';
+
+/** Get flashlight IDs that have raw spec text entries, optionally filtered by source type */
+function getFlashlightIdsWithRawText(brand?: string, source?: SourceFilter): string[] {
 	const db = getDb();
+
+	if (source && source !== 'all') {
+		// When filtering by source, we need to get IDs from raw_spec_text entries
+		// whose source_url matches the requested domain category
+		let query = `
+			SELECT DISTINCT r.flashlight_id, r.source_url FROM raw_spec_text r
+			JOIN flashlights f ON f.id = r.flashlight_id
+		`;
+		const params: Record<string, unknown> = {};
+		if (brand) {
+			query += ` WHERE LOWER(f.brand) = LOWER($brand)`;
+			params.$brand = brand;
+		}
+		query += ' ORDER BY r.flashlight_id';
+		const rows = db.prepare(query).all(params) as { flashlight_id: string; source_url: string }[];
+
+		// Filter by source URL classification in application code
+		const matchingIds = new Set<string>();
+		for (const row of rows) {
+			if (classifySourceUrl(row.source_url) === source) {
+				matchingIds.add(row.flashlight_id);
+			}
+		}
+		return [...matchingIds];
+	}
+
+	// No source filter — original behavior
 	let query = `
 		SELECT DISTINCT r.flashlight_id FROM raw_spec_text r
 		JOIN flashlights f ON f.id = r.flashlight_id
@@ -548,8 +579,9 @@ export async function aiParseAllEntries(options: {
 	dryRun?: boolean;
 	brand?: string;
 	minMissing?: number;
+	source?: SourceFilter;
 }): Promise<AiParseResult> {
-	const { apiKey, maxItems = Infinity, dryRun = false, brand, minMissing = 1 } = options;
+	const { apiKey, maxItems = Infinity, dryRun = false, brand, minMissing = 1, source } = options;
 
 	const result: AiParseResult = {
 		processed: 0,
@@ -562,8 +594,9 @@ export async function aiParseAllEntries(options: {
 	};
 
 	// Get flashlight IDs that have raw spec text
-	const flashlightIds = getFlashlightIdsWithRawText(brand);
-	console.log(`  Found ${flashlightIds.length} flashlights with raw spec text${brand ? ` (brand: ${brand})` : ''}`);
+	const flashlightIds = getFlashlightIdsWithRawText(brand, source);
+	const sourceLabel = source && source !== 'all' ? `, source: ${source}` : '';
+	console.log(`  Found ${flashlightIds.length} flashlights with raw spec text${brand ? ` (brand: ${brand})` : ''}${sourceLabel}`);
 
 	let processCount = 0;
 	let errorStreak = 0;
