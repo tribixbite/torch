@@ -1,25 +1,47 @@
 # Pipeline State — 2026-03-17
 
-## Current Status: Review scrapers + pattern expansion — 29.4% valid
+## Current Status: Pattern expansion + review scrapers + AI re-parse — 30.8% valid
 
 ### Coverage (10,775 entries)
 | Field | Current | Previous | Δ |
 |-------|---------|----------|---|
-| lumens | 80.9% | 80.9% | — |
-| throw_m | 69.9% | 69.0% | +0.9% |
-| runtime | 64.1% | 63.4% | +0.7% |
-| length_mm | 71.9% | 71.8% | +0.1% |
+| lumens | 83.3% | 80.9% | +2.4% |
+| throw_m | 69.5% | 69.9% | -0.4%* |
+| runtime | 64.1% | 64.1% | — |
+| length_mm | 71.9% | 71.9% | — |
 | weight_g | 91.1% | 91.1% | — |
-| led | 67.1% | 66.9% | +0.2% |
+| led | 67.2% | 67.1% | +0.1% |
 | battery | 87.5% | 87.5% | — |
-| switch | 82.5% | 79.7% | +2.8% |
-| material | 79.3% | 79.2% | +0.1% |
+| switch | 82.6% | 82.5% | +0.1% |
+| material | 79.3% | 79.3% | — |
 | color | 80.1% | 80.1% | — |
 | features | 90.8% | 90.8% | — |
-| price | 93.9% | 93.9% | — |
-| purchase_url | 90.8% | 90.8% | — |
+| price | 94.0% | 93.9% | +0.1% |
+| purchase_url | 99.5% | 90.8% | +8.7% |
 
-Fully valid: **3,172 entries (29.4%)** — up from 3,006 (27.9%)
+*throw recalculated with stricter >0 check
+
+Fully valid: **3,318 entries (30.8%)** — up from 3,172 (29.4%)
+
+### Near-Valid Distribution (entries missing N fields)
+| Missing | Count | Cumulative |
+|---------|-------|------------|
+| 0 | 3,318 | 3,318 (30.8%) |
+| 1 | 2,375 | 5,693 (52.8%) |
+| 2 | 1,473 | 7,166 (66.5%) |
+| 3 | 919 | 8,085 (75.0%) |
+
+### Single-Field Blockers (2,375 entries missing exactly 1 field)
+| Blocker | Count | Fillable? |
+|---------|-------|-----------|
+| runtime | 614 | Hard — not in text for most |
+| led | 476 | Hard — brands don't publish emitter |
+| color | 363 | Hard — vision pipeline already ran |
+| throw | 325 | Medium — FL1 data from reviews |
+| length | 196 | Medium — some in structured pages |
+| material | 156 | Medium — some in structured pages |
+| price | 99 | Medium — need retailer cross-ref |
+| switch | 97 | Medium — some in text patterns |
 
 ### Session 4 Work (2026-03-17)
 
@@ -37,9 +59,29 @@ Fully valid: **3,172 entries (29.4%)** — up from 3,006 (27.9%)
 - zakreviews: 31 reviews, 26 matched, 2 enriched
 - sammyshp: 100 reviews, 49 matched, 1 enriched
 - tgreviews: 161 reviews, 135 matched, 13 enriched
-- 1lumen: (running)
-- zeroair: (running)
+- 1lumen: 941 reviews, 681 matched, 85 enriched
+- zeroair: running (~516 raw text entries so far)
 - Most review data already present from raw text + AI parser
+
+#### Feat: Purchase URL population (Phase 6)
+- 868 entries had store source URLs but empty purchase_urls
+- Added isStoreUrl() helper with 40+ manufacturer/retailer domains
+- 962 entries enriched, purchase_url gap: 9.2% → 0.5%
+
+#### Feat: Lumens, throw, intensity patterns (Session 5)
+- Lumens: Battery Junction "Max Lumens\n100", Nightstick "High Lumens:", simple "N lumens"
+- Throw: "Peak Beam Distance" with decimals, feet→meters conversion
+- Intensity (candela): "NK Candela", "Peak Beam Intensity: X cd", "Lux at 1m"
+  → FL1 derivation computes throw_m from intensity_cd
+- 250 new lumens values, 51 new throw values
+
+#### AI re-parse: review text
+- 300 entries processed with review text + product text
+- Only 7 enriched — most data already extracted in prior passes
+- Marginal value from review text for entries already AI-parsed
+
+#### BLF scraper
+- 200 entries processed, 0 enriched (heavy 429 rate limiting)
 
 #### Investigation: Nightstick PDF spec sheets
 - 71 product pages have "Data Sheet" download links
