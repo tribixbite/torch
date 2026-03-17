@@ -424,7 +424,11 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 				detected.push(switchType);
 			}
 		}
-		if (detected.length > 0 && detected.length <= 2) {
+		// Dedup overlapping types: rotary + magnetic ring = same mechanism
+		if (detected.includes('rotary') && detected.includes('magnetic ring')) {
+			detected.splice(detected.indexOf('magnetic ring'), 1);
+		}
+		if (detected.length > 0 && detected.length <= 3) {
 			entry.switch = detected;
 			changed = true;
 		}

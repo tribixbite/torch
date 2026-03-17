@@ -242,12 +242,12 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 	const claimed = entry.performance?.claimed ?? {};
 
 	// Sanitize arrays to prevent page-level text pollution
-	// A single flashlight realistically has: 1-2 LEDs, 1-3 batteries, 1-2 materials, 1-2 switches
+	// A single flashlight realistically has: 1-2 LEDs, 1-3 batteries, 1-2 materials, 1-3 switches
 	const cap = (arr: unknown[], max: number): unknown[] => arr.length > max ? [] : arr;
 	const safeLed = cap(entry.led, 2);
 	const safeBattery = cap(entry.battery, 4);
 	const safeMaterial = cap(entry.material, 2);
-	const safeSwitch = cap(entry.switch, 2);
+	const safeSwitch = cap(entry.switch, 3);
 
 	stmt.run({
 		$id: entry.id,
