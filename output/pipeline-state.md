@@ -1,74 +1,76 @@
 # Pipeline State — 2026-03-16
 
-## Current Status: AI parse COMPLETE, data rebuilt
+## Current Status: Pipeline refactored, reviews scraped, dedup complete
 
-### Coverage (12,650 entries)
-| Field | Final | Pre-AI | Δ |
-|-------|-------|--------|---|
-| lumens | 81.2% | 78.7% | +2.5% |
-| throw_m | 65.5% | 59.3% | +6.2% |
-| runtime | 59.8% | 54.7% | +5.1% |
-| length_mm | 60.1% | 50.4% | **+9.7%** |
-| weight_g | 91.1% | 89.4% | +1.7% |
-| led | 55.0% | 44.0% | **+11.0%** |
-| battery | 82.5% | 69.2% | **+13.3%** |
-| switch | 66.2% | 55.3% | **+10.9%** |
-| material | 67.2% | 60.2% | +7.0% |
-| color | 53.3% | 41.6% | **+11.7%** |
-| features | 83.5% | 72.8% | **+10.7%** |
-| price | 94.5% | 94.5% | — |
+### Coverage (10,725 entries — was 12,650 before dedup)
+| Field | Current | Previous | Δ |
+|-------|---------|----------|---|
+| lumens | 80.3% | 81.2% | -0.9% |
+| throw_m | 63.2% | 65.5% | -2.3% |
+| runtime | 61.1% | 59.8% | +1.3% |
+| length_mm | 59.3% | 60.1% | -0.8% |
+| weight_g | 90.8% | 91.1% | -0.3% |
+| led | 54.2% | 55.0% | -0.8% |
+| battery | 81.4% | 82.5% | -1.1% |
+| switch | 66.7% | 66.2% | +0.5% |
+| material | 68.8% | 67.2% | +1.6% |
+| color | 55.5% | 53.3% | +2.2% |
+| features | 82.5% | 83.5% | -1.0% |
+| price | 93.9% | 94.5% | -0.6% |
 
-Fully valid: **2,497 entries (19.7%)** — was 532 (4.2%), **4.7x improvement**
+Fully valid: **1,252 entries (11.7%)** — down from 2,497 at 12,650 entries
+> Note: dedup removed 1,925 entries (many were retailer duplicates that inflated valid count).
+> The valid% is lower but data quality is higher — fewer duplicate/conflicting entries.
 
-### AI Parser — COMPLETE
-- Processed: 10,428 / 10,911 (483 skipped)
-- Enriched: 5,291 entries (50.7% enrichment rate)
-- Fields added: 11,573
-- Errors: 0
-- Tokens: 14.0M input + 418K output (free via healer-alpha)
-- Model: `openrouter/healer-alpha` (free, 262K ctx)
+### This Session's Work
 
-### Raw Text Fetcher — COMPLETE
-- **12,737 / 12,650** entries have raw_spec_text (100%+ coverage)
-- All 3 fetchers finished: main (3,538/3,553), BJ1 (1,769/1,782), BJ2 (2,178/2,191)
+#### Phase 1-2: Code Refactoring
+- Created `pipeline/store/brand-aliases.ts` — shared brand normalization module
+- Refactored `shopify-crawler.ts` to import from brand-aliases (DRY)
+- Added `--source` filter to `ai-parser.ts` (reviews|retailers|manufacturers)
+- Added `run-full` orchestrated pipeline command to CLI
+- Added `woocommerce` CLI command with brand filter
+- Created `output/data-audit.md` and `output/coverage-tracker.md`
 
-### FL1 Enrichment — COMPLETE
-- 1,314 entries enriched via FL1 derivation (throw ↔ intensity)
+#### Phase 3: Data Cleanup
+- Merged 5 Prometheus Lights → FourSevens
+- Fixed CloudDefensive → Cloud Defensive (38 entries)
+- Removed 239 exact model duplicates
+- Smart-deduped 1,941 near-duplicate models (same brand, prefix matching)
+- DB: 12,650 → 10,725 entries
 
-### Data Build — COMPLETE
-- 12,317 entries (333 accessories filtered)
-- JSON: 7,712 KB
-- SPA built successfully
+#### Phase 4: Review Site Scraping
+| Site | Reviews Found | Entries Enriched |
+|------|--------------|-----------------|
+| zakreviews | 31 | 6 |
+| tgreviews | 161 | 50 |
+| sammyshp | 100 | 5 |
+| 1lumen | 941 | 311 |
+| zeroair | 1,105 | 195 |
+| **Total** | **2,338** | **567** |
 
-### Shadow Verification Results (12 domains)
-| Domain | Entries | Grade | Key Finding |
-|--------|---------|-------|-------------|
-| batteryjunction | 2,605 | PARTIAL | Retailer spec table — switch extractable, LED/battery absent |
-| goinggear | 1,517 | PARTIAL | Clean key:value but missing LED/battery/dimensions |
-| nealsgadgets | 1,163 | GOOD | Rich bullets — LED, battery, switch extractable |
-| fenixlighting | 640 | GOOD | Structured spec block, nearly complete |
-| flashlightgo | 604 | GOOD | Full product descriptions, length only gap |
-| killzone | 468 | GOOD | LED model extractable, dimensions absent |
-| acebeam | 343 | GOOD | length present but not extracted (parser gap fixed) |
-| nitecorestore | 215 | PARTIAL | Short marketing copy only (~1,391 chars avg) |
-| nextorch | 156 | PARTIAL | Clean spec block but omits LED/switch/material |
-| armytek | 90 | GOOD | length in spec table (parser gap fixed with char increase) |
-| intl-outdoor | 58 | GOOD | LED/switch present, multi-variant format |
-| skilhunt | 39 | GOOD | 4/5 missing fields in text (boilerplate was hiding them) |
+#### Phase 5: AI Parse (reviews + targeted brands)
+- Review sources: 449 processed, 22 enriched (+22 fields)
+- Malkoff: 120 processed, 5 enriched
+- ReyLight: 81 processed, 5 enriched
+- Zebralight: 50 processed, 0 enriched (throw_m not on pages)
 
-### AI Parser Improvements (this session)
-- Switched model: `anthropic/claude-haiku-4-5` → `openrouter/healer-alpha` (free, 262K ctx)
-- Increased MAX_INPUT_CHARS: 3000 → 8000 (healer-alpha can handle more context)
-- Added `stripBoilerplate()`: removes WooCommerce/CS-Cart/Magento nav/footer
-- Added segment priority: 'specs' category before 'full-page' in prompt
+#### Phase 6: Image Pipeline Fix
+- Switched from sequential-index to flashlight-ID-based sprite mapping
+- Images now stable across DB changes (entries added/removed/reordered)
+- Requires image pipeline re-run to regenerate sprite with ID-based naming
 
-### Code Changes (this session)
-1. `be495b1` — feat: add bulk raw text fetcher for AI parser input
-2. `1eaf7ac` — fix: switch AI parser to healer-alpha, add SQLITE_BUSY retry
-3. `240353d` — feat: improve AI parser with boilerplate stripping and 8K char limit
+#### Phase 7: Accessory Classification
+- 324 entries classified as type "accessory" (was: filtered out at build time)
+- Accessories now kept in DB and output, filterable in SPA via type column
+
+### Build Output
+- 10,725 entries, 36 columns, 6,644 KB JSON
+- 324 accessories included (filterable)
 
 ### Next Steps
-1. Consider second AI parse pass on entries that weren't enriched
-2. CFC headless scraping for JS-rendered pages (Pelican, Olight, Wurkkos, Sofirn)
-3. Run `bun run pipeline/cli.ts stats` for detailed per-brand breakdown
-4. Deploy SPA update
+1. **Re-run image pipeline** with new ID-based sprite mapping
+2. **CFC headless** for Pelican (193), Wurkkos (32), Sofirn (40)
+3. **Deep attribute gaps**: led (45.8%), color (44.5%), length (40.7%)
+4. **Deploy SPA update**
+5. Continue targeted AI parse for remaining brands
