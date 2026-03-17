@@ -734,14 +734,51 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:ANSI|FL1)\s+(?:beam\s*)?(?:distance|throw)[:\s]+(\d{2,5})\s*m/i,
 			// "500m beam distance" or "1500m throw"
 			/(\d{2,5})\s*m\s*(?:beam\s*distance|throw|range)\b/i,
+			// "Peak Beam Distance: 250 meters" — decimal allowed, "meters" spelled out
+			/(?:peak\s+)?beam\s*distance[:\s]+(\d+(?:\.\d+)?)\s*(?:m|meters?)\b/i,
+			// "Max Beam Distance 780 feet" or "Beam Reach: 800 ft" — feet→meters
+			/(?:beam\s*(?:distance|reach)|throw)[:\s]+(\d+)\s*(?:ft|feet)\b/i,
 		];
 		for (const re of throwPatterns) {
 			const m = combined.match(re);
 			if (m) {
-				const val = parseInt(m[1], 10);
+				// Convert feet to meters if the pattern matched feet
+				const isFeet = /ft|feet/i.test(m[0]);
+				const val = isFeet ? Math.round(parseFloat(m[1]) * 0.3048) : Math.round(parseFloat(m[1]));
 				if (val >= 10 && val <= 5000) {
 					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 					entry.performance.claimed.throw_m = val;
+					changed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Intensity (candela) extraction from raw text → FL1 derivation will compute throw_m
+	if (!entry.performance?.claimed?.intensity_cd) {
+		const cdPatterns = [
+			// "7.5K Candela" or "65K candela" or "33K cd"
+			/(\d+(?:\.\d+)?)\s*K\s*(?:candela|cd)\b/i,
+			// "Peak Beam Intensity: 5000 cd" or "Intensity: 12,500 candela"
+			/(?:peak\s+)?(?:beam\s+)?intensity[:\s]+(\d[\d,]*)\s*(?:cd|candela)?\b/i,
+			// "Candela: 33000" or "Candela 6500"
+			/candela[:\s]+(\d[\d,]*)\b/i,
+			// "Lux at 1 meter (candela) is approximately 18,000" or "Lux (Candela) \n 6500"
+			/lux\s*(?:at\s*1\s*(?:m|meter)?)?\s*\(?\s*candela\s*\)?[:\s]*(?:is\s*)?(?:approximately\s*)?(\d[\d,]*(?:\.\d+)?)\s*K?\b/i,
+			// "11K Lux (candela)" — value before label
+			/(\d+(?:\.\d+)?)\s*K?\s*(?:lux\s*\(?\s*candela\s*\)?|candela)\b/i,
+		];
+		for (const re of cdPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				let val = parseFloat(m[1].replace(/,/g, ''));
+				// If matched with K suffix, multiply by 1000
+				if (/K\s*(?:candela|cd|lux)/i.test(m[0])) val *= 1000;
+				val = Math.round(val);
+				if (val >= 100 && val <= 10_000_000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.intensity_cd = val;
 					changed = true;
 					break;
 				}
@@ -758,6 +795,12 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d[\d,]*)\s*(?:lumens?|lm)\s*(?:\(?\s*(?:max|turbo|high)\s*\)?)/i,
 			// ANSI lumens
 			/(?:ANSI|FL1)\s+(?:lumens?|output)[:\s]+(\d[\d,]*)\b/i,
+			// Battery Junction table: "Max Lumens\n100" or "High Lumens\n350"
+			/(?:max|high)\s+lumens?\s+(\d[\d,]*)\b/i,
+			// Nightstick: "High Lumens: 350" or "Flashlight Lumens: 235"
+			/(?:high|flashlight|max)\s+lumens?[:\s]+(\d[\d,]*)\b/i,
+			// Simple: "420 lumens" — must be standalone (not part of "max output: X lumens" already matched)
+			/\b(\d[\d,]*)\s+lumens?\b/i,
 		];
 		for (const re of lumensPatterns) {
 			const m = combined.match(re);
