@@ -1,92 +1,88 @@
 # Pipeline State — 2026-03-17
 
-## Current Status: Sprite fix + enrichment Phase 5 + Pelican scrape complete
+## Current Status: Vision pipeline + expanded extraction — 27.9% valid
 
 ### Coverage (10,775 entries)
-| Field | Current | Previous (3/16) | Δ |
-|-------|---------|-----------------|---|
-| lumens | 80.6% | 80.3% | +0.3% |
-| throw_m | 63.9% | 63.2% | +0.7% |
-| runtime | 63.1% | 61.1% | +2.0% |
-| length_mm | 60.1% | 59.3% | +0.8% |
-| weight_g | 90.5% | 90.8% | -0.3% |
-| led | 54.4% | 54.2% | +0.2% |
-| battery | 81.3% | 81.4% | -0.1% |
-| switch | 72.5% | 66.7% | +5.8% |
-| material | 78.6% | 68.8% | +9.8% |
-| color | 56.2% | 55.5% | +0.7% |
-| features | 90.6% | 82.5% | +8.1% |
-| price | 93.5% | 93.9% | -0.4% |
-| purchase_url | 90.8% | n/a | — |
+| Field | Current | Previous | Δ |
+|-------|---------|----------|---|
+| lumens | 80.9% | 80.6% | +0.3% |
+| throw_m | 69.0% | 63.9% | +5.1% |
+| runtime | 63.4% | 63.1% | +0.3% |
+| length_mm | 71.8% | 60.1% | +11.7% |
+| weight_g | 91.1% | 90.5% | +0.6% |
+| led | 66.9% | 54.4% | +12.5% |
+| battery | 87.5% | 81.3% | +6.2% |
+| switch | 79.7% | 72.5% | +7.2% |
+| material | 79.2% | 78.6% | +0.6% |
+| color | 80.1% | 56.2% | +23.9% |
+| features | 90.8% | 90.6% | +0.2% |
+| price | 93.9% | 93.5% | +0.4% |
+| purchase_url | 90.8% | 90.8% | — |
 
-Fully valid: **1,327 entries (12.3%)** — up from 1,252 (11.7%)
+Fully valid: **3,006 entries (27.9%)** — up from 1,327 (12.3%)
+
+### Session 3 Work (2026-03-17)
+
+#### Feat: Expanded raw text extraction (Phase 5b)
+- LED from raw text: +1,339 entries (XHP50/70, XP-L/G/E, SST-20/40, SFT40, 519A, LH351D)
+- Length from raw text: +1,255 entries ("Length: 135mm", dimensions, inch conversion)
+- Battery from raw text: +595 entries ("1x21700", "powered by 18650" patterns)
+- Throw from raw text: +534 entries ("beam distance: 500m", ANSI FL1 patterns)
+- Weight from raw text: +16 entries
+- Color expanded patterns: +25 entries (color/finish field patterns)
+- Total: 2,245 entries enriched in this phase
+
+#### Feat: Vision pipeline (Gemini 2.0 Flash)
+- Built grid composer: 5×5 thumbnail grids (100×100px each) with labels
+- Processed 226 grids covering 5,647 entries missing switch or color
+- Switch classified: +710 entries (tail, side, dual, rotary, electronic)
+- Color classified: +2,536 entries (black, silver, OD green, desert tan, etc.)
+- Non-flashlight items: 2,319 identified (accessories, batteries, lanterns)
+- Pipeline: vision-grid-builder.ts → vision-classifier.ts → DB update
+
+#### Feat: BLF scraper (BudgetLightForum)
+- Ran first BLF enrichment pass: 300 entries processed, 26 enriched
+- Uses Discourse API to search for review threads
+- Extracts specs from forum posts (LED, switch, runtime, material)
+- Rate-limited by BLF at ~1 req/2s with 429 backoff
+
+#### Feat: Wurkkos curl scraper
+- Discovered wurkkos.com loads via curl (UeeShop, not Cloudflare-blocked on collections)
+- Scraped 48 products with lumens, LED, battery, price, material, throw
+- Imported 11 entries with 15 new fields
+
+#### Gemini plan review via PAL MCP
+- Submitted full gap analysis to gemini-3-pro-preview for strategic review
+- Confirmed attack ordering: quick wins → CFC headless → vision → targeted re-parse
+- Identified missed opportunities: model name LED/color, histogram color detection
 
 ### Session 2 Work (2026-03-17)
 
 #### Fix: Sprite ID-based mapping
 - Rebuilt sprite with `idToSprite` mapping in metadata (10,281 images)
-- Fixed image mismatch issue on live site — images now correctly map by flashlight ID
-- Grid: 102×101, 10,200×10,100px, 9.76 MB sprite
+- Fixed image mismatch issue on live site
 
 #### Fix: Enrich CLI signature mismatch
 - Removed `applyInference` and `nowValid`/`stillInvalid` from cmdEnrich
-- enrich.ts only returns `{ total, enriched }`
 
 #### Feat: Phase 5 enrichment — raw text extraction
-- Switch from raw text: +611 entries (regex: tail/side/rotary/dual/electronic/magnetic)
-- Material from raw text: +1,058 entries (aluminum, polycarbonate, stainless steel, etc.)
-- Runtime from raw text: +153 entries (from "XX hours runtime" patterns)
-- Features from raw text: +860 entries (clip, waterproof, rechargeable, strobe, SOS, lanyard, etc.)
-- Color from raw text: +47 entries
+- Switch +611, Material +1,058, Runtime +153, Features +860, Color +47
 
-#### Feat: Pelican catalog crawler (catalog-crawler.ts)
-- Added full Pelican crawler to catalog-crawler.ts CRAWLERS array
-- Scrapes www.pelican.com/us/en/product/flashlights/* (50 products, 100% success)
-- Uses `fetchWithCurl()` to bypass Cloudflare TLS fingerprinting (bun fetch gets 403)
-- Extracts: product-specs-table (battery, switch, material, length, weight, modes)
-- Extracts: ANSI FL1 table (lumens per mode, runtime, throw, candela, IPX, drop)
-- Extracts: JSON-LD pricing, Vue :product prop (colors, Shopify purchase URLs, images)
-- All 50 entries have lumens, throw, battery, switch, material, weight, length, price
-- Pelican brand now at 220 total entries, 50 from manufacturer site with complete specs
+#### Feat: Pelican catalog crawler
+- 50 products from www.pelican.com with full FL1 specs
+- Uses fetchWithCurl() for Cloudflare bypass
 
 ### Previous Session Work (2026-03-16)
-
-#### Phase 1-2: Code Refactoring
-- Created `pipeline/store/brand-aliases.ts` — shared brand normalization module
-- Refactored `shopify-crawler.ts` to import from brand-aliases (DRY)
-- Added `--source` filter to `ai-parser.ts` (reviews|retailers|manufacturers)
-- Added `run-full` orchestrated pipeline command to CLI
-- Added `woocommerce` CLI command with brand filter
-- Created `output/data-audit.md` and `output/coverage-tracker.md`
-
-#### Phase 3: Data Cleanup
-- Merged 5 Prometheus Lights → FourSevens
-- Fixed CloudDefensive → Cloud Defensive (38 entries)
-- Removed 239 exact model duplicates
-- Smart-deduped 1,941 near-duplicate models (same brand, prefix matching)
-- DB: 12,650 → 10,725 entries
-
-#### Phase 4: Review Site Scraping
-| Site | Reviews Found | Entries Enriched |
-|------|--------------|-----------------|
-| zakreviews | 31 | 6 |
-| tgreviews | 161 | 50 |
-| sammyshp | 100 | 5 |
-| 1lumen | 941 | 311 |
-| zeroair | 1,105 | 195 |
-| **Total** | **2,338** | **567** |
-
-#### Phase 5: AI Parse (reviews + targeted brands)
-- Review sources: 449 processed, 22 enriched (+22 fields)
-- Malkoff: 120 processed, 5 enriched
-- ReyLight: 81 processed, 5 enriched
-- Zebralight: 50 processed, 0 enriched (throw_m not on pages)
+(See git history for Phase 1-5 details: brand aliases, dedup, review scraping, AI parse)
 
 ### Remaining Gaps / TODO
-- **LED (45.6% missing)**: Most pages don't list specific LED emitter. Could use image classification.
-- **Color (43.8%)**: User suggested image parsing for switch type — extends to color detection too.
-- **Length (39.9%)**: Needs structured spec tables. Most available data already scraped.
-- **Runtime (36.9%)**: In marketing text but AI parser already tried. More structured sources needed.
-- **Throw (36.1%)**: FL1 derivation from intensity_cd has minimal remaining candidates (28).
-- **CFC headless**: Wurkkos (Cloudflare), Sofirn (Cloudflare) — needs browser-based scraping.
-- **Petzl**: 137 entries, mostly from Battery Junction. Structured specs on petzl.com behind JS.
+- **Runtime (36.6% missing)**: Hardest gap — not in raw text for most remaining entries
+- **LED (33.1%)**: Most pages don't list LED. Some extractable from product descriptions.
+- **Throw (31.0%)**: FL1 testing data, limited to manufacturer spec tables
+- **Length (28.2%)**: Need structured spec tables from more manufacturers
+- **Material (20.8%)**: Many generic retailer listings don't specify
+- **Switch (20.3%)**: Vision pipeline handled most, remaining entries lack images
+- **Color (19.9%)**: Vision pipeline handled most, remaining entries lack images
+- **Lumens (19.1%)**: Some entries are accessories incorrectly classified
+- **CFC headless**: Sofirn (Shoplazza), Petzl (Salesforce) — still need browser scraping
+- **PDF spec sheets**: No PDF detection pipeline yet — potential goldmine for missing specs
