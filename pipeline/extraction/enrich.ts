@@ -26,7 +26,7 @@
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 import type { FlashlightEntry } from '../schema/canonical.js';
-import { getAllFlashlights, upsertFlashlight } from '../store/db.js';
+import { getAllFlashlights, upsertFlashlight, getRawSpecText } from '../store/db.js';
 import { scrapeProductPage } from './manufacturer-scraper.js';
 
 /** Well-known manufacturer product page URL patterns */
@@ -354,11 +354,121 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 }
 
 /**
+ * Extract switch, material, runtime, and other specs from raw_spec_text.
+ * These are real values present in product descriptions — not fabrication.
+ */
+function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
+	const rawTexts = getRawSpecText(entry.id);
+	if (rawTexts.length === 0) return false;
+
+	// Combine all raw text for this entry
+	const combined = rawTexts.map(r => r.text_content).join('\n');
+	let changed = false;
+
+	// Switch type extraction (only if missing)
+	if (!entry.switch?.length) {
+		const switchPatterns: [RegExp, string][] = [
+			[/\btail[\s-]*(?:cap\s+)?switch\b/i, 'tail'],
+			[/\bside[\s-]*switch\b/i, 'side'],
+			[/\brotary\b.*?\bswitch\b|\bswitch\b.*?\brotary\b/i, 'rotary'],
+			[/\btwist(?:y)?[\s-]*(?:head|switch)\b/i, 'twisty'],
+			[/\bpush[\s-]*button\b/i, 'push button'],
+			[/\btactical[\s-]*(?:tail\s+)?switch\b/i, 'tail'],
+			[/\bdual[\s-]*switch\b/i, 'dual'],
+			[/\belectronic[\s-]*(?:side\s+)?switch\b/i, 'electronic'],
+			[/\bmagnetic[\s-]*(?:ring|control)\b/i, 'magnetic ring'],
+			[/\bclicky\b/i, 'tail'],
+		];
+		const detected: string[] = [];
+		for (const [re, switchType] of switchPatterns) {
+			if (re.test(combined) && !detected.includes(switchType)) {
+				detected.push(switchType);
+			}
+		}
+		if (detected.length > 0 && detected.length <= 2) {
+			entry.switch = detected;
+			changed = true;
+		}
+	}
+
+	// Material extraction (only if missing)
+	if (!entry.material?.length) {
+		const matPatterns: [RegExp, string][] = [
+			[/\b(?:6061|7075|A6061)[\s-]*T6?\s*alum/i, 'aluminum'],
+			[/\balumini?um\s*(?:alloy|body|construction|housing)?\b/i, 'aluminum'],
+			[/\bstainless\s*steel\b/i, 'stainless steel'],
+			[/\bpolycarbonate\b/i, 'polycarbonate'],
+			[/\btitanium\b/i, 'titanium'],
+			[/\bpolymer\b/i, 'polymer'],
+			[/\bnylon\b/i, 'nylon'],
+			[/\bcopper\s*(?:body|construction|housing)?\b/i, 'copper'],
+			[/\bbrass\s*(?:body|construction|housing)?\b/i, 'brass'],
+			[/\bABS\s*(?:plastic|body)?\b/, 'ABS'],
+		];
+		const detected: string[] = [];
+		for (const [re, mat] of matPatterns) {
+			if (re.test(combined) && !detected.includes(mat)) {
+				detected.push(mat);
+				if (detected.length >= 2) break; // Cap at 2 materials
+			}
+		}
+		if (detected.length > 0) {
+			entry.material = detected;
+			changed = true;
+		}
+	}
+
+	// Runtime extraction from raw text (only if missing)
+	if (!entry.performance?.claimed?.runtime_hours?.length) {
+		// "Runtime: 1.5h (high) / 8h (low)" or "120 hours" or "2h 30min"
+		const runtimePatterns = [
+			// "XX hours" or "XXh" patterns — capture the highest value
+			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:\(?\s*(?:high|turbo|max)\s*\)?)/i,
+			/(?:runtime|run\s*time)[:\s]*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:of\s+)?runtime/i,
+		];
+		for (const re of runtimePatterns) {
+			const m = combined.match(re);
+			if (m) {
+				const hrs = parseFloat(m[1]);
+				if (hrs > 0 && hrs < 10000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.runtime_hours = [hrs];
+					changed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Color from raw text (only if missing — supplement model name detection)
+	if (!entry.color?.length) {
+		const colorPatterns: [RegExp, string][] = [
+			[/\bavailable\s+in\s+(?:\w+\s+)?black\b/i, 'black'],
+			[/\bcolor:\s*black\b/i, 'black'],
+			[/\bdesert\s*tan\b/i, 'brown'],
+			[/\bOD\s*green\b/i, 'green'],
+			[/\bcamo(?:uflage)?\s+(?:pattern|finish)\b/i, 'camo'],
+		];
+		for (const [re, color] of colorPatterns) {
+			if (re.test(combined)) {
+				entry.color = [color];
+				changed = true;
+				break;
+			}
+		}
+	}
+
+	return changed;
+}
+
+/**
  * Run enrichment on all entries.
  * Phase 1: Manufacturer website scraping (real data)
  * Phase 2: ANSI FL1 derivation (throw ↔ intensity)
  * Phase 3: Color detection from model name (observable fact)
  * Phase 4: Extract specs from title (observable fact)
+ * Phase 5: Extract switch/material/runtime from raw spec text (real values)
  *
  * NO PHASE FOR: guessing, estimating, defaulting, or inferring.
  */
@@ -402,6 +512,11 @@ export async function enrichAllEntries(options: {
 
 		// Phase 4: Extract LED, battery, throw from product title (observable fact)
 		if (enrichFromTitle(entry)) {
+			wasEnriched = true;
+		}
+
+		// Phase 5: Extract switch, material, runtime from raw spec text (real values)
+		if (enrichFromRawSpecText(entry)) {
 			wasEnriched = true;
 		}
 
