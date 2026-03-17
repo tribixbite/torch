@@ -370,14 +370,27 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		const switchPatterns: [RegExp, string][] = [
 			[/\btail[\s-]*(?:cap\s+)?switch\b/i, 'tail'],
 			[/\bside[\s-]*switch\b/i, 'side'],
+			[/\bbody[\s-]*(?:mounted\s+)?switch\b/i, 'side'],
+			[/\bhead[\s-]*switch\b/i, 'side'],
+			[/\brear[\s-]*switch\b/i, 'tail'],
 			[/\brotary\b.*?\bswitch\b|\bswitch\b.*?\brotary\b/i, 'rotary'],
 			[/\btwist(?:y)?[\s-]*(?:head|switch)\b/i, 'twisty'],
 			[/\bpush[\s-]*button\b/i, 'push button'],
 			[/\btactical[\s-]*(?:tail\s+)?switch\b/i, 'tail'],
-			[/\bdual[\s-]*switch\b/i, 'dual'],
+			[/\bdual[\s-]*(?:mode\s+)?(?:tail\s+)?switch\b/i, 'dual'],
+			[/\btriple[\s-]*switch\b/i, 'dual'],
 			[/\belectronic[\s-]*(?:side\s+)?switch\b/i, 'electronic'],
-			[/\bmagnetic[\s-]*(?:ring|control)\b/i, 'magnetic ring'],
+			[/\bmagnetic[\s-]*(?:ring|control|selector)\b/i, 'magnetic ring'],
 			[/\bclicky\b/i, 'tail'],
+			// Spec table format: "Switch\nBody" or "Switch: Body"
+			[/\bswitch[:\s]+body\b/i, 'side'],
+			[/\bswitch[:\s]+tail\b/i, 'tail'],
+			[/\bswitch[:\s]+side\b/i, 'side'],
+			[/\bswitch[:\s]+head\b/i, 'side'],
+			[/\bswitch[:\s]+rear\b/i, 'tail'],
+			[/\bswitch[:\s]+rotary\b/i, 'rotary'],
+			[/\bswitch[:\s]+twist\b/i, 'twisty'],
+			[/\bswitch[:\s]+electronic\b/i, 'electronic'],
 		];
 		const detected: string[] = [];
 		for (const [re, switchType] of switchPatterns) {
@@ -421,13 +434,21 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Runtime extraction from raw text (only if missing)
 	if (!entry.performance?.claimed?.runtime_hours?.length) {
 		// "Runtime: 1.5h (high) / 8h (low)" or "120 hours" or "2h 30min"
-		const runtimePatterns = [
+		const runtimeHoursPatterns = [
 			// "XX hours" or "XXh" patterns — capture the highest value
 			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:\(?\s*(?:high|turbo|max)\s*\)?)/i,
-			/(?:runtime|run\s*time)[:\s]*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			/(?:runtime|run\s*time)[:\s：]*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:of\s+)?runtime/i,
+			// Nightstick spec table format: "High Runtime (h): 3.0"
+			/(?:high\s+)?runtime\s*\(h\)[:\s]*(\d+(?:\.\d+)?)/i,
 		];
-		for (const re of runtimePatterns) {
+		// Minute-based patterns (converted to hours)
+		const runtimeMinPatterns = [
+			/(?:runtime|run\s*time)[:\s：]*~?\s*(\d+)\s*(?:minutes?|mins?)\b/i,
+			/~?\s*(\d+)\s*(?:minutes?|mins?)\s*(?:of\s+)?runtime/i,
+		];
+		let foundRuntime = false;
+		for (const re of runtimeHoursPatterns) {
 			const m = combined.match(re);
 			if (m) {
 				const hrs = parseFloat(m[1]);
@@ -435,7 +456,23 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 					entry.performance.claimed.runtime_hours = [hrs];
 					changed = true;
+					foundRuntime = true;
 					break;
+				}
+			}
+		}
+		if (!foundRuntime) {
+			for (const re of runtimeMinPatterns) {
+				const m = combined.match(re);
+				if (m) {
+					const mins = parseFloat(m[1]);
+					const hrs = Math.round((mins / 60) * 100) / 100;
+					if (hrs > 0 && hrs < 10000) {
+						if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+						entry.performance.claimed.runtime_hours = [hrs];
+						changed = true;
+						break;
+					}
 				}
 			}
 		}
@@ -482,24 +519,37 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		const colorPatterns: [RegExp, string][] = [
 			[/\bavailable\s+in\s+(?:\w+\s+)?black\b/i, 'black'],
 			[/\bcolor:\s*black\b/i, 'black'],
+			[/\bbody\s*color[:\s]+black\b/i, 'black'],
 			[/\bdesert\s*tan\b/i, 'brown'],
 			[/\bOD\s*green\b/i, 'green'],
 			[/\bcamo(?:uflage)?\s+(?:pattern|finish)\b/i, 'camo'],
-			[/\bcolor[:\s]+(?:olive|OD)\s*(?:green|drab)\b/i, 'green'],
-			[/\bcolor[:\s]+(?:desert\s*tan|FDE|flat\s*dark\s*earth|coyote)\b/i, 'brown'],
-			[/\bcolor[:\s]+(?:red|crimson)\b/i, 'red'],
-			[/\bcolor[:\s]+(?:blue|navy)\b/i, 'blue'],
-			[/\bcolor[:\s]+(?:silver|natural|raw)\b/i, 'silver'],
-			[/\bcolor[:\s]+(?:gray|grey|gunmetal|stonewash)\b/i, 'gray'],
-			[/\bcolor[:\s]+(?:orange|safety\s*orange)\b/i, 'orange'],
-			[/\bcolor[:\s]+(?:yellow|hi[\s-]*vis)\b/i, 'yellow'],
-			[/\bcolor[:\s]+(?:pink|rose)\b/i, 'pink'],
-			[/\bcolor[:\s]+(?:copper)\b/i, 'copper'],
-			[/\bcolor[:\s]+(?:brass)\b/i, 'brass'],
-			[/\bcolor[:\s]+(?:gold)\b/i, 'gold'],
+			// Spec table: "Color: X" or "Body Color: X"
+			[/\b(?:body\s+)?color[:\s]+(?:olive|OD)\s*(?:green|drab)\b/i, 'green'],
+			[/\b(?:body\s+)?color[:\s]+(?:desert\s*tan|FDE|flat\s*dark\s*earth|coyote)\b/i, 'brown'],
+			[/\b(?:body\s+)?color[:\s]+(?:red|crimson)\b/i, 'red'],
+			[/\b(?:body\s+)?color[:\s]+(?:blue|navy)\b/i, 'blue'],
+			[/\b(?:body\s+)?color[:\s]+(?:silver|natural|raw)\b/i, 'silver'],
+			[/\b(?:body\s+)?color[:\s]+(?:gray|grey|gunmetal|stonewash)\b/i, 'gray'],
+			[/\b(?:body\s+)?color[:\s]+(?:orange|safety\s*orange)\b/i, 'orange'],
+			[/\b(?:body\s+)?color[:\s]+(?:yellow|hi[\s-]*vis)\b/i, 'yellow'],
+			[/\b(?:body\s+)?color[:\s]+(?:pink|rose)\b/i, 'pink'],
+			[/\b(?:body\s+)?color[:\s]+(?:copper)\b/i, 'copper'],
+			[/\b(?:body\s+)?color[:\s]+(?:brass)\b/i, 'brass'],
+			[/\b(?:body\s+)?color[:\s]+(?:gold)\b/i, 'gold'],
+			[/\b(?:body\s+)?color[:\s]+(?:white)\b/i, 'white'],
+			// Nightstick format: "Body Color\nBlack"
+			[/\bbody\s+color\s+black\b/i, 'black'],
+			[/\bbody\s+color\s+yellow\b/i, 'yellow'],
+			[/\bbody\s+color\s+green\b/i, 'green'],
+			[/\bbody\s+color\s+orange\b/i, 'orange'],
+			// Finish patterns
 			[/\bfinish[:\s]+(?:black|dark)\b/i, 'black'],
 			[/\bfinish[:\s]+(?:desert\s*tan|FDE|coyote)\b/i, 'brown'],
 			[/\bfinish[:\s]+(?:OD\s*green|olive)\b/i, 'green'],
+			// Material/Color combined: "Titanium - stonewashed"
+			[/\btitanium[\s-]+(?:stonewash|raw|bead\s*blast)\b/i, 'gray'],
+			[/\bcopper\s*(?:body|construction)\b/i, 'copper'],
+			[/\bbrass\s*(?:body|construction)\b/i, 'brass'],
 		];
 		for (const [re, color] of colorPatterns) {
 			if (re.test(combined)) {
@@ -536,11 +586,19 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\b519A\b/, '519A'],
 			[/\b219[BCF]\b/, ''],
 			[/\bE21A\b/, 'E21A'],
+			// Luminus LUXEON family (used by Acebeam, etc.)
+			[/\bLUXEON\s*(?:HL|MX|TX|V|V2)?\s*\w*\b/i, ''],
+			[/\bSFH\s*55\b/i, 'SFH55'],
+			[/\bSFT[\s-]?25\w?\b/i, ''],
 			// Other
 			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
-			[/\bOsram\s*(?:CSLNM1|CULNM1|KW\s*CSLNM)\.?\w*\b/i, ''],
+			[/\bOsram\s*(?:CSLNM1|CULNM1|CULPM1|KW\s*CSLNM|PM1)\.?\w*\b/i, ''],
+			[/\bOsram\s*(?:W1|W2)\b/i, ''],
+			[/\bCree\s+LED\b/i, 'Cree LED'],
 			[/\bLEP\b/, 'LEP'],
 			[/\bCOB\b/, 'COB'],
+			[/\bUV\s*LED\b/i, 'UV LED'],
+			[/\bWhite\s*Laser\b/i, 'White Laser'],
 		];
 		for (const [re, name] of ledRawPatterns) {
 			const m = combined.match(re);
