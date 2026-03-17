@@ -485,12 +485,206 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bdesert\s*tan\b/i, 'brown'],
 			[/\bOD\s*green\b/i, 'green'],
 			[/\bcamo(?:uflage)?\s+(?:pattern|finish)\b/i, 'camo'],
+			[/\bcolor[:\s]+(?:olive|OD)\s*(?:green|drab)\b/i, 'green'],
+			[/\bcolor[:\s]+(?:desert\s*tan|FDE|flat\s*dark\s*earth|coyote)\b/i, 'brown'],
+			[/\bcolor[:\s]+(?:red|crimson)\b/i, 'red'],
+			[/\bcolor[:\s]+(?:blue|navy)\b/i, 'blue'],
+			[/\bcolor[:\s]+(?:silver|natural|raw)\b/i, 'silver'],
+			[/\bcolor[:\s]+(?:gray|grey|gunmetal|stonewash)\b/i, 'gray'],
+			[/\bcolor[:\s]+(?:orange|safety\s*orange)\b/i, 'orange'],
+			[/\bcolor[:\s]+(?:yellow|hi[\s-]*vis)\b/i, 'yellow'],
+			[/\bcolor[:\s]+(?:pink|rose)\b/i, 'pink'],
+			[/\bcolor[:\s]+(?:copper)\b/i, 'copper'],
+			[/\bcolor[:\s]+(?:brass)\b/i, 'brass'],
+			[/\bcolor[:\s]+(?:gold)\b/i, 'gold'],
+			[/\bfinish[:\s]+(?:black|dark)\b/i, 'black'],
+			[/\bfinish[:\s]+(?:desert\s*tan|FDE|coyote)\b/i, 'brown'],
+			[/\bfinish[:\s]+(?:OD\s*green|olive)\b/i, 'green'],
 		];
 		for (const [re, color] of colorPatterns) {
 			if (re.test(combined)) {
 				entry.color = [color];
 				changed = true;
 				break;
+			}
+		}
+	}
+
+	// LED emitter extraction from raw text (only if missing)
+	if (!entry.led?.length) {
+		const ledRawPatterns: [RegExp, string][] = [
+			// Cree XHP family
+			[/\bXHP\s*70(?:\.2|\.3)?\s*(?:HI)?\b/i, ''],
+			[/\bXHP\s*50(?:\.2|\.3)?\s*(?:HI)?\b/i, ''],
+			[/\bXHP\s*35(?:\.2)?\s*(?:HI|HD)?\b/i, ''],
+			// Cree XM/XP family
+			[/\bXM[\s-]?L2?\s*(?:U[234])?\b/i, ''],
+			[/\bXP[\s-]?L\s*(?:HI|HD|V[56])?\b/i, ''],
+			[/\bXP[\s-]?G[23S]?\s*(?:S[235])?\b/i, ''],
+			[/\bXP[\s-]?E2?\b/i, ''],
+			// Luminus
+			[/\bSFT[\s-]?40\b/i, 'SFT40'],
+			[/\bSFT[\s-]?70\b/i, 'SFT70'],
+			[/\bSST[\s-]?20\b/i, 'SST-20'],
+			[/\bSST[\s-]?40\b/i, 'SST-40'],
+			[/\bSST[\s-]?70\b/i, 'SST-70'],
+			[/\bSBT[\s-]?90(?:\.2)?\b/i, ''],
+			// Samsung
+			[/\bLH351D\b/i, 'LH351D'],
+			[/\bLH351B\b/i, 'LH351B'],
+			// Nichia
+			[/\b519A\b/, '519A'],
+			[/\b219[BCF]\b/, ''],
+			[/\bE21A\b/, 'E21A'],
+			// Other
+			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
+			[/\bOsram\s*(?:CSLNM1|CULNM1|KW\s*CSLNM)\.?\w*\b/i, ''],
+			[/\bLEP\b/, 'LEP'],
+			[/\bCOB\b/, 'COB'],
+		];
+		for (const [re, name] of ledRawPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				// Clean up the matched text: remove extra spaces, normalize
+				const ledName = (name || m[0]).replace(/\s+/g, '').replace(/^XHP/, 'XHP').replace(/^XP-?/, 'XP-').replace(/^XM-?/, 'XM-').replace(/^SST-?/, 'SST-').replace(/^SBT-?/, 'SBT-');
+				entry.led = [ledName];
+				changed = true;
+				break;
+			}
+		}
+	}
+
+	// Length extraction from raw text (only if missing)
+	if (!entry.length_mm) {
+		const lengthPatterns = [
+			// "Length: 135mm" or "Length: 135 mm" or "Overall Length: 5.3 in"
+			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*mm\b/i,
+			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i,
+			// "135mm (length)" or "135mm long"
+			/(\d{2,4}(?:\.\d+)?)\s*mm\s*(?:\(?(?:overall|length|long|L)\)?)/i,
+			// Table cell: "135 mm" near "length" keyword
+			/length[^.\n]{0,30}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
+			// "5.3 in" or "5.3 inches" near length
+			/length[^.\n]{0,30}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+			// "Dimensions: 135mm x 25mm" — first number is usually length
+			/dimensions?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:mm)?\s*[x×]/i,
+		];
+		for (const re of lengthPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				let val = parseFloat(m[1]);
+				// Convert inches to mm if the pattern matched inches
+				if (re.source.includes('inches') || re.source.includes('in\\\\.')) {
+					if (val < 30) val = Math.round(val * 25.4); // Only convert if clearly inches
+				}
+				if (val >= 20 && val <= 1000) {
+					entry.length_mm = Math.round(val * 10) / 10;
+					changed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Weight extraction from raw text (only if missing)
+	if (!entry.weight_g) {
+		const weightPatterns = [
+			// "Weight: 120g" or "Weight: 120 g" or "Weight (w/o battery): 85g"
+			/weight[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*(?:grams?|g)\b/i,
+			// "4.2 oz" or "4.2 ounces" near weight
+			/weight[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*(?:oz|ounces?)\b/i,
+			// "120g (weight)" or "120g without battery"
+			/(\d+(?:\.\d+)?)\s*(?:grams?|g)\s*\(?(?:weight|without|w\/o|incl|with)\b/i,
+			// Table cell: "120 g" near "weight" keyword
+			/(?:net\s+)?weight[:\s]+(\d+(?:\.\d+)?)\s*g\b/i,
+		];
+		for (const re of weightPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				let val = parseFloat(m[1]);
+				// Convert oz to grams
+				if (re.source.includes('oz') || re.source.includes('ounce')) {
+					val = Math.round(val * 28.3495);
+				}
+				if (val > 5 && val < 5000) {
+					entry.weight_g = Math.round(val * 10) / 10;
+					changed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Battery extraction from raw text (only if missing)
+	if (!entry.battery?.length) {
+		const batteryPatterns: [RegExp, string][] = [
+			[/\b1\s*[x×]\s*21700\b/i, '21700'], [/\bpowered\s+by\s+(?:a\s+)?21700\b/i, '21700'],
+			[/\bbattery[:\s]+21700\b/i, '21700'], [/\buses?\s+(?:a\s+)?21700\b/i, '21700'],
+			[/\b1\s*[x×]\s*18650\b/i, '18650'], [/\bpowered\s+by\s+(?:a\s+)?18650\b/i, '18650'],
+			[/\bbattery[:\s]+18650\b/i, '18650'], [/\buses?\s+(?:a\s+)?18650\b/i, '18650'],
+			[/\b1\s*[x×]\s*18350\b/i, '18350'], [/\bbattery[:\s]+18350\b/i, '18350'],
+			[/\b1\s*[x×]\s*14500\b/i, '14500'], [/\bbattery[:\s]+14500\b/i, '14500'],
+			[/\b1\s*[x×]\s*26650\b/i, '26650'], [/\bbattery[:\s]+26650\b/i, '26650'],
+			[/\b1\s*[x×]\s*26800\b/i, '26800'], [/\bbattery[:\s]+26800\b/i, '26800'],
+			[/\b1\s*[x×]\s*16340\b/i, '16340'], [/\bbattery[:\s]+16340\b/i, '16340'],
+			[/\bCR123A?\b/i, 'CR123A'],
+			[/\bbattery[:\s]+AA\b/i, 'AA'], [/\b(?:1|2|3)\s*[x×]\s*AA\b(?!A)/i, 'AA'],
+			[/\bbattery[:\s]+AAA\b/i, 'AAA'], [/\b(?:1|2|3)\s*[x×]\s*AAA\b/i, 'AAA'],
+			[/\bbuilt[\s-]*in\s+(?:Li[\s-]*(?:ion|po)?\s+)?(?:\d+\s*mAh\s+)?battery\b/i, 'built-in'],
+		];
+		for (const [re, bat] of batteryPatterns) {
+			if (re.test(combined)) {
+				entry.battery = [bat];
+				changed = true;
+				break;
+			}
+		}
+	}
+
+	// Throw extraction from raw text (only if missing)
+	if (!entry.performance?.claimed?.throw_m) {
+		const throwPatterns = [
+			// "Beam Distance: 500m" or "Throw: 250 meters" or "Max Throw: 1500m"
+			/(?:beam\s*distance|throw|range)[:\s]+(\d{2,5})\s*(?:m|meters?)\b/i,
+			// "ANSI throw 500m" or "FL1 throw: 500m"
+			/(?:ANSI|FL1)\s+(?:beam\s*)?(?:distance|throw)[:\s]+(\d{2,5})\s*m/i,
+			// "500m beam distance" or "1500m throw"
+			/(\d{2,5})\s*m\s*(?:beam\s*distance|throw|range)\b/i,
+		];
+		for (const re of throwPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				const val = parseInt(m[1], 10);
+				if (val >= 10 && val <= 5000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.throw_m = val;
+					changed = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Lumens extraction from raw text (only if missing)
+	if (!entry.performance?.claimed?.lumens?.length) {
+		const lumensPatterns = [
+			// "Max Output: 5000 lumens" or "Output: 2800lm"
+			/(?:max(?:imum)?\s+)?(?:output|brightness|luminous\s*flux)[:\s]+(\d[\d,]*)\s*(?:lumens?|lm)\b/i,
+			// "5000 lumens max" or "2800lm (turbo)"
+			/(\d[\d,]*)\s*(?:lumens?|lm)\s*(?:\(?\s*(?:max|turbo|high)\s*\)?)/i,
+			// ANSI lumens
+			/(?:ANSI|FL1)\s+(?:lumens?|output)[:\s]+(\d[\d,]*)\b/i,
+		];
+		for (const re of lumensPatterns) {
+			const m = combined.match(re);
+			if (m) {
+				const lm = parseInt(m[1].replace(/,/g, ''), 10);
+				if (lm > 0 && lm < 1_000_000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.lumens = [lm];
+					changed = true;
+					break;
+				}
 			}
 		}
 	}
