@@ -392,6 +392,15 @@ export function countRawSpecText(): { category: string; count: number }[] {
 	`).all() as { category: string; count: number }[];
 }
 
+/** Get source URLs for a flashlight */
+export function getSourceUrls(flashlightId: string): string[] {
+	const db = getDb();
+	const rows = db.prepare(
+		`SELECT DISTINCT url FROM sources WHERE flashlight_id = ?`
+	).all(flashlightId) as { url: string }[];
+	return rows.map(r => r.url);
+}
+
 /** Get set of all source URLs already scraped (for skip-cache in detail scraper) */
 export function getScrapedUrlSet(): Set<string> {
 	const db = getDb();

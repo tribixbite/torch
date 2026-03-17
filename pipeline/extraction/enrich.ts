@@ -26,8 +26,34 @@
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 import type { FlashlightEntry } from '../schema/canonical.js';
-import { getAllFlashlights, upsertFlashlight, getRawSpecText } from '../store/db.js';
+import { getAllFlashlights, upsertFlashlight, getRawSpecText, getSourceUrls } from '../store/db.js';
 import { scrapeProductPage } from './manufacturer-scraper.js';
+
+/** Domains that are actual stores (have buy/cart functionality) — not just info/review sites */
+const STORE_DOMAINS = [
+	'fenixlighting.com', 'nitecorestore.com', 'olightstore.com', 'acebeam.com',
+	'lumintop.com', 'nightstick.com', 'ledlenserusa.com', 'streamlight.com',
+	'nextorch.com', 'rovyvon.com', 'jetbeamlight.com', 'armytek.com',
+	'powertac.com', 'imalentstore.com', 'malkoffdevices.com', 'wubenlight.com',
+	'reylight.net', 'foursevens.com', 'eagtac.com', 'intl-outdoor.com',
+	'zebralight.com', 'sofirnlight.com', 'wurkkos.com', 'skilhunt.com',
+	'shop.pelican.com', 'maglite.com', 'modlite.com', 'surefire.com',
+	// Multi-brand retailers
+	'batteryjunction.com', 'goinggear.com', 'nealsgadgets.com',
+	'killzoneflashlights.com', 'jlhawaii808.com', 'fenix-store.com',
+	'flashlightworld.ca', 'flashlightgo.com', 'torchdirect.co.uk',
+	'amazon.com', 'amazon.co.uk',
+];
+
+/** Check if a URL is from a known store/retailer */
+function isStoreUrl(url: string): boolean {
+	try {
+		const host = new URL(url).hostname.replace(/^www\./, '');
+		return STORE_DOMAINS.some(d => host === d || host.endsWith('.' + d));
+	} catch {
+		return false;
+	}
+}
 
 /** Well-known manufacturer product page URL patterns */
 const BRAND_URL_PATTERNS: Record<string, (model: string) => string[]> = {
@@ -757,6 +783,7 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
  * Phase 3: Color detection from model name (observable fact)
  * Phase 4: Extract specs from title (observable fact)
  * Phase 5: Extract switch/material/runtime from raw spec text (real values)
+ * Phase 6: Populate purchase_urls from store source URLs (observable fact)
  *
  * NO PHASE FOR: guessing, estimating, defaulting, or inferring.
  */
@@ -806,6 +833,16 @@ export async function enrichAllEntries(options: {
 		// Phase 5: Extract switch, material, runtime from raw spec text (real values)
 		if (enrichFromRawSpecText(entry)) {
 			wasEnriched = true;
+		}
+
+		// Phase 6: Populate purchase_urls from store source URLs (observable fact)
+		if (!entry.purchase_urls?.length) {
+			const sourceUrls = getSourceUrls(entry.id);
+			const storeUrls = sourceUrls.filter(url => isStoreUrl(url));
+			if (storeUrls.length > 0) {
+				entry.purchase_urls = storeUrls.slice(0, 3); // Cap at 3 URLs
+				wasEnriched = true;
+			}
 		}
 
 		if (wasEnriched) {
