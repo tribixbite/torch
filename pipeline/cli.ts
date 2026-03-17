@@ -389,14 +389,11 @@ async function cmdEnrich(): Promise<void> {
 	const scrapeFlag = process.argv.includes('--scrape');
 	const result = await enrichAllEntries({
 		scrapeManufacturers: scrapeFlag,
-		applyInference: true,
 		maxScrape: 100,
 	});
 
-	console.log(`Total entries: ${result.total}`);
+	console.log(`\nTotal entries: ${result.total}`);
 	console.log(`Enriched: ${result.enriched}`);
-	console.log(`Now valid: ${result.nowValid}`);
-	console.log(`Still invalid: ${result.stillInvalid}`);
 }
 
 /** Enrich from BudgetLightForum review threads */
