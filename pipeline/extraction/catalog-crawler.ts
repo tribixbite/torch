@@ -11,6 +11,30 @@ import { upsertFlashlight, addSource, countFlashlights } from '../store/db.js';
 
 const CRAWL_DELAY = 1500; // ms between requests (polite crawling)
 
+/**
+ * Fetch a page using curl — bypasses Cloudflare TLS fingerprinting
+ * that blocks bun/node fetch. Used for sites like pelican.com.
+ */
+async function fetchWithCurl(url: string): Promise<string> {
+	const proc = Bun.spawn(['curl', '-sS', '-L', '--max-time', '20',
+		'-H', 'User-Agent: Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+		'-H', 'Accept: text/html,application/xhtml+xml',
+		'-H', 'Accept-Language: en-US,en;q=0.9',
+		url,
+	], { stdout: 'pipe', stderr: 'pipe' });
+	const html = await new Response(proc.stdout).text();
+	const exitCode = await proc.exited;
+	if (exitCode !== 0 || html.length < 100) {
+		const stderr = await new Response(proc.stderr).text();
+		throw new Error(`curl failed (exit ${exitCode}): ${stderr.trim()}`);
+	}
+	// Detect Cloudflare challenge in response
+	if (html.includes('Just a moment...') && html.includes('challenges.cloudflare.com')) {
+		throw new Error('Cloudflare challenge detected');
+	}
+	return html;
+}
+
 /** Site-specific crawler configuration */
 interface SiteCrawler {
 	brand: string;
@@ -18,6 +42,8 @@ interface SiteCrawler {
 	discoverUrls: () => Promise<string[]>;
 	/** Extract structured data from a product page */
 	extractProduct: (url: string, html: string, text: string) => FlashlightEntry | null;
+	/** Optional custom fetch function for sites behind Cloudflare TLS fingerprinting */
+	fetchFn?: (url: string) => Promise<string>;
 }
 
 // --- Generic helpers ---
@@ -1167,6 +1193,247 @@ const CRAWLERS: SiteCrawler[] = [
 			return buildEntryFromSpecs('Zebralight', model, specs, url, images);
 		},
 	},
+	{
+		brand: 'Pelican',
+		// Pelican.com uses Cloudflare that blocks bun/node TLS fingerprints
+		fetchFn: fetchWithCurl,
+		async discoverUrls() {
+			// Pelican corporate site — listing page at /us/en/products/flashlights
+			// Uses curl to bypass Cloudflare TLS fingerprint blocking
+			const base = 'https://www.pelican.com';
+			const listUrl = `${base}/us/en/products/flashlights`;
+			const urls: string[] = [];
+			try {
+				const html = await fetchWithCurl(listUrl);
+				// Product URLs: /us/en/product/flashlights/<model>
+				const re = /href="([^"]*\/us\/en\/product\/flashlights\/[^"]+)"/gi;
+				let m;
+				while ((m = re.exec(html)) !== null) {
+					const fullUrl = m[1].startsWith('http') ? m[1] : `${base}${m[1]}`;
+					if (!urls.includes(fullUrl)) urls.push(fullUrl);
+				}
+			} catch (err) {
+				console.log(`    Pelican listing error: ${(err as Error).message}`);
+			}
+			return urls;
+		},
+		extractProduct(url, html, _text) {
+			// --- Model name from <h1> or JSON-LD ---
+			let model = '';
+			const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+			if (h1Match) model = h1Match[1].replace(/<[^>]+>/g, '').trim();
+			if (!model) {
+				// Fallback: title tag "2780 Headlamp"
+				const titleM = html.match(/<title>\s*(.*?)\s*<\/title>/i);
+				if (titleM) model = titleM[1].split('|')[0].trim();
+			}
+			if (!model) return null;
+
+			// Skip accessories
+			if (/\b(?:battery|batteries|charger|case|bag|strap|clip|wand|cone|filter)\b/i.test(model) &&
+				!/flashlight|headlamp|headlight|lantern|light/i.test(model)) {
+				return null;
+			}
+
+			const specs: Partial<ExtractionResult> = {};
+
+			// --- Type from model name ---
+			if (/headlamp|headlight/i.test(model)) specs.type = ['headlamp'];
+			else if (/lantern/i.test(model)) specs.type = ['lantern'];
+			else if (/right.?angle/i.test(model)) specs.type = ['right-angle'];
+			else specs.type = ['flashlight'];
+
+			// --- Price from JSON-LD (nested in offers object) ---
+			const jsonLd = html.match(/"@context"\s*:\s*"http:\/\/schema\.org"[\s\S]*?"offers"[\s\S]*?"price"\s*:\s*"?([\d.]+)"?/);
+			if (jsonLd) specs.price_usd = parseFloat(jsonLd[1]);
+
+			// --- Extract spec rows from product-specs-table ---
+			// Format: <div>Key</div> ... <div>Value</div> in paired col-md-6 divs
+			// Table ends at ansi-fl1-section or component-section boundary
+			const specTable = html.match(/product-specs-table[\s\S]*?(?=ansi-fl1|component-section|<\/section)/);
+			if (specTable) {
+				const rowRe = /<div class="col-md-6">\s*<div>([\s\S]*?)<\/div>\s*<\/div>\s*<div class="col-md-6">\s*<div>([\s\S]*?)<\/div>/gi;
+				let rm;
+				while ((rm = rowRe.exec(specTable[0])) !== null) {
+					const key = rm[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+					const val = rm[2].replace(/<[^>]+>/g, '').trim();
+					if (!val || val === '-' || val === 'N/A') continue;
+
+					switch (key) {
+						case 'length': {
+							// "3.00" (7.6 cm)" or "6.32" (16.1 cm)"
+							const cmM = val.match(/\((\d+(?:\.\d+)?)\s*cm\)/);
+							if (cmM) specs.length_mm = parseFloat(cmM[1]) * 10;
+							else {
+								// inches: "6.32""
+								const inM = val.match(/([\d.]+)\s*[""]/);
+								if (inM) specs.length_mm = parseFloat(inM[1]) * 25.4;
+							}
+							break;
+						}
+						case 'weight with batteries':
+						case 'weight w/ batteries': {
+							// "8.8 oz (249.48 g)"
+							const gM = val.match(/\((\d+(?:\.\d+)?)\s*g\)/);
+							if (gM) specs.weight_g = parseFloat(gM[1]);
+							else {
+								const ozM = val.match(/([\d.]+)\s*oz/);
+								if (ozM) specs.weight_g = parseFloat(ozM[1]) * 28.3495;
+							}
+							break;
+						}
+						case 'weight no batteries': {
+							// Use this only if we don't have "with batteries" weight
+							if (!specs.weight_g) {
+								const gM = val.match(/\((\d+(?:\.\d+)?)\s*g\)/);
+								if (gM) specs.weight_g = parseFloat(gM[1]);
+							}
+							break;
+						}
+						case 'switch type':
+							specs.switch = val.split(/\s*[\/,]\s*/).map((s: string) => s.toLowerCase().trim()).filter(Boolean);
+							break;
+						case 'battery size':
+							specs.battery = val.split(/\s*[\/,]\s*/).filter(Boolean);
+							break;
+						case 'body material':
+							specs.material = [val];
+							break;
+						case 'lamp type':
+						case 'lamp secondary type':
+							if (val.toLowerCase() !== 'led' && !specs.led?.length) {
+								specs.led = [val];
+							}
+							break;
+						case 'rechargeable':
+							if (val.toLowerCase() === 'yes') {
+								if (!specs.charging) specs.charging = [];
+								specs.charging.push('USB');
+							}
+							break;
+						case 'light modes': {
+							specs.modes = val.split(/\s*[\/,]\s*/).map((s: string) => s.toLowerCase().trim()).filter(Boolean);
+							break;
+						}
+					}
+				}
+			}
+
+			// --- ANSI FL1 table: lumens, runtime, beam distance, candela ---
+			const fl1Table = html.match(/ansifl1-table[\s\S]*?<\/table>/);
+			if (fl1Table) {
+				const tbl = fl1Table[0];
+
+				// Lumens: <td>430<br><span...>LUMENS</span></td>
+				const lumens: number[] = [];
+				const lumRe = /(\d[\d,]*)\s*<br\s*\/?>\s*<span[^>]*>\s*LUMENS/gi;
+				let lm;
+				while ((lm = lumRe.exec(tbl)) !== null) {
+					const v = parseInt(lm[1].replace(/,/g, ''), 10);
+					if (v > 0 && !lumens.includes(v)) lumens.push(v);
+				}
+				if (lumens.length > 0) specs.lumens = lumens.sort((a, b) => b - a);
+
+				// Beam distance: <td>124m</td>
+				const beams: number[] = [];
+				const beamRe = /<td[^>]*>\s*(\d+)\s*m\s*<\/td>/gi;
+				let bm;
+				while ((bm = beamRe.exec(tbl)) !== null) {
+					const v = parseInt(bm[1], 10);
+					if (v > 0 && !beams.includes(v)) beams.push(v);
+				}
+				if (beams.length > 0) specs.throw_m = Math.max(...beams);
+
+				// Candela: <td>3868cd</td>
+				const candelas: number[] = [];
+				const cdRe = /<td[^>]*>\s*([\d,]+)\s*cd\s*<\/td>/gi;
+				let cd;
+				while ((cd = cdRe.exec(tbl)) !== null) {
+					const v = parseInt(cd[1].replace(/,/g, ''), 10);
+					if (v > 0) candelas.push(v);
+				}
+				if (candelas.length > 0) specs.intensity_cd = Math.max(...candelas);
+
+				// Runtime: "1h 30min" or "3h" or "12h 00min"
+				const runtimes: number[] = [];
+				const rtRe = /(\d+)h\s*(?:(\d+)\s*min)?/gi;
+				let rt;
+				while ((rt = rtRe.exec(tbl)) !== null) {
+					const hrs = parseInt(rt[1], 10);
+					const mins = rt[2] ? parseInt(rt[2], 10) : 0;
+					const total = hrs + mins / 60;
+					if (total > 0 && !runtimes.includes(total)) runtimes.push(total);
+				}
+				if (runtimes.length > 0) specs.runtime_hours = runtimes.sort((a, b) => a - b);
+
+				// IPX rating from FL1 table
+				const ipxM = tbl.match(/IPX(\d)/i);
+				if (ipxM) specs.environment = [`IPX${ipxM[1]}`];
+
+				// Impact/drop resistance from FL1 table — row after drop.gif icon
+				const dropM = tbl.match(/drop\.gif[\s\S]*?<td[^>]*colspan[^>]*>\s*(\d+(?:\.\d+)?)\s*m\s*<\/td>/i);
+				if (dropM) specs.impact = [`${dropM[1]}m drop`];
+			}
+
+			// --- Images from product gallery (only product images, not navbar/footer) ---
+			const images: string[] = [];
+			// Extract from Vue :product prop images array for exact product images
+			const imgArrayRe = /"complete_url"\s*:\s*"([^"]+)"/g;
+			let im;
+			while ((im = imgArrayRe.exec(html)) !== null) {
+				const src = im[1].replace(/\\\//g, '/');
+				if (!images.includes(src)) images.push(src);
+			}
+			// Fallback: S3 URLs only from product section (skip navbar images)
+			if (images.length === 0) {
+				const productSection = html.match(/product-main-image[\s\S]*?product-specs/);
+				const section = productSection ? productSection[0] : html;
+				const s3Re = /https:\/\/pelicanweb-prod\.s3[^"'\s]+\.(?:jpg|png|webp)/gi;
+				while ((im = s3Re.exec(section)) !== null) {
+					const src = im[0];
+					if (!images.includes(src) && !/icon|logo|badge|navbar/i.test(src)) {
+						images.push(src);
+					}
+				}
+			}
+
+			// --- Colors from Vue :product prop (product_color.name) ---
+			const colorMatches: string[] = [];
+			const colorRe = /"product_color"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/g;
+			let cm;
+			while ((cm = colorRe.exec(html)) !== null) {
+				// Color name like "Black \/ White \/ Photoluminescent" (JSON-escaped slashes)
+				const colorParts = cm[1].replace(/\\\//g, '/').split('/').map((c: string) => c.trim().toLowerCase()).filter(Boolean);
+				for (const c of colorParts) {
+					if (/^(black|white|yellow|red|blue|green|orange|silver|gray|grey|tan|olive|coyote|photoluminescent|pink|purple|hi-?vis|desert tan)$/i.test(c)) {
+						if (!colorMatches.includes(c)) colorMatches.push(c);
+					}
+				}
+			}
+			if (colorMatches.length > 0) specs.color = colorMatches;
+
+			// --- Features ---
+			if (!specs.features) specs.features = [];
+			if (/IPX[78]/i.test(html)) specs.features.push('waterproof');
+			if (/rechargeable/i.test(html) && specs.charging?.length) specs.features.push('rechargeable');
+			if (/glow.?in.?the.?dark|photoluminescent/i.test(html)) specs.features.push('glow-in-the-dark');
+			if (/downcast/i.test(html)) specs.features.push('downcast LED');
+			if (/pivoting|pivot/i.test(html)) specs.features.push('pivoting head');
+
+			// LED: Pelican uses generic "LED" but some have specific types in description
+			if (!specs.led?.length) specs.led = ['LED'];
+
+			const entry = buildEntryFromSpecs('Pelican', model, specs, url, images.slice(0, 5));
+
+			// Add Shopify purchase URL from Vue :product prop
+			const handleMatch = html.match(/"handle"\s*:\s*"([^"]+)"/);
+			if (handleMatch) {
+				entry.purchase_urls = [`https://shop.pelican.com/products/${handleMatch[1]}`];
+			}
+
+			return entry;
+		},
+	},
 ];
 
 /**
@@ -1197,10 +1464,13 @@ export async function crawlBrand(brandName: string): Promise<{
 	let saved = 0;
 	let errors = 0;
 
+	// Use custom fetch function if available (e.g. curl for Cloudflare-protected sites)
+	const fetchFn = crawler.fetchFn ?? fetchPage;
+
 	for (let i = 0; i < urls.length; i++) {
 		const url = urls[i];
 		try {
-			const html = await fetchPage(url);
+			const html = await fetchFn(url);
 			const text = htmlToText(html);
 
 			// Skip non-product pages (too short or no spec-related content)
