@@ -1,0 +1,1109 @@
+[
+  {
+    "model": "CL01",
+    "brand": "Wurkkos",
+    "name": "Wurkkos CL01 Camping Light with Adjustable Color Temperature/Power Bank/RGB Police Modes/Magnet Tail/21700 Battery Replaceable",
+    "url": "https://www.wurkkos.com/products/cl01-camping-light",
+    "lumens": 500,
+    "throw_m": null,
+    "battery": [
+      "21700"
+    ],
+    "led": null,
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 24.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/11/products/CL01LAN-2499.jpg"
+  },
+  {
+    "model": "DL02",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL02 Amphibious Flashlight, 3000 Lumens 1627ft Long Range 6500K Diving Light, with Rotary Magnetic Switch for Cave Exploration",
+    "url": "https://www.wurkkos.com/products/new-releasewurkkos-dl02-amphibious-flashlight",
+    "lumens": 3000,
+    "throw_m": 496,
+    "battery": [
+      "21700",
+      "18650"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": null,
+    "weight_g": 130.0,
+    "runtime_hours": null,
+    "price_usd": 37.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/dl02.jpg"
+  },
+  {
+    "model": "DL03",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL03 Rechargeable Dive Light – 2800LM, 480M Beam, Green Laser & Power Indicator, 100M Waterproof for Safe Night Dives",
+    "url": "https://www.wurkkos.com/products/wurkkos-dl03-rechargeable-dive-light-laser",
+    "lumens": 2800,
+    "throw_m": 480,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 148.5,
+    "weight_g": 152.0,
+    "runtime_hours": null,
+    "price_usd": 59.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/DL03.jpg"
+  },
+  {
+    "model": "DL06",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL06 Diving Flashlight, 15000 Lumens, 555m Beam, Power Bank Function, IPX8 Waterproof, 3×21700 Batteries",
+    "url": "https://www.wurkkos.com/products/wurkkos-dl06-rechargeable-powerful-15000lm-dive-light",
+    "lumens": 15000,
+    "throw_m": 555,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP50.2"
+    ],
+    "switch": [
+      "rotary"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 150.0,
+    "weight_g": 670.0,
+    "runtime_hours": null,
+    "price_usd": 99.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/DL06.jpg"
+  },
+  {
+    "model": "DL08",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL08 3600lm Rechargeable Diving Light, Long-Range Spotlight & Wide Floodlight with Red & UV LEDs, Underwater Torch IP68",
+    "url": "https://www.wurkkos.com/products/wurkkos-dl08-3600lm-rechargeable-diving-light",
+    "lumens": 3600,
+    "throw_m": null,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 138.9,
+    "weight_g": 149.0,
+    "runtime_hours": null,
+    "price_usd": 51.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/DL08.jpg"
+  },
+  {
+    "model": "DL10R",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL10R USB C Rechargeable Powerful 4500lm XHP70.2 21700 Flashlight Diving Light with Magnetic Control Switch Underwater Torch",
+    "url": "https://www.wurkkos.com/products/-dl10r-usb-c-rechargeable-pl",
+    "lumens": 4500,
+    "throw_m": null,
+    "battery": [
+      "21700",
+      "18650"
+    ],
+    "led": [
+      "XHP70.2"
+    ],
+    "switch": [
+      "rotary"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 140.0,
+    "weight_g": 176.0,
+    "runtime_hours": null,
+    "price_usd": 46.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2507/09/products/DL10R.png"
+  },
+  {
+    "model": "DL30",
+    "brand": "Wurkkos",
+    "name": "DL30 21700 Diving Flashlight, 3600lm Triple LH351D High CRI, Magnetic Control Ring Switch, 5000k＆2700k for Firemen",
+    "url": "https://www.wurkkos.com/products/dl30-diving-flashlight-3600lm",
+    "lumens": 3600,
+    "throw_m": null,
+    "battery": [
+      "21700",
+      "18650"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": [
+      "rotary"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 118.0,
+    "weight_g": 130.0,
+    "runtime_hours": null,
+    "price_usd": 36.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/DL30.jpg"
+  },
+  {
+    "model": "DL46",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL46 Diving Flashlight , 20000lm, USB-C Rechargeable, 30000 mAh battery, Power Bank",
+    "url": "https://www.wurkkos.com/products/dl46-diving-flashlight",
+    "lumens": 20000,
+    "throw_m": 608,
+    "battery": [
+      "46950"
+    ],
+    "led": [
+      "XHP50.2"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 168.0,
+    "weight_g": 938.0,
+    "runtime_hours": null,
+    "price_usd": 115.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/DL46.jpg"
+  },
+  {
+    "model": "DL70",
+    "brand": "Wurkkos",
+    "name": "Wurkkos DL70 Super Bright 13000lm Dive Light, Amphibious Flashlight, Underwater 100m, with 2*26650 Flashlights, 4*XHP50B, 4 Modes Operation",
+    "url": "https://www.wurkkos.com/products/usa-warehousewurkkos-dl70-super-bright-13000lm-dive-light,-amphibious-flashlight,-underwater-100m,-with-226650-flashlights,-4xhp50b,-4-modes-operation",
+    "lumens": 13000,
+    "throw_m": null,
+    "battery": [
+      "26650"
+    ],
+    "led": [
+      "XHP50B"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 209.0,
+    "weight_g": 395.0,
+    "runtime_hours": null,
+    "price_usd": 69.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2507/09/products/DL70-1436304b43.png"
+  },
+  {
+    "model": "FC11C",
+    "brand": "Wurkkos",
+    "name": "Wurkkos FC11C Nichia 519A Powerful 18650 Flashlight, USB C Rechargeable,Buck Circuit 1200Lumens with Magnetic Tail",
+    "url": "https://www.wurkkos.com/products/wurkkos-fc11c-nichia-519a-buck-circuit-flashlight",
+    "lumens": 1200,
+    "throw_m": 155,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 116.23,
+    "weight_g": 110.0,
+    "runtime_hours": null,
+    "price_usd": 19.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/FC11C.jpg"
+  },
+  {
+    "model": "FC12C",
+    "brand": "Wurkkos",
+    "name": "Wurkkos FC12C Buck Circuit Tactical Flashlight, Long-range 1600 LM/332 M, Tactical & Ramping for indoor/outdoor use",
+    "url": "https://www.wurkkos.com/products/-wurkkos-fc12c-buck-circuit-tactical-flashlight",
+    "lumens": 1600,
+    "throw_m": 332,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "SFT40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 136.5,
+    "weight_g": 85.0,
+    "runtime_hours": null,
+    "price_usd": 26.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/FC12C-1157273a29.jpg"
+  },
+  {
+    "model": "H25L",
+    "brand": "Wurkkos",
+    "name": "Wurkkos H25L Powerful 1000 Lumens USB C Rechargeable Headlamp, 90CRI LH351D LED 5000k Useful Headlight",
+    "url": "https://www.wurkkos.com/products/h25l-headlamp",
+    "lumens": 1000,
+    "throw_m": null,
+    "battery": [
+      "21700",
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 9.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/H25L999.jpg"
+  },
+  {
+    "model": "H25LR",
+    "brand": "Wurkkos",
+    "name": "H25LR LED Rechargeable Headlamp with 90 High CRI Bright White Light＆660nm Red Torch, USB C charhing ＆18650 battery",
+    "url": "https://www.wurkkos.com/products/h25lr-led-rechargeable-headlamp-with-90-high-cri-bright-white-light",
+    "lumens": 500,
+    "throw_m": null,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 12.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/H25LR1299.jpg"
+  },
+  {
+    "model": "H25S",
+    "brand": "Wurkkos",
+    "name": "H25S USB C Rechargeable Headlamp 2*SST40 LED 1200lm Powerful Headlight Working light Original D25S Upgrade",
+    "url": "https://www.wurkkos.com/products/h25s-usb-c-rechargeable-headlamp-us",
+    "lumens": 1200,
+    "throw_m": null,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 10.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2507/09/products/H25S.png"
+  },
+  {
+    "model": "HD01",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD01 Rechargeable EDC Flashlight with Front Light,Side flood light (90CRI)/RGB Light/Green Beam,Dual Switch/Magnetic Tail",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd01-rechargeable-1200lm-edc-flashlight",
+    "lumens": 1200,
+    "throw_m": null,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 111.0,
+    "weight_g": 95.0,
+    "runtime_hours": null,
+    "price_usd": 29.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2503/18/products/HD01-9e5c.jpg"
+  },
+  {
+    "model": "HD01 PRO",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD01 PRO Flat EDC Flashlight, 365nm UV, Green Laser, White Flood LED, RGB Side Light, Magnetic Tail",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd01-pro-edc-flashlight",
+    "lumens": 1200,
+    "throw_m": null,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 111.5,
+    "weight_g": 100.0,
+    "runtime_hours": null,
+    "price_usd": 36.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD01PRO-11285638c7.jpg"
+  },
+  {
+    "model": "HD01UV",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD01UV Multifunctional EDC Flashlight, with 365nm UV light and White flood led, Side RGB Lights/Dual Switch/Magnetic Tail",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd01uv",
+    "lumens": 1200,
+    "throw_m": 157,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 111.5,
+    "weight_g": 96.0,
+    "runtime_hours": null,
+    "price_usd": 19.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD01UV-1132124e56.jpg"
+  },
+  {
+    "model": "HD02",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD02 | Magnetic Foldable Flashlight with Quad Beam, 3300 Lumens, Spotlight/UV Light/Green Laser& Wing Light | Reverse charging",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd02-work-light",
+    "lumens": 3300,
+    "throw_m": null,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 59.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD02.jpg"
+  },
+  {
+    "model": "HD03",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD03 iF Design Award Clip Light – 680LM USB‑C Rechargeable EDC Flashlight with Spotlight, Floodlight (95 CRI), RGB, Magnet & Buck Driver",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd03-clip-light",
+    "lumens": 680,
+    "throw_m": null,
+    "battery": [
+      "built-in"
+    ],
+    "led": null,
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 16.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD03CHENG.jpg"
+  },
+  {
+    "model": "HD05",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD05 Foldable 4-in-1 EDC Flashlight (Spot / Flood / Red / UV), 3100LM 335m Throw, Rotatable 180° Wing Floodlight (3000–6000K)",
+    "url": "https://www.wurkkos.com/products/hd05-foldable-4-in-1-edc-woke-flashlight",
+    "lumens": 3100,
+    "throw_m": 335,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 62.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/10/products/HD052.png"
+  },
+  {
+    "model": "HD10",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD10 Mini Angle Flashlight,USB C Rechargeable 14500 Headlamp 1200LM Max , Anduril 2.0/Real RGB Aux/Magnetic Tailcap/Headband",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd10",
+    "lumens": 1200,
+    "throw_m": 129,
+    "battery": [
+      "18650",
+      "14500"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 82.4,
+    "weight_g": 46.0,
+    "runtime_hours": null,
+    "price_usd": 19.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD10HEI.jpg"
+  },
+  {
+    "model": "HD12",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD12 Mini Angle Light, White&Red Beam, USB C Rechargeable 14500/AA Headlamp ,with Simple UI/Adjustable Headband",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd12-mini-angle-light-usa",
+    "lumens": 850,
+    "throw_m": 105,
+    "battery": [
+      "18650",
+      "14500"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 84.4,
+    "weight_g": 48.0,
+    "runtime_hours": null,
+    "price_usd": 26.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2507/09/products/HD12.png"
+  },
+  {
+    "model": "HD15",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD15 USB C Rechargeable 18650 Flashlight, with LH351D 5000K SST20 5000K 2000lm Max, 18350 Compatible, with Reverse Charging",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd15-angle-flashlight",
+    "lumens": 2000,
+    "throw_m": 220,
+    "battery": [
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 110.0,
+    "weight_g": 72.0,
+    "runtime_hours": null,
+    "price_usd": 21.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/10/products/HD15-2199.jpg"
+  },
+  {
+    "model": "HD16",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD16 High-Performance Headlamp, 2500LM, 297M Beam Distance, Spot, Flood & Red Light, One-Handed Rotary Switch for Easy Operation",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd16-headlamp-spot＆flood＆red",
+    "lumens": 2500,
+    "throw_m": 297,
+    "battery": [
+      "21700",
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": [
+      "rotary"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 94.3,
+    "weight_g": 70.0,
+    "runtime_hours": null,
+    "price_usd": 40.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD16.jpg"
+  },
+  {
+    "model": "HD17",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD17 Powerful Headlamp, 2500 Lumens, 220m Beam Distance, Spotlight Floodlight & Red Light,Constant Current Driver＆ Simple UI",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd17-powerful-headlamp",
+    "lumens": 2500,
+    "throw_m": 220,
+    "battery": [
+      "21700",
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 39.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD17.jpg"
+  },
+  {
+    "model": "HD20",
+    "brand": "Wurkkos",
+    "name": "HD20 USB C Rechargeable Headlamp 21700 Flashlight 2000lm Dual LED LH351D and XPL with Magnetic Tail",
+    "url": "https://www.wurkkos.com/products/eu-warehousehd20-usb-c-rechargeable-headlamp-21700-flashlight-2000lm-dual-led-lh351d-and-xpl-with-magnetic-tail",
+    "lumens": 2000,
+    "throw_m": null,
+    "battery": [
+      "21700",
+      "18650"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": 122.0,
+    "weight_g": 130.0,
+    "runtime_hours": null,
+    "price_usd": 54.65,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2601/08/products/HD20-.png"
+  },
+  {
+    "model": "HD50",
+    "brand": "Wurkkos",
+    "name": "Wurkkos HD50 Headlamp with Spotlight & Floodlight&red light, 4000LM/ 239M Powerful Flashlight Magnetic Tailcap USB C Rechargeable with dual swtich",
+    "url": "https://www.wurkkos.com/products/wurkkos-hd50-headlamp-with-spotlight-floodlightred-light",
+    "lumens": 4000,
+    "throw_m": 239,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP50.3 HI"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 86.0,
+    "weight_g": 100.0,
+    "runtime_hours": null,
+    "price_usd": 39.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/HD50.jpg"
+  },
+  {
+    "model": "TD01",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD01/TD01C Rechargeable Tactical Flashlight, Throw 1039M IPX8 Waterproof, USB-C Torch PMMA Lens",
+    "url": "https://www.wurkkos.com/products/wurkkos-td01-powerful-tactical-flashlight",
+    "lumens": 1000,
+    "throw_m": 1039,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT40"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 152.0,
+    "weight_g": 200.0,
+    "runtime_hours": null,
+    "price_usd": 38.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TD01.jpg"
+  },
+  {
+    "model": "TD01C",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD01C Rechargeable Tactical Flashlight, Throw 1000M IPX8 Waterproof, USB-C Torch PMMA Lens,",
+    "url": "https://www.wurkkos.com/products/brazil-warehouswurkkos-td01c-rechargeable-tactical-flashlight,-throw-927m-ipx8-waterproof,-usb-c-torch-pmma-lens,",
+    "lumens": 1000,
+    "throw_m": 1039,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SFT40"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 152.0,
+    "weight_g": 200.0,
+    "runtime_hours": null,
+    "price_usd": 39.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2511/12/products/TD01.png"
+  },
+  {
+    "model": "TD02",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD02 Tactical Flashlight, 2000LM 254M Pocket Rechargeable EDC Torch with Type C Charging Port, Tail Switch IPX8 Waterproof",
+    "url": "https://www.wurkkos.com/products/new-releasewurkkos-td02-tactical-flashlight,-2000lm-254m-pocket-rechargeable-edc-torch-with-type-c-charging-port,-tail-switch-ipx8-waterproof",
+    "lumens": 2000,
+    "throw_m": 254,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": [
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 122.0,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 21.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TD02.jpg"
+  },
+  {
+    "model": "TD04",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD04 XHP50D HI Rechargeable Flashlight USB-C 3000 lumens Torch IP68 Waterproof EDC Tail Switch,21700 Battery Two Groups Tactical",
+    "url": "https://www.wurkkos.com/products/wurkkos-td04-xhp50d-3000-lumens-torch-ip68",
+    "lumens": 3000,
+    "throw_m": 335,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP50D HI"
+    ],
+    "switch": [
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 137.0,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 27.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TD04.jpg"
+  },
+  {
+    "model": "TD07",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD07 Tactical Flashlight, USB C Rechargeable 1300 Lumens, 479m Long Range EDC Flashlight",
+    "url": "https://www.wurkkos.com/products/wurkkos-td07-tactical-flashlight",
+    "lumens": 1300,
+    "throw_m": 479,
+    "battery": [
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": [
+      "rotary"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 99.0,
+    "weight_g": 80.0,
+    "runtime_hours": null,
+    "price_usd": 26.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TD07GANLANLV-11303093be.jpg"
+  },
+  {
+    "model": "TD11",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TD11 Smart OLED Tactical Flashlight, 3000LM 320M, Dual Tactical Tail Buttons, Boost Constant Current Driver",
+    "url": "https://www.wurkkos.com/products/td11-smart-oled-tactical-flashlight",
+    "lumens": 3000,
+    "throw_m": 320,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP50D HI"
+    ],
+    "switch": [
+      "tail"
+    ],
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 69.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TD11.jpg"
+  },
+  {
+    "model": "TS11",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS11 2000LM Powerful Rechargeable Mini EDC Flashlight SFT40 616M Throw with RGB Auxiliary,Anduril 2.0, IP68",
+    "url": "https://www.wurkkos.com/products/ts11",
+    "lumens": 2000,
+    "throw_m": 616,
+    "battery": [
+      "18650",
+      "18350"
+    ],
+    "led": [
+      "SFT40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 89.5,
+    "weight_g": 89.0,
+    "runtime_hours": null,
+    "price_usd": 22.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS11-113138b036.jpg"
+  },
+  {
+    "model": "TS12",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS12 Mini Thrower EDC Flashlight, 1350LM 473Meters Powerful USB C Rechargeable Light",
+    "url": "https://www.wurkkos.com/products/wurkkos-ts12-mini-edc-flashlight",
+    "lumens": 1350,
+    "throw_m": 473,
+    "battery": [
+      "18650",
+      "14500"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 90.8,
+    "weight_g": 75.0,
+    "runtime_hours": null,
+    "price_usd": 19.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/ts12diffuser.jpg"
+  },
+  {
+    "model": "TS15",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS15 Mini Thrower EDC Flashlight, 401 Meters, Buck Driver, USB-C Rechargeable, 14500 & AA battery, IP68 Waterproof",
+    "url": "https://www.wurkkos.com/products/ts15-mini-thrower-edc-flashlight",
+    "lumens": 900,
+    "throw_m": 401,
+    "battery": [
+      "18650",
+      "14500"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 91.6,
+    "weight_g": 51.0,
+    "runtime_hours": null,
+    "price_usd": 19.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS15.jpg"
+  },
+  {
+    "model": "TS22",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS22 XHP70.3 LED Flashlight, 4500 Lumen and High CRI, Magnetic Tail, Reverse Charging, USB-C Rechargeable",
+    "url": "https://www.wurkkos.com/products/powerful-flashlight-ts22-4500lm",
+    "lumens": 4500,
+    "throw_m": 228,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP70.3"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 122.0,
+    "weight_g": 95.0,
+    "runtime_hours": null,
+    "price_usd": 39.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS22.jpg"
+  },
+  {
+    "model": "TS23",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS23 21700 Tactical Flashlight XHP70.3 HI LED 5000Lm Torch IP68 Waterproof Two Group Mode EDC Tail Switch",
+    "url": "https://www.wurkkos.com/products/wurkkos-ts23-21700-tactical-flashlight",
+    "lumens": 5000,
+    "throw_m": 482,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "XHP70.3 HI"
+    ],
+    "switch": [
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 138.0,
+    "weight_g": 173.0,
+    "runtime_hours": null,
+    "price_usd": 42.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS23LV.jpg"
+  },
+  {
+    "model": "TS26",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS26 Anduril EDC Flashlight, 3470 Lumens 197M, Boost driver, Reverse Charging＆IPX8, Magnetic tailcap",
+    "url": "https://www.wurkkos.com/products/ts26-anduril-edc-flashlight-reverse-charging",
+    "lumens": 3470,
+    "throw_m": 197,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "LH351D"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 39.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/12/products/TS26-1.jpg"
+  },
+  {
+    "model": "TS26S",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS26S EDC Flashlight, 4*519A Leds with CRI 90+,max output 3100 lumens 191M, waterproof IPX8＆Boost driver",
+    "url": "https://www.wurkkos.com/products/wurkkos-ts26s-edc-flashlight",
+    "lumens": 3100,
+    "throw_m": 191,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": [
+      "side",
+      "tail"
+    ],
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 122.0,
+    "weight_g": 108.0,
+    "runtime_hours": null,
+    "price_usd": 33.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/10/products/0310.jpg"
+  },
+  {
+    "model": "TS27",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS27 | 3200LM Multi-Mode Flashlight with Lantern & RGB, 845m Throw, 3000–6000K CCT, 300-Hour Runtime, Power Bank",
+    "url": "https://www.wurkkos.com/products/ts27",
+    "lumens": 3200,
+    "throw_m": 845,
+    "battery": [
+      "LiFePO4"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 59.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS27-1125454ad5.jpg"
+  },
+  {
+    "model": "TS28",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS28 3200 Lumens EDC Flashlight, Ultra Long Range 506m, Stainless Steel Bezel, Magnetic Tail, IPX8,21700 Battery Included",
+    "url": "https://www.wurkkos.com/products/wurkkos-ts28-3200-lumens-506m-edc-flashlight",
+    "lumens": 3200,
+    "throw_m": 506,
+    "battery": [
+      "21700",
+      "18650"
+    ],
+    "led": [
+      "SFT70"
+    ],
+    "switch": null,
+    "material": null,
+    "length_mm": null,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 33.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS28.jpg"
+  },
+  {
+    "model": "TS30S",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS30S PRO Powerful 6000lm Flashlight, Reverse charging, 1086 Meters, SBT90.2 LED BLF Anduril 2.0 IP68",
+    "url": "https://www.wurkkos.com/products/ts30s-pro",
+    "lumens": 6000,
+    "throw_m": 1086,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "SBT90.2"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 157.2,
+    "weight_g": 265.0,
+    "runtime_hours": null,
+    "price_usd": 68.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/05/products/TS30SPRO-5999.jpg"
+  },
+  {
+    "model": "TS32",
+    "brand": "Wurkkos",
+    "name": "Wurkkos TS32 12000 Lumens Super Bright Flashlight with Spotlight & Floodlight, USB-C Rechargeable & Power Bank",
+    "url": "https://www.wurkkos.com/products/wurkkos-ts32-rechargeable-lashlight",
+    "lumens": 12000,
+    "throw_m": 584,
+    "battery": [
+      "21700"
+    ],
+    "led": [
+      "Nichia 519A",
+      "SFT40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 132.4,
+    "weight_g": null,
+    "runtime_hours": null,
+    "price_usd": 89.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/TS32519A.jpg"
+  },
+  {
+    "model": "WK03",
+    "brand": "Wurkkos",
+    "name": "Wurkkos WK03 1800lm SST40 USB C Rechargeable 18650 EDC Flashlight Simple UI with Power Indicator/ATR",
+    "url": "https://www.wurkkos.com/products/wk03",
+    "lumens": 1800,
+    "throw_m": 220,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "SST40"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 101.5,
+    "weight_g": 55.0,
+    "runtime_hours": null,
+    "price_usd": 10.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/wk03999.jpg"
+  },
+  {
+    "model": "WK03 519A",
+    "brand": "Wurkkos",
+    "name": "Wurkkos WK03 18650 EDC Flashlight with Nichia 519A 5000K 1200lm/USB C Rechargeable/Extra Magnetic Tail Cap included",
+    "url": "https://www.wurkkos.com/products/wurkkos-wk03-golden-nichia-519a",
+    "lumens": 1200,
+    "throw_m": 220,
+    "battery": [
+      "18650"
+    ],
+    "led": [
+      "Nichia 519A"
+    ],
+    "switch": null,
+    "material": [
+      "aluminum"
+    ],
+    "length_mm": 101.5,
+    "weight_g": 55.0,
+    "runtime_hours": null,
+    "price_usd": 15.99,
+    "image_url": "https://ueeshop.ly200-cdn.com/u_file/UPAU/UPAU502/2603/04/products/WK03519a.jpg"
+  }
+]
