@@ -1,28 +1,51 @@
-# Pipeline State — 2026-03-16
+# Pipeline State — 2026-03-17
 
-## Current Status: Pipeline refactored, reviews scraped, dedup complete
+## Current Status: Sprite fix + enrichment Phase 5 + Pelican scrape complete
 
-### Coverage (10,725 entries — was 12,650 before dedup)
-| Field | Current | Previous | Δ |
-|-------|---------|----------|---|
-| lumens | 80.3% | 81.2% | -0.9% |
-| throw_m | 63.2% | 65.5% | -2.3% |
-| runtime | 61.1% | 59.8% | +1.3% |
-| length_mm | 59.3% | 60.1% | -0.8% |
-| weight_g | 90.8% | 91.1% | -0.3% |
-| led | 54.2% | 55.0% | -0.8% |
-| battery | 81.4% | 82.5% | -1.1% |
-| switch | 66.7% | 66.2% | +0.5% |
-| material | 68.8% | 67.2% | +1.6% |
-| color | 55.5% | 53.3% | +2.2% |
-| features | 82.5% | 83.5% | -1.0% |
-| price | 93.9% | 94.5% | -0.6% |
+### Coverage (10,775 entries)
+| Field | Current | Previous (3/16) | Δ |
+|-------|---------|-----------------|---|
+| lumens | 80.6% | 80.3% | +0.3% |
+| throw_m | 63.9% | 63.2% | +0.7% |
+| runtime | 63.1% | 61.1% | +2.0% |
+| length_mm | 60.1% | 59.3% | +0.8% |
+| weight_g | 90.5% | 90.8% | -0.3% |
+| led | 54.4% | 54.2% | +0.2% |
+| battery | 81.3% | 81.4% | -0.1% |
+| switch | 72.5% | 66.7% | +5.8% |
+| material | 78.6% | 68.8% | +9.8% |
+| color | 56.2% | 55.5% | +0.7% |
+| features | 90.6% | 82.5% | +8.1% |
+| price | 93.5% | 93.9% | -0.4% |
+| purchase_url | 90.8% | n/a | — |
 
-Fully valid: **1,252 entries (11.7%)** — down from 2,497 at 12,650 entries
-> Note: dedup removed 1,925 entries (many were retailer duplicates that inflated valid count).
-> The valid% is lower but data quality is higher — fewer duplicate/conflicting entries.
+Fully valid: **1,327 entries (12.3%)** — up from 1,252 (11.7%)
 
-### This Session's Work
+### Session 2 Work (2026-03-17)
+
+#### Fix: Sprite ID-based mapping
+- Rebuilt sprite with `idToSprite` mapping in metadata (10,281 images)
+- Fixed image mismatch issue on live site — images now correctly map by flashlight ID
+- Grid: 102×101, 10,200×10,100px, 9.76 MB sprite
+
+#### Fix: Enrich CLI signature mismatch
+- Removed `applyInference` and `nowValid`/`stillInvalid` from cmdEnrich
+- enrich.ts only returns `{ total, enriched }`
+
+#### Feat: Phase 5 enrichment — raw text extraction
+- Switch from raw text: +611 entries (regex: tail/side/rotary/dual/electronic/magnetic)
+- Material from raw text: +1,058 entries (aluminum, polycarbonate, stainless steel, etc.)
+- Runtime from raw text: +153 entries (from "XX hours runtime" patterns)
+- Features from raw text: +860 entries (clip, waterproof, rechargeable, strobe, SOS, lanyard, etc.)
+- Color from raw text: +47 entries
+
+#### Feat: Pelican structured specs scrape
+- Discovered www.pelican.com serves full FL1 spec tables in static HTML
+- Scraped 50 product pages via curl (Cloudflare blocks bun fetch)
+- 92 entries enriched, 369 fields added (length, switch, material, battery, FL1 data)
+- Also imported 83 products from Shopify JSON API (price, weight, color)
+
+### Previous Session Work (2026-03-16)
 
 #### Phase 1-2: Code Refactoring
 - Created `pipeline/store/brand-aliases.ts` — shared brand normalization module
@@ -55,22 +78,11 @@ Fully valid: **1,252 entries (11.7%)** — down from 2,497 at 12,650 entries
 - ReyLight: 81 processed, 5 enriched
 - Zebralight: 50 processed, 0 enriched (throw_m not on pages)
 
-#### Phase 6: Image Pipeline Fix
-- Switched from sequential-index to flashlight-ID-based sprite mapping
-- Images now stable across DB changes (entries added/removed/reordered)
-- Requires image pipeline re-run to regenerate sprite with ID-based naming
-
-#### Phase 7: Accessory Classification
-- 324 entries classified as type "accessory" (was: filtered out at build time)
-- Accessories now kept in DB and output, filterable in SPA via type column
-
-### Build Output
-- 10,725 entries, 36 columns, 6,644 KB JSON
-- 324 accessories included (filterable)
-
-### Next Steps
-1. **Re-run image pipeline** with new ID-based sprite mapping
-2. **CFC headless** for Pelican (193), Wurkkos (32), Sofirn (40)
-3. **Deep attribute gaps**: led (45.8%), color (44.5%), length (40.7%)
-4. **Deploy SPA update**
-5. Continue targeted AI parse for remaining brands
+### Remaining Gaps / TODO
+- **LED (45.6% missing)**: Most pages don't list specific LED emitter. Could use image classification.
+- **Color (43.8%)**: User suggested image parsing for switch type — extends to color detection too.
+- **Length (39.9%)**: Needs structured spec tables. Most available data already scraped.
+- **Runtime (36.9%)**: In marketing text but AI parser already tried. More structured sources needed.
+- **Throw (36.1%)**: FL1 derivation from intensity_cd has minimal remaining candidates (28).
+- **CFC headless**: Wurkkos (Cloudflare), Sofirn (Cloudflare) — needs browser-based scraping.
+- **Petzl**: 137 entries, mostly from Battery Junction. Structured specs on petzl.com behind JS.
