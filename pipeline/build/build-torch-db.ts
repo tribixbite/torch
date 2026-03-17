@@ -61,6 +61,8 @@ interface SpriteMetadata {
 	tileSize: number;
 	totalImages: number;
 	spriteFile: string;
+	/** Stable mapping: flashlight ID → sprite position index */
+	idToSprite?: Record<string, number>;
 }
 
 /** Column definition — maps to head[i] / disp[i] / opts[i] etc. */
@@ -349,20 +351,26 @@ export async function buildTorchDb(): Promise<{
 	const allEntries = getAllFlashlights();
 	console.log(`  ${allEntries.length} entries from SQLite`);
 
-	// Filter out obvious non-flashlight accessories
-	// Match non-flashlight items — \b word boundaries, case-insensitive
-	// "glow tubes" matched only if at start or is the entire product name
+	// Classify accessories — keep them in the DB but add "accessory" to their type
 	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|replacement lamp|replacement bulb|replacement battery|replacement nimh|replacement xenon|traffic.*wand|accessory lens|gift card|mouse pad|sticker|poster|headband(?! light)|charger(?! led| rechargeable| flashlight))\b/i;
 	const GLOW_TUBE_ONLY = /^(gitd\b|.*\bglow tubes?\b(?!.*\b(flashlight|headlamp|torch)\b))/i;
-	// Also filter entries where the model is ONLY an accessory keyword (not a flashlight name containing it)
 	const PURE_ACCESSORY = /^(?:battery pack|holster|diffuser|charger|mount|strap|case|pouch|headband|glass lens|schneider gelion)\b/i;
-	const entries = allEntries.filter((e) =>
-		!ACCESSORY_PATTERNS.test(e.model) &&
-		!GLOW_TUBE_ONLY.test(e.model) &&
-		!PURE_ACCESSORY.test(e.model),
-	);
-	const removed = allEntries.length - entries.length;
-	if (removed > 0) console.log(`  Filtered ${removed} accessories (${entries.length} actual flashlights)`);
+
+	let accessoryCount = 0;
+	for (const entry of allEntries) {
+		const isAccessory =
+			ACCESSORY_PATTERNS.test(entry.model) ||
+			GLOW_TUBE_ONLY.test(entry.model) ||
+			PURE_ACCESSORY.test(entry.model);
+		if (isAccessory && !entry.type.includes('accessory')) {
+			entry.type = ['accessory'];
+			accessoryCount++;
+		}
+	}
+	if (accessoryCount > 0) console.log(`  Classified ${accessoryCount} accessories (kept in DB, filterable by type)`);
+
+	// Keep all entries — accessories are now filterable via type column
+	const entries = allEntries;
 
 	// Load sprite metadata if available (written by scrape-images.ts)
 	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');
@@ -380,19 +388,36 @@ export async function buildTorchDb(): Promise<{
 	const data: unknown[][] = [];
 	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
 
+	let spriteHits = 0;
 	for (let rowIdx = 0; rowIdx < entries.length; rowIdx++) {
 		const entry = entries[rowIdx];
 		const row: unknown[] = [];
 		for (const col of COLUMNS) {
 			row.push(col.extract(entry));
 		}
-		// If sprite available, replace _pic with [col, row] sprite coordinates
+		// If sprite available, map by flashlight ID for stable image assignment
 		if (spriteMeta && picColIdx >= 0) {
-			const spriteCol = rowIdx % spriteMeta.cols;
-			const spriteRow = Math.floor(rowIdx / spriteMeta.cols);
-			row[picColIdx] = [spriteCol, spriteRow];
+			const idMap = spriteMeta.idToSprite;
+			if (idMap && entry.id in idMap) {
+				// ID-based mapping (stable across DB changes)
+				const spriteIdx = idMap[entry.id];
+				const spriteCol = spriteIdx % spriteMeta.cols;
+				const spriteRow = Math.floor(spriteIdx / spriteMeta.cols);
+				row[picColIdx] = [spriteCol, spriteRow];
+				spriteHits++;
+			} else if (!idMap) {
+				// Legacy fallback: sequential index mapping (will be wrong if entries changed)
+				const spriteCol = rowIdx % spriteMeta.cols;
+				const spriteRow = Math.floor(rowIdx / spriteMeta.cols);
+				row[picColIdx] = [spriteCol, spriteRow];
+				spriteHits++;
+			}
+			// else: no sprite for this entry, keep the image URL from extract
 		}
 		data.push(row);
+	}
+	if (spriteMeta) {
+		console.log(`  Sprite mapped: ${spriteHits}/${entries.length} entries have sprite images`);
 	}
 
 	// Build all metadata arrays

@@ -26,26 +26,27 @@ const skipDownload = args.has('--skip-download');
 const spriteOnly = args.has('--sprite-only');
 
 interface ImageJob {
-	/** Row index in the flashlights table (0-based order) */
+	/** Sprite position index (0-based, assigned sequentially to entries with images) */
 	idx: number;
-	/** Primary key from DB */
-	id: number;
+	/** Flashlight ID from DB (used for thumb file naming — stable across rebuilds) */
+	flashlightId: string;
 	/** First image URL */
 	url: string;
 }
 
-/** Extract all image jobs from the database */
+/** Extract all image jobs from the database, keyed by stable flashlight ID */
 function getImageJobs(): ImageJob[] {
 	const db = new Database(DB_PATH, { readonly: true });
 	const rows = db.query(
-		'SELECT rowid as id, image_urls FROM flashlights ORDER BY rowid'
-	).all() as { id: number; image_urls: string }[];
+		'SELECT id, image_urls FROM flashlights ORDER BY brand, model'
+	).all() as { id: string; image_urls: string }[];
 
 	const jobs: ImageJob[] = [];
-	for (let i = 0; i < rows.length; i++) {
-		const urls = JSON.parse(rows[i].image_urls) as string[];
+	let idx = 0;
+	for (const row of rows) {
+		const urls = JSON.parse(row.image_urls) as string[];
 		if (urls.length > 0 && urls[0]) {
-			jobs.push({ idx: i, id: rows[i].id, url: urls[0] });
+			jobs.push({ idx: idx++, flashlightId: row.id, url: urls[0] });
 		}
 	}
 	db.close();
@@ -90,7 +91,8 @@ async function downloadImage(url: string, retries = MAX_RETRIES): Promise<Buffer
 
 /** Process a single image: download → resize → save as WebP thumb */
 async function processImage(job: ImageJob): Promise<boolean> {
-	const thumbPath = join(THUMBS_DIR, `${job.idx}.webp`);
+	// Use flashlight ID for stable file naming (survives DB reordering)
+	const thumbPath = join(THUMBS_DIR, `${job.flashlightId}.webp`);
 
 	// Skip if already processed
 	if (existsSync(thumbPath)) return true;
@@ -119,15 +121,15 @@ async function downloadAll(jobs: ImageJob[]): Promise<{ ok: number; fail: number
 	let fail = 0;
 	let completed = 0;
 
-	// Check how many already exist
-	const existing = jobs.filter((j) => existsSync(join(THUMBS_DIR, `${j.idx}.webp`))).length;
+	// Check how many already exist (using flashlight ID-based names)
+	const existing = jobs.filter((j) => existsSync(join(THUMBS_DIR, `${j.flashlightId}.webp`))).length;
 	if (existing > 0) {
 		console.log(`  ${existing} thumbnails already cached, skipping those`);
 		ok += existing;
 		completed += existing;
 	}
 
-	const pending = jobs.filter((j) => !existsSync(join(THUMBS_DIR, `${j.idx}.webp`)));
+	const pending = jobs.filter((j) => !existsSync(join(THUMBS_DIR, `${j.flashlightId}.webp`)));
 	if (pending.length === 0) {
 		console.log('  All thumbnails already downloaded');
 		return { ok, fail };
@@ -157,20 +159,35 @@ async function downloadAll(jobs: ImageJob[]): Promise<{ ok: number; fail: number
 	return { ok, fail };
 }
 
-/** Build sprite sheet from individual thumbnails using row-by-row chunking */
-async function buildSprite(totalImages: number): Promise<void> {
+/** Build sprite sheet from individual thumbnails using row-by-row chunking.
+ * Returns the id→spriteIndex mapping for use in build step. */
+async function buildSprite(jobs: ImageJob[]): Promise<Record<string, number>> {
 	console.log('\nBuilding sprite sheet...');
 
-	// Calculate grid dimensions (aim for roughly square)
+	// Build ordered list of flashlight IDs that have thumbs
+	const orderedJobs: ImageJob[] = [];
+	for (const job of jobs) {
+		const thumbPath = join(THUMBS_DIR, `${job.flashlightId}.webp`);
+		if (existsSync(thumbPath)) {
+			orderedJobs.push(job);
+		}
+	}
+
+	const totalImages = orderedJobs.length;
 	const cols = Math.ceil(Math.sqrt(totalImages));
 	const rows = Math.ceil(totalImages / cols);
 	const width = cols * TILE_SIZE;
 	const height = rows * TILE_SIZE;
 
-	console.log(`  Grid: ${cols}x${rows} (${width}x${height}px)`);
+	console.log(`  Grid: ${cols}x${rows} (${width}x${height}px), ${totalImages} images`);
+
+	// Build id→spriteIndex mapping
+	const idToSprite: Record<string, number> = {};
+	for (let i = 0; i < orderedJobs.length; i++) {
+		idToSprite[orderedJobs[i].flashlightId] = i;
+	}
 
 	// Build row-by-row to avoid OOM on large datasets
-	// Each row is cols * TILE_SIZE wide, TILE_SIZE tall
 	const rowBuffers: Buffer[] = [];
 	let found = 0;
 
@@ -180,9 +197,7 @@ async function buildSprite(totalImages: number): Promise<void> {
 		const endIdx = Math.min(startIdx + cols, totalImages);
 
 		for (let i = startIdx; i < endIdx; i++) {
-			const thumbPath = join(THUMBS_DIR, `${i}.webp`);
-			if (!existsSync(thumbPath)) continue;
-
+			const thumbPath = join(THUMBS_DIR, `${orderedJobs[i].flashlightId}.webp`);
 			const col = i % cols;
 			rowComposites.push({
 				input: thumbPath,
@@ -231,19 +246,24 @@ async function buildSprite(totalImages: number): Promise<void> {
 	const sizeMB = ((await stat.size) / 1024 / 1024).toFixed(2);
 	console.log(`  Sprite saved: ${SPRITE_OUTPUT} (${sizeMB} MB)`);
 	console.log(`  Grid cols: ${cols}`);
+
+	return idToSprite;
 }
 
-/** Write sprite metadata for build-torch-db.ts to consume */
-async function writeSpriteMetadata(totalImages: number): Promise<void> {
+/** Write sprite metadata + id→position mapping for build-torch-db.ts to consume */
+async function writeSpriteMetadata(idToSprite: Record<string, number>): Promise<void> {
+	const totalImages = Object.keys(idToSprite).length;
 	const cols = Math.ceil(Math.sqrt(totalImages));
 	const metadata = {
 		cols,
 		tileSize: TILE_SIZE,
 		totalImages,
 		spriteFile: 'flashlights.sprites.webp',
+		// Stable mapping: flashlight ID → sprite position index
+		idToSprite,
 	};
-	await Bun.write('pipeline-data/sprite-metadata.json', JSON.stringify(metadata, null, 2));
-	console.log('  Sprite metadata written to pipeline-data/sprite-metadata.json');
+	await Bun.write('pipeline-data/sprite-metadata.json', JSON.stringify(metadata));
+	console.log(`  Sprite metadata written (${totalImages} entries mapped)`);
 }
 
 // --- Main ---
@@ -262,10 +282,10 @@ async function main() {
 		console.log(`\nDownload complete in ${elapsed}s — ${ok} ok, ${fail} failed`);
 	}
 
-	// Build sprite
+	// Build sprite and write id→position mapping
 	const start2 = Date.now();
-	await buildSprite(jobs.length);
-	await writeSpriteMetadata(jobs.length);
+	const idToSprite = await buildSprite(jobs);
+	await writeSpriteMetadata(idToSprite);
 	const elapsed2 = ((Date.now() - start2) / 1000).toFixed(1);
 	console.log(`Sprite built in ${elapsed2}s`);
 
