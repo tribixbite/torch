@@ -8,3 +8,8 @@ vite.config.ts.timestamp-*
 
 # Pipeline runtime data
 pipeline-data/
+
+# Bun cache & home directory artifacts
+~/.bun/
+~/
+flashlights.db
