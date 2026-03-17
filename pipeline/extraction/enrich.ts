@@ -471,11 +471,19 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:of\s+)?runtime/i,
 			// Nightstick spec table format: "High Runtime (h): 3.0"
 			/(?:high\s+)?runtime\s*\(h\)[:\s]*(\d+(?:\.\d+)?)/i,
+			// Battery Junction mode table: "Runtime ... 4hours ... 65hours" (no space)
+			/runtime[^.]{0,200}?(\d+(?:\.\d+)?)hours\b/i,
+			// "80-hour runtime" or "72 hours of runtime"
+			/(\d+(?:\.\d+)?)[\s-]*hours?\s+(?:of\s+)?runtime/i,
+			// "up to X hours" or "maximum X hours" (common description format)
+			/(?:up\s+to|maximum|max\.?)\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i,
 		];
 		// Minute-based patterns (converted to hours)
 		const runtimeMinPatterns = [
 			/(?:runtime|run\s*time)[:\s：]*~?\s*(\d+)\s*(?:minutes?|mins?)\b/i,
 			/~?\s*(\d+)\s*(?:minutes?|mins?)\s*(?:of\s+)?runtime/i,
+			// BJ mode table: "Runtime ... 65minutes" (no space)
+			/runtime[^.]{0,200}?(\d+)minutes\b/i,
 		];
 		let foundRuntime = false;
 		for (const re of runtimeHoursPatterns) {
@@ -650,12 +658,18 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i,
 			// "135mm (length)" or "135mm long"
 			/(\d{2,4}(?:\.\d+)?)\s*mm\s*(?:\(?(?:overall|length|long|L)\)?)/i,
-			// Table cell: "135 mm" near "length" keyword
-			/length[^.\n]{0,30}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
-			// "5.3 in" or "5.3 inches" near length
-			/length[^.\n]{0,30}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+			// Table cell: "135 mm" near "length" keyword (extended range for multiline)
+			/length[^.]{0,80}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
+			// "5.3 in" or "5.3 inches" near length (extended range)
+			/length[^.]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+			// Olight: "Length (mm / in) \n 63mm / 2.48in"
+			/length\s*\(mm\b[^)]*\)\s+(\d{2,4}(?:\.\d+)?)\s*mm/i,
+			// Battery Junction: "X in (Y mm)" near length — capture the mm value
+			/length[^.]{0,60}?\d+(?:\.\d+)?\s*in\s*\((\d+)\s*mm\)/i,
 			// "Dimensions: 135mm x 25mm" — first number is usually length
 			/dimensions?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:mm)?\s*[x×]/i,
+			// "X mm x Y mm" dimensions without keyword (first = length if >50mm)
+			/(\d{2,4}(?:\.\d+)?)\s*mm\s*[x×]\s*\d{2,4}(?:\.\d+)?\s*mm/i,
 		];
 		for (const re of lengthPatterns) {
 			const m = combined.match(re);
