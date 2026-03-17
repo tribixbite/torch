@@ -21,7 +21,7 @@
 
 *throw recalculated with stricter >0 check
 
-Fully valid: **3,318 entries (30.8%)** — up from 3,172 (29.4%)
+Fully valid: **3,325 entries (30.9%)** — up from 3,172 (29.4%)
 
 ### Near-Valid Distribution (entries missing N fields)
 | Missing | Count | Cumulative |
