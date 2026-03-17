@@ -37,7 +37,8 @@ const STORE_DOMAINS = [
 	'powertac.com', 'imalentstore.com', 'malkoffdevices.com', 'wubenlight.com',
 	'reylight.net', 'foursevens.com', 'eagtac.com', 'intl-outdoor.com',
 	'zebralight.com', 'sofirnlight.com', 'wurkkos.com', 'skilhunt.com',
-	'shop.pelican.com', 'maglite.com', 'modlite.com', 'surefire.com',
+	'shop.pelican.com', 'maglite.com', 'modlite.com', 'surefire.com', 'coastportland.com',
+	'clouddefensive.com', 'loopgear.com', 'skylumen.com',
 	// Multi-brand retailers
 	'batteryjunction.com', 'goinggear.com', 'nealsgadgets.com',
 	'killzoneflashlights.com', 'jlhawaii808.com', 'fenix-store.com',

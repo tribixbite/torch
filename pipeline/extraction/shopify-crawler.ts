@@ -323,6 +323,18 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 				!/battery|charger|case|pouch|clip|strap/i.test(text);
 		},
 	},
+	{
+		brand: 'Coast',
+		// Coast's main domain blocks /products.json, use checkout subdomain for API
+		baseUrl: 'https://checkout.coastportland.com',
+		publicUrl: 'https://www.coastportland.com',
+		isFlashlight: (p) => {
+			const type = (p.product_type ?? '').toLowerCase();
+			const text = `${p.title} ${type} ${p.tags.join(' ')}`.toLowerCase();
+			return /flashlight|headlamp|lantern|light/i.test(text) &&
+				!/knife|tool|blade|sheath|battery|charger|accessory/i.test(type);
+		},
+	},
 ];
 
 /**
