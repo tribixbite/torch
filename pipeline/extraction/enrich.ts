@@ -32,7 +32,7 @@ import { scrapeProductPage } from './manufacturer-scraper.js';
 /** Domains that are actual stores (have buy/cart functionality) — not just info/review sites */
 const STORE_DOMAINS = [
 	'fenixlighting.com', 'nitecorestore.com', 'olightstore.com', 'acebeam.com',
-	'lumintop.com', 'nightstick.com', 'ledlenserusa.com', 'streamlight.com',
+	'lumintop.com', 'lumintoponline.com', 'nightstick.com', 'ledlenserusa.com', 'streamlight.com',
 	'nextorch.com', 'rovyvon.com', 'jetbeamlight.com', 'armytek.com',
 	'powertac.com', 'imalentstore.com', 'malkoffdevices.com', 'wubenlight.com',
 	'reylight.net', 'foursevens.com', 'eagtac.com', 'intl-outdoor.com',

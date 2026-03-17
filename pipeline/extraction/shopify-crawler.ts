@@ -245,6 +245,15 @@ export const SHOPIFY_STORES: ShopifyStore[] = [
 		baseUrl: 'https://reylight.net',
 	},
 	{
+		brand: 'Lumintop',
+		baseUrl: 'https://www.lumintoponline.com',
+		isFlashlight: (p) => {
+			const text = `${p.title} ${p.product_type ?? ''}`.toLowerCase();
+			// Filter out accessories: batteries, clips, tailcaps, chargers, etc.
+			return !/battery|clip|tailcap|tail cap|charger|holster|diffuser|filter|lanyard|o-ring/i.test(text);
+		},
+	},
+	{
 		brand: 'FourSevens',
 		baseUrl: 'https://www.foursevens.com',
 	},
