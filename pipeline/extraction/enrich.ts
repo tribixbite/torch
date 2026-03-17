@@ -418,6 +418,13 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bswitch[:\s]+rotary\b/i, 'rotary'],
 			[/\bswitch[:\s]+twist\b/i, 'twisty'],
 			[/\bswitch[:\s]+electronic\b/i, 'electronic'],
+			// "Switch Type: Push buttons" (spec table)
+			[/\bswitch\s+type[:\s]+(?:push\s*button|mechanical)/i, 'push button'],
+			[/\bswitch\s+type[:\s]+(?:tail|rear)/i, 'tail'],
+			[/\bswitch\s+type[:\s]+(?:side|body)/i, 'side'],
+			[/\bswitch\s+type[:\s]+(?:twist|rotary)/i, 'twisty'],
+			// "e-switch" pattern
+			[/\be[\s-]*switch\b/i, 'electronic'],
 		];
 		const detected: string[] = [];
 		for (const [re, switchType] of switchPatterns) {
@@ -585,6 +592,13 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bfinish[:\s]+(?:black|dark)\b/i, 'black'],
 			[/\bfinish[:\s]+(?:desert\s*tan|FDE|coyote)\b/i, 'brown'],
 			[/\bfinish[:\s]+(?:OD\s*green|olive)\b/i, 'green'],
+			// Anodized patterns (most common flashlight body treatment)
+			[/\b(?:black\s+)?(?:hard[\s-]*)?anodized?\s+(?:black|dark)\b/i, 'black'],
+			[/\b(?:anodized?|HA[\s-]*III?)\s+(?:black|dark)\s/i, 'black'],
+			[/\b(?:matte|matt)\s+black\b/i, 'black'],
+			[/\bblack\s+(?:anodized?|body|finish|aluminum|aluminium)\b/i, 'black'],
+			// HA-III without color = black (standard mil-spec anodized finish)
+			[/\btype[\s-]*III\s+(?:hard[\s-]*)?anodiz/i, 'black'],
 			// Material/Color combined: "Titanium - stonewashed"
 			[/\btitanium[\s-]+(?:stonewash|raw|bead\s*blast)\b/i, 'gray'],
 			[/\bcopper\s*(?:body|construction)\b/i, 'copper'],
