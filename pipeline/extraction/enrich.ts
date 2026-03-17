@@ -441,6 +441,42 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		}
 	}
 
+	// Features extraction from raw text (only if missing)
+	if (!entry.features?.length) {
+		const featurePatterns: [RegExp, string][] = [
+			[/\bpocket\s*clip\b/i, 'clip'],
+			[/\bbelt\s*clip\b/i, 'clip'],
+			[/\b(?:removable|two[\s-]way)\s*clip\b/i, 'clip'],
+			[/\bmagnetic\s*(?:tail(?:\s*cap)?|base|end)\b/i, 'magnetic tailcap'],
+			[/\btail[\s-]*stand\b/i, 'magnetic tailcap'],
+			[/\bIPX[4-9]\b/i, 'waterproof'],
+			[/\bwaterproof\b/i, 'waterproof'],
+			[/\bwater[\s-]*resistant\b/i, 'waterproof'],
+			[/\brechargeable\b/i, 'rechargeable'],
+			[/\bUSB[\s-]*C?\s*charg/i, 'rechargeable'],
+			[/\bbuilt[\s-]*in\s*(?:battery|charging)\b/i, 'rechargeable'],
+			[/\blockout\b/i, 'lockout'],
+			[/\bstrobe\b/i, 'strobe'],
+			[/\bSOS\b/, 'SOS'],
+			[/\blanyard\b/i, 'lanyard'],
+			[/\bholster\b/i, 'holster'],
+			[/\bmemory\s*mode\b/i, 'mode memory'],
+			[/\bpower\s*indicator\b/i, 'power indicator'],
+			[/\bbattery\s*(?:level\s*)?indicator\b/i, 'power indicator'],
+			[/\banti[\s-]*roll\b/i, 'anti-roll'],
+		];
+		const detected: string[] = [];
+		for (const [re, feat] of featurePatterns) {
+			if (re.test(combined) && !detected.includes(feat)) {
+				detected.push(feat);
+			}
+		}
+		if (detected.length > 0) {
+			entry.features = detected;
+			changed = true;
+		}
+	}
+
 	// Color from raw text (only if missing — supplement model name detection)
 	if (!entry.color?.length) {
 		const colorPatterns: [RegExp, string][] = [
