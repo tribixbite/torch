@@ -112,14 +112,14 @@ function deriveThrowIntensity(entry: FlashlightEntry): boolean {
 	let changed = false;
 	const perf = entry.performance.claimed;
 
-	// Derive intensity from throw
-	if (perf.throw_m && perf.throw_m > 0 && (!perf.intensity_cd || perf.intensity_cd <= 0)) {
-		perf.intensity_cd = Math.round((perf.throw_m / 2) ** 2);
-		changed = true;
+	// Derive intensity from throw (skip when throw_m < 2 — produces cd=0 which oscillates)
+	if (perf.throw_m && perf.throw_m >= 2 && (perf.intensity_cd == null || perf.intensity_cd <= 0)) {
+		const cd = Math.round((perf.throw_m / 2) ** 2);
+		if (cd > 0) { perf.intensity_cd = cd; changed = true; }
 	}
 
 	// Derive throw from intensity
-	if (perf.intensity_cd && perf.intensity_cd > 0 && (!perf.throw_m || perf.throw_m <= 0)) {
+	if (perf.intensity_cd && perf.intensity_cd > 0 && (perf.throw_m == null || perf.throw_m <= 0)) {
 		perf.throw_m = Math.round(2 * Math.sqrt(perf.intensity_cd));
 		changed = true;
 	}
