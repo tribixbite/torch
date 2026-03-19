@@ -179,6 +179,22 @@ function extractLength(text: string): number | null {
     /(?:size|dimensions?)\s*[-:=]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*cm/gi,
     // "X.X x Y.Y cm" (2D)
     /(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*cm\b/gi,
+    // "Size: 126.5*34.5mm" — mm at end, dimensions separated by * or x
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)\s*(?:mm\s*)?[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm/gi,
+    // "Size: φ33.8(head)*φ32.0(body)*78.8mm" — φ-prefixed dimensions
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)\s*(?:\([^)]*\)\s*)?[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*(?:\([^)]*\)\s*)?[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm/gi,
+    // "Size:37mm*124.1mm" — mm after each dimension (2D)
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm/gi,
+    // "Size:37mm*32mm*124.1mm" — mm after each dimension (3D)
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*mm/gi,
+    // "AxBmm(length*head)" — mm with parenthesized description
+    /(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*mm\s*\(\s*length/gi,
+    // "φXX*Ymm" — bare diameter*length
+    /φ\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*mm/gi,
+    // "66.9*33.5*40.4*mm" — trailing asterisk/separator before mm
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)\s*[x×*]?\s*mm/gi,
+    // "XX*YYmm" with no space before mm (2D)
+    /(?:size|dimensions?)\s*[-:=]\s*(?:φ?\s*)?(\d+\.?\d*)(?:mm)?\s*[x×*]\s*(?:φ?\s*)?(\d+\.?\d*)mm/gi,
   ];
 
   let bestLength: number | null = null;

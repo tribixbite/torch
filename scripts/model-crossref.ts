@@ -111,8 +111,13 @@ for (const field of fields) {
         // Only if all donors agree
         const unique = [...new Set(donorValues.map(v => JSON.stringify(v)))];
         if (unique.length === 1) {
-          update.run(donorValues[0], m.id);
-          stats[field.name]++;
+          try {
+            update.run(donorValues[0], m.id);
+            stats[field.name]++;
+          } catch (e: any) {
+            // Skip UNIQUE constraint violations (e.g., updating led changes primary_led)
+            if (!e.message?.includes('UNIQUE constraint')) throw e;
+          }
         }
       }
     }
