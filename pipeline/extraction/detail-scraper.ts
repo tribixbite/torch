@@ -41,6 +41,8 @@ export async function scrapeDetailForEntry(
 			// Olight pages need API calls — HTML has no specs
 			if (/olight\.com/i.test(url)) {
 				await enrichFromOlightApi(entry, url, fieldsAdded);
+				// Track this URL as detail-scraped regardless of enrichment result
+				addSource(entry.id, { source: 'detail-scrape', url, scraped_at: new Date().toISOString(), confidence: 0.8 });
 				if (fieldsAdded.length > 0) {
 					entry.updated_at = new Date().toISOString();
 					return { enriched: true, fieldsAdded, skipped: false };
@@ -56,6 +58,9 @@ export async function scrapeDetailForEntry(
 
 			// Then text-based extraction for remaining gaps
 			enrichFromFullPage(entry, html, text, fieldsAdded, url);
+
+			// Track this URL as detail-scraped regardless of enrichment result
+			addSource(entry.id, { source: 'detail-scrape', url, scraped_at: new Date().toISOString(), confidence: 0.9 });
 
 			if (fieldsAdded.length > 0) {
 				entry.updated_at = new Date().toISOString();

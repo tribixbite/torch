@@ -137,6 +137,7 @@ function initSchema(db: Database): void {
 		);
 
 		CREATE INDEX IF NOT EXISTS idx_sources_flash ON sources(flashlight_id);
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_sources_unique ON sources(flashlight_id, source, url);
 
 		CREATE TABLE IF NOT EXISTS reviews (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -326,7 +327,7 @@ export function addPrice(flashlightId: string, price: PriceEntry): void {
 export function addSource(flashlightId: string, source: SourceRef): void {
 	const db = getDb();
 	db.prepare(`
-		INSERT INTO sources (flashlight_id, source, url, scraped_at, confidence)
+		INSERT OR REPLACE INTO sources (flashlight_id, source, url, scraped_at, confidence)
 		VALUES ($fid, $source, $url, $scraped_at, $confidence)
 	`).run({
 		$fid: flashlightId,
@@ -410,11 +411,15 @@ export function getSourceUrls(flashlightId: string): string[] {
 	return rows.map(r => r.url);
 }
 
-/** Get set of all source URLs already scraped (for skip-cache in detail scraper) */
+/** Get set of all source URLs already detail-scraped (for skip-cache in detail scraper).
+ * Uses the sources table with 'detail-scrape' source type, not raw_spec_text.
+ * This prevents the raw-text-fetcher from blocking the detail scraper. */
 export function getScrapedUrlSet(): Set<string> {
 	const db = getDb();
-	const rows = db.prepare(`SELECT DISTINCT source_url FROM raw_spec_text`).all() as { source_url: string }[];
-	return new Set(rows.map((r) => r.source_url));
+	// Use sources table (detail scraper marks its URLs here) instead of raw_spec_text
+	// which is populated by the raw-text-fetcher and would block re-scraping
+	const rows = db.prepare(`SELECT DISTINCT url FROM sources WHERE source = 'detail-scrape'`).all() as { url: string }[];
+	return new Set(rows.map((r) => r.url));
 }
 
 /** Mark an ASIN as scraped */

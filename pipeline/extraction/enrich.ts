@@ -550,6 +550,14 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/runtime[:\s]+(?:high|turbo|max|burst)[:\s/]+(\d+(?:\.\d+)?)\s*(?:h|hours?|hrs?)\b/i,
 			// "Runtime on High: ... X:YY" — H:MM format in runtime context (hours:minutes)
 			/runtime[\s\S]{0,200}?(?:high|turbo|max)[:\s]+(?:\d+\s*(?:lumens?|lm)\s*(?:for|\/)\s*)?(\d+):(\d{2})\b/i,
+			// "runs 3 hours" or "runs 8.5h" — narrative description format
+			/\bruns\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			// "lasts for 2.75 hours" or "last 8h" — narrative
+			/\blasts?\s+(?:for\s+)?(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			// "Turbo: 4200lm, 200m, runs 3 hours" — mode table with "runs"
+			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)[,\s]+\d+\s*m[,\s]+runs\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			// "operating time: 8 hours" or "burn time: 3h"
+			/(?:operating|burn|battery)\s*time[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 		];
 		// Compact XhYm format patterns — "1h58min", "1h 45m", "4h55min"
 		const runtimeCompactPatterns = [
@@ -795,8 +803,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/length[\s\S]{0,80}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
 			// "5.3 in" or "5.3 inches" near length — cross newlines
 			/length[\s\S]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
-			// "NNN inches long" or "NNN inches in length" — inches as length
-			/(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length)\b/i,
+			// "NNN inches long" or "NNN inches in length" or "NNNin body length"
+			/(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|(?:body\s+)?length|in\s+length)\b/i,
 			// Olight: "Length (mm / in) \n 63mm / 2.48in" or "Length (mm / in) \n 155 / 6.10"
 			/length\s*\(mm\b[^)]*\)[\s\S]{0,20}?(\d{2,4}(?:\.\d+)?)\s*(?:mm)?/i,
 			// Battery Junction: "X in (Y mm)" near length — capture the mm value (cross newlines)
