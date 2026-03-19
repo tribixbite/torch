@@ -424,8 +424,11 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	const rawTexts = getRawSpecText(entry.id);
 	if (rawTexts.length === 0) return false;
 
-	// Combine all raw text for this entry
-	const combined = rawTexts.map(r => r.text_content).join('\n');
+	// Combine all raw text for this entry, decoding common HTML entities
+	const combined = rawTexts.map(r => r.text_content).join('\n')
+		.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&plus;/g, '+')
+		.replace(/&ndash;/g, '–').replace(/&mdash;/g, '—').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
 	let changed = false;
 
 	// Switch type extraction (only if missing)
@@ -571,6 +574,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)[,\s]+\d+\s*m[,\s]+runs\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 			// "operating time: 8 hours" or "burn time: 3h"
 			/(?:operating|burn|battery)\s*time[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			// "550 Lumens - 38 Hours" or "960 lm / 3.5 Hours" — BJ/Rovyvon mode table
+			/\d+\s*(?:lumens?|lm)\s*[-–—/]\s*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 		];
 		// Compact XhYm format patterns — "1h58min", "1h 45m", "4h55min"
 		const runtimeCompactPatterns = [
@@ -587,6 +592,10 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+)\s*(?:minutes?|mins?)\s+(?:of\s+)?(?:\w+\s+){0,3}(?:run\s*time|runtime)/i,
 			// BJ mode table: "Runtime ... 65 minutes" — use [\s\S] not [^.], allow space before unit
 			/runtime[\s\S]{0,300}?(\d+)\s*minutes\b/i,
+			// "550 Lumens - 38 Minutes" or "960 lm / 55 min" — BJ/Rovyvon mode table
+			/\d+\s*(?:lumens?|lm)\s*[-–—/]\s*(\d+)\s*(?:minutes?|mins?)\b/i,
+			// "Run Time 3+ 30+ 130minutes 54hours" — HTML-decoded spec table, capture Nminutes
+			/run\s*time[\s\S]{0,100}?(\d+)\s*minutes\b/i,
 		];
 		let foundRuntime = false;
 		for (const re of runtimeHoursPatterns) {
