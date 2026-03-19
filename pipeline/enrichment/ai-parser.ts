@@ -11,7 +11,7 @@ import { getAllFlashlights, getRawSpecText, upsertFlashlight, getDb } from '../s
 import { classifySourceUrl } from '../store/brand-aliases.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'openrouter/healer-alpha';
+const MODEL = 'xiaomi/mimo-v2-omni'; // healer-alpha was renamed to mimo-v2-omni
 const MAX_INPUT_CHARS = 8000;
 const RATE_LIMIT_MS = 600; // ~1.7 req/s
 
