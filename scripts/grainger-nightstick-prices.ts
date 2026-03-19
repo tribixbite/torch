@@ -23,7 +23,7 @@ const RATE_LIMIT_MS = 3000;
 const BASE_URL = 'https://www.opticsplanet.com';
 const LISTING_URL = `${BASE_URL}/nightstick-brand.html`;
 const MAX_PAGES = 8; // 216 products / 60 per page = 4 pages, allow extra margin
-const MIN_PRICE = 5; // ignore prices below $5 (likely accessories)
+const MIN_PRICE = 12; // ignore prices below $12 (accessories, replacement parts)
 const MAX_PRICE = 2000; // sanity cap
 
 // Nightstick model number regex — matches prefixes like NSP-1102, MT-90, TWM-854XL, etc.
@@ -252,12 +252,15 @@ if (variantUrls.length > 0) {
           const sku = String(offer.sku || '');
           const offerName = String(offer.name || data.name || '');
 
+          // Only use SKU and offer name for model extraction — avoid description
+          // because it may mention parent model numbers for accessories
           let models = extractModels(sku);
           if (models.length === 0) models = extractModels(offerName);
-          if (models.length === 0) models = extractModels(data.description || '');
 
           for (const model of models) {
-            if (!allPrices.has(model) || price < allPrices.get(model)!) {
+            // For variant pages, prefer HIGHER prices — the flashlight itself costs more
+            // than its accessories (batteries, chargers, holsters) that share the model prefix
+            if (!allPrices.has(model) || price > allPrices.get(model)!) {
               allPrices.set(model, price);
               variantMatched++;
             }
@@ -316,15 +319,19 @@ const tx = db.transaction(() => {
     }
 
     // Prefix match: "USB-558XL" should match DB entry "USB-558XLS" or "USB-558XLLB"
+    // Guard: require model prefix >= 8 chars and price >= $15 to avoid accessory contamination
+    // (e.g. "NSR-9612" charger at $5.99 incorrectly matching flashlight "NSR-9612B")
     let prefixMatched = false;
-    for (const [key, entryList] of modelToEntries) {
-      if (key.startsWith(model) && key !== model && !allPrices.has(key)) {
-        for (const e of entryList) {
-          updatePrice.run(price, e.id);
-          totalUpdated++;
+    if (model.length >= 8 && price >= 15) {
+      for (const [key, entryList] of modelToEntries) {
+        if (key.startsWith(model) && key !== model && !allPrices.has(key)) {
+          for (const e of entryList) {
+            updatePrice.run(price, e.id);
+            totalUpdated++;
+          }
+          matched.push(`  ${model} -> ${key}: $${price.toFixed(2)} (${entryList.length} entries, prefix)`);
+          prefixMatched = true;
         }
-        matched.push(`  ${model} -> ${key}: $${price.toFixed(2)} (${entryList.length} entries, prefix)`);
-        prefixMatched = true;
       }
     }
 
