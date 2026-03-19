@@ -107,7 +107,10 @@ function buildEntryFromSpecs(
 	url: string,
 	imageUrls: string[] = [],
 ): FlashlightEntry {
-	const id = generateId(brand, model, specs.led?.[0]);
+	// Configurable products (with led_options) don't include LED in ID —
+	// all options are the same product, just different configurations
+	const ledForId = specs.led_options?.length ? undefined : specs.led?.[0];
+	const id = generateId(brand, model, ledForId);
 
 	return {
 		id,
@@ -693,9 +696,10 @@ const CRAWLERS: SiteCrawler[] = [
 
 			// Parse LED variants from <select> dropdown options
 			const leds: string[] = [];
-			// Find select elements labeled "LED" or "LED & Tint" or "Channel"
-			// intl-outdoor (Magento 1.x) uses <p> tags for option headings, not <label>
-			const selectRe = /<(?:label|p|div|span)[^>]*>([^<]*(?:LED|Tint|Emitter|Channel)[^<]*)<\/(?:label|p|div|span)>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			// intl-outdoor (Magento 1.x) uses <p class="required uppercase"> for option headings
+			// Must restrict to option headings only — otherwise product description <p> tags
+			// containing "tint" will match and grab the wrong dropdown
+			const selectRe = /<p[^>]*class="[^"]*required[^"]*"[^>]*>([^<]*(?:LED|Tint|Emitter|Channel)[^<]*)<\/p>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
 			let sm;
 			while ((sm = selectRe.exec(html)) !== null) {
 				const optionsHtml = sm[2];
@@ -786,17 +790,17 @@ const CRAWLERS: SiteCrawler[] = [
 			}
 
 			const images = extractImages(html, url);
-			// intl-outdoor base price from itemprop="price"; skip sub-$5 placeholders
+			// intl-outdoor base price from itemprop="price"; skip sub-$15 placeholders
+			// (no real Emisar/Noctigon flashlight costs under $15)
 			const basePrice = extractPagePrice(html);
-			if (basePrice && basePrice >= 5) {
+			if (basePrice && basePrice >= 15) {
 				specs.price_usd = basePrice;
 			}
-			// Surcharges are in <option price="N"> attrs (handled by JS on page)
 
 			// Extract colors from body color dropdown
 			const colors: string[] = [];
-			// Magento uses <p> tags for option headings, not <label>
-			const colorSelectRe = /<(?:label|p|div|span)[^>]*>([^<]*(?:Body\s*Color|Color|Finish)[^<]*)<\/(?:label|p|div|span)>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			// Magento uses <p class="required"> for option headings, not <label>
+			const colorSelectRe = /<p[^>]*class="[^"]*required[^"]*"[^>]*>([^<]*(?:Body\s*Color|Color|Finish)[^<]*)<\/p>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
 			let cm;
 			while ((cm = colorSelectRe.exec(html)) !== null) {
 				const optionsHtml = cm[2];
