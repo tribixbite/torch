@@ -412,6 +412,29 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 		}
 	}
 
+	// Switch from title (only if empty)
+	// "Clicky", "Rotary Switch", "Paddle Tail Switch", "Dual Switch"
+	if (!entry.switch?.length) {
+		const switchTitlePatterns: [RegExp, string[]][] = [
+			[/\bclicky\b/i, ['tail']],
+			[/\brotary\s*(?:switch|ring|dial|selector)?\b/i, ['rotary']],
+			[/\bpaddle\s*(?:tail\s*)?switch\b/i, ['tail']],
+			[/\btwist(?:y)?\s*(?:head|switch)?\b/i, ['twisty']],
+			[/\bdual[\s-]*switch\b/i, ['side', 'tail']],
+			[/\btail[\s-]*(?:cap\s+)?switch\b/i, ['tail']],
+			[/\bside[\s-]*switch\b/i, ['side']],
+			[/\bmagnetic[\s-]*(?:ring|control)\b/i, ['magnetic ring']],
+			[/\bforward[\s-]*click(?:y)?\b/i, ['tail']],
+		];
+		for (const [re, types] of switchTitlePatterns) {
+			if (re.test(title)) {
+				entry.switch = types;
+				changed = true;
+				break;
+			}
+		}
+	}
+
 	// Material from title
 	if (!entry.material?.length) {
 		if (/\btitanium\b/i.test(title)) { entry.material = ['titanium']; changed = true; }
@@ -478,6 +501,14 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bswitch\s+type[:\s]+(?:twist|rotary)/i, 'twisty'],
 			// "e-switch" pattern
 			[/\be[\s-]*switch(?:es)?\b/i, 'electronic'],
+			// "forward-click switch" (common in spec tables)
+			[/\bforward[\s-]*click(?:y)?\s*(?:switch)?\b/i, 'tail'],
+			// "reverse-click switch"
+			[/\breverse[\s-]*click(?:y)?\s*(?:switch)?\b/i, 'tail'],
+			// "capacitive switch" or "touch switch"
+			[/\b(?:capacitive|touch)[\s-]*switch(?:es)?\b/i, 'electronic'],
+			// "rubber switch" or "rubber button" (usually side)
+			[/\brubber[\s-]*(?:switch|button)\b/i, 'side'],
 		];
 		const detected: string[] = [];
 		for (const [re, switchType] of switchPatterns) {
@@ -1027,6 +1058,43 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 					entry.performance.claimed.intensity_cd = val;
 					changed = true;
 					break;
+				}
+			}
+		}
+	}
+
+	// Price extraction from raw text (only if missing)
+	// Keepa/Amazon pages embed prices like "$29.90$29.90\nList: $35.99"
+	// Also manufacturer pages: "MSRP: $149.99" or "Price: $89.95"
+	if (!entry.price_usd) {
+		// Prefer list/MSRP price (more stable than sale price)
+		const listPriceMatch = combined.match(/(?:List(?:\s*Price)?|MSRP|Retail)[:\s]*\$(\d+(?:\.\d{2})?)/i);
+		if (listPriceMatch) {
+			const price = parseFloat(listPriceMatch[1]);
+			if (price >= 5 && price <= 3000) {
+				entry.price_usd = price;
+				changed = true;
+			}
+		}
+		// Fall back to first Amazon-style doubled price: "$29.90$29.90"
+		if (!entry.price_usd) {
+			const amazonPriceMatch = combined.match(/\$(\d+(?:\.\d{2})?)\$\1/);
+			if (amazonPriceMatch) {
+				const price = parseFloat(amazonPriceMatch[1]);
+				if (price >= 5 && price <= 3000) {
+					entry.price_usd = price;
+					changed = true;
+				}
+			}
+		}
+		// Fall back to "Price: $XX.XX" spec table format
+		if (!entry.price_usd) {
+			const specPriceMatch = combined.match(/(?:our\s+)?price[:\s]+\$(\d+(?:\.\d{2})?)/i);
+			if (specPriceMatch) {
+				const price = parseFloat(specPriceMatch[1]);
+				if (price >= 5 && price <= 3000) {
+					entry.price_usd = price;
+					changed = true;
 				}
 			}
 		}
