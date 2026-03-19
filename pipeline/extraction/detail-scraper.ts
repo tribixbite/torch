@@ -2584,6 +2584,33 @@ function enrichFromFullPage(
 		}
 	}
 
+	// === PRICE EXTRACTION from HTML metadata/structured data ===
+	if (!entry.price_usd || entry.price_usd <= 0) {
+		let price: number | null = null;
+		// JSON-LD: {"@type":"Product","offers":{"price":"29.99"}}
+		const jsonLdMatch = html.match(/"@type"\s*:\s*"Product"[\s\S]*?"price"\s*:\s*"?(\d+(?:\.\d+)?)"?/);
+		if (jsonLdMatch) price = parseFloat(jsonLdMatch[1]);
+		// Open Graph / meta: <meta property="og:price:amount" content="29.99">
+		if (!price) {
+			const ogMatch = html.match(/<meta\s+(?:property|name)="(?:og:price:amount|product:price:amount)"\s+content="(\d+(?:\.\d+)?)"/i);
+			if (ogMatch) price = parseFloat(ogMatch[1]);
+		}
+		// WooCommerce: <span class="woocommerce-Price-amount">$29.99</span> or <bdi>$29.99</bdi>
+		if (!price) {
+			const wooMatch = html.match(/class="woocommerce-Price-amount[^"]*"[^>]*>(?:<[^>]+>)*\$?(\d+(?:\.\d+)?)/i);
+			if (wooMatch) price = parseFloat(wooMatch[1]);
+		}
+		// Generic: <span class="price">$29.99</span> or data-price="29.99"
+		if (!price) {
+			const priceAttr = html.match(/data-price="(\d+(?:\.\d+)?)"/i);
+			if (priceAttr) price = parseFloat(priceAttr[1]);
+		}
+		if (price && price > 1 && price < 10000) {
+			entry.price_usd = price;
+			fieldsAdded.push('price_usd');
+		}
+	}
+
 	// === RAW SPEC TEXT CAPTURE for future AI parsing ===
 	// Extract text segments that look like spec data but weren't fully parsed by regex.
 	// These get stored in raw_spec_text table for batch AI processing later.

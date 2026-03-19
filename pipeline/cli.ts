@@ -140,10 +140,12 @@ async function cmdDiscover(): Promise<void> {
 	console.log(`\nDB totals: ${counts.total} discovered, ${counts.scraped} scraped, ${counts.unscraped} unscraped`);
 }
 
-/** Scrape product details for unscraped ASINs */
+/** Scrape product details for unscraped ASINs.
+ * Usage: scrape [batches] [--brand=Name] */
 async function cmdScrape(): Promise<void> {
 	const maxBatches = parseInt(process.argv[3] || '1', 10);
-	console.log(`=== Keepa Product Scraping (${maxBatches} batch${maxBatches > 1 ? 'es' : ''}) ===\n`);
+	const brandArg = process.argv.find(a => a.startsWith('--brand='))?.split('=')[1];
+	console.log(`=== Keepa Product Scraping (${maxBatches} batch${maxBatches > 1 ? 'es' : ''}${brandArg ? ` for ${brandArg}` : ''}) ===\n`);
 
 	const client = new KeepaClient();
 	const status = await client.getTokenStatus();
@@ -157,7 +159,7 @@ async function cmdScrape(): Promise<void> {
 		return;
 	}
 
-	const result = await scrapeUnscrapedAsins(client, maxBatches);
+	const result = await scrapeUnscrapedAsins(client, maxBatches, brandArg);
 	console.log(`\nScraping complete: ${result.scraped} scraped, ${result.errors} errors`);
 	console.log(`Total flashlights in DB: ${countFlashlights()}`);
 }

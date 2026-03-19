@@ -15,6 +15,7 @@ import {
 	addSource,
 } from '../store/db.js';
 import { BRANDS, getBrandSearchTerms, type BrandConfig } from '../config/brands.js';
+import { normalizeBrandName } from '../store/brand-aliases.js';
 
 const BATCH_SIZE = 20; // Smaller batches to start scraping sooner (20 tokens = 20 min wait vs 100 min)
 const DETAIL_TOKEN_COST = 1; // per ASIN
@@ -70,12 +71,13 @@ export async function discoverAllBrands(client: KeepaClient): Promise<{
 export async function scrapeUnscrapedAsins(
 	client: KeepaClient,
 	maxBatches = 1,
+	brand?: string,
 ): Promise<{ scraped: number; errors: number }> {
 	let scraped = 0;
 	let errors = 0;
 
 	for (let batch = 0; batch < maxBatches; batch++) {
-		const unscraped = getUnscrapedAsins(undefined, BATCH_SIZE);
+		const unscraped = getUnscrapedAsins(brand, BATCH_SIZE);
 		if (unscraped.length === 0) {
 			console.log('  No more unscraped ASINs');
 			break;
@@ -148,7 +150,7 @@ export async function scrapeUnscrapedAsins(
  * Extracts structured data from Keepa's fields + parses description for specs.
  */
 function keepaToCanonical(product: KeepaProduct, fallbackBrand: string): FlashlightEntry | null {
-	const brand = product.brand || fallbackBrand;
+	const brand = normalizeBrandName(product.brand || fallbackBrand);
 	const model = extractModel(product, brand);
 	if (!model || !brand) return null;
 

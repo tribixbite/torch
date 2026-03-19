@@ -438,8 +438,17 @@ export function getUnscrapedAsins(brand?: string, limit = 100): { asin: string; 
 			SELECT asin, brand FROM discovered_asins WHERE scraped = 0 AND brand = $brand LIMIT $limit
 		`).all({ $brand: brand, $limit: limit }) as { asin: string; brand: string }[];
 	}
+	// Prioritize brands where price is the main missing attribute (Nightstick, Lumintop, etc.)
 	return db.prepare(`
-		SELECT asin, brand FROM discovered_asins WHERE scraped = 0 LIMIT $limit
+		SELECT asin, brand FROM discovered_asins WHERE scraped = 0
+		ORDER BY CASE brand
+			WHEN 'Nightstick' THEN 1
+			WHEN 'Lumintop' THEN 2
+			WHEN 'Armytek' THEN 3
+			WHEN 'Convoy' THEN 4
+			ELSE 5
+		END, brand
+		LIMIT $limit
 	`).all({ $limit: limit }) as { asin: string; brand: string }[];
 }
 
