@@ -264,6 +264,21 @@ function extractWeight(text: string): number | null {
     /(\d+\.?\d*)\s*g(?:rams?)?\s*\(\s*\d+\.?\d*\s*(?:oz|ounces?)\s*\)/gi,
     // "Weight X.X oz" with space
     /(?:net\s+)?weight\s+(?:approx\.?\s*)?(\d+\.?\d*)\s*(?:oz|ounces?)\b/gi,
+    // "Xg in weight" / "Xg in net weight" / "X.Xg weight" (value before keyword)
+    /(\d+\.?\d*)\s*g\s+(?:in\s+)?(?:net\s+)?weight/gi,
+    // "X.X oz in weight" (oz before keyword)
+    /(\d+\.?\d*)\s*(?:oz|ounces?)\s+(?:in\s+)?(?:net\s+)?weight/gi,
+    // "Weight (g): X" / "Weight(g): X" (unit in parens after keyword)
+    /(?:net\s+)?weight\s*\(\s*g(?:rams?)?\s*\)\s*[-:=]?\s*(\d+\.?\d*)/gi,
+    // "Weight (oz): X"
+    /(?:net\s+)?weight\s*\(\s*(?:oz|ounces?)\s*\)\s*[-:=]?\s*(\d+\.?\d*)/gi,
+    // "Xg (without battery)" / "Xg (with battery)" — already partially covered, add standalone
+    /(\d+\.?\d*)\s*g(?:rams?)?\s+(?:without|w\/o|w\/)\s+batter/gi,
+    // "Net weight: About Xg" — "About" qualifier
+    /(?:net\s+)?weight\s*[-:=]\s*(?:about|approximately|approx\.?|~)\s*(\d+\.?\d*)\s*g(?:rams?)?\b/gi,
+    // "Weight\nXg" / "Weight\n X g" — newline-separated (table format)
+    /(?:net\s+)?weight\s*\n\s*(\d+\.?\d*)\s*g(?:rams?)?\b/gi,
+    /(?:net\s+)?weight\s*\n\s*(\d+\.?\d*)\s*(?:oz|ounces?)\b/gi,
   ];
 
   let bestWeight: number | null = null;

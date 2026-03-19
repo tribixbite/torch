@@ -27,7 +27,8 @@ console.log(`${entries.length} Nightstick entries need price`);
 // Extract model number from our model string
 function extractModelNum(model: string): string | null {
   // Match Nightstick model number patterns including suffixes like XL, XLB
-  const m = model.match(/^([A-Z]{2,4}-\d{3,5}[A-Z]{0,3}\d?)/);
+  // Also handle MT-90, MT-100G etc. (2-digit models)
+  const m = model.match(/^([A-Z]{2,4}-\d{2,5}[A-Z]{0,3}\d?)/);
   return m ? m[1] : null;
 }
 
@@ -55,37 +56,45 @@ function fetchPage(url: string): string {
   return proc.stdout.toString();
 }
 
-// Step 1: Get all product URLs from listing pages
+// Step 1: Get all product URLs from listing pages (paginate fully)
 const productUrls = new Set<string>();
-const listingPages = [
-  'https://www.opticsplanet.com/nightstick-flashlights.html',
-  'https://www.opticsplanet.com/nightstick-flashlights.html?_iv_page=2',
-  'https://www.opticsplanet.com/nightstick-flashlights.html?_iv_page=3',
-  'https://www.opticsplanet.com/nightstick-brand.html',
-  'https://www.opticsplanet.com/nightstick-brand.html?_iv_page=2',
-  'https://www.opticsplanet.com/nightstick-brand.html?_iv_page=3',
-];
+const bases = ['nightstick-brand', 'nightstick-flashlights'];
+const MAX_PAGES = 15;
 
-for (let i = 0; i < listingPages.length; i++) {
-  console.log(`Listing page ${i + 1}/${listingPages.length}...`);
-  const html = fetchPage(listingPages[i]);
-  // Extract product page URLs
-  const urlRe = /href="(https:\/\/www\.opticsplanet\.com\/nightstick-[^"]*\.html)"/g;
-  let m;
-  while ((m = urlRe.exec(html)) !== null) {
-    const url = m[1];
-    // Skip listing/category pages
-    if (url.includes('_iv_page') || url.endsWith('brand.html') || url.endsWith('flashlights.html')) continue;
-    productUrls.add(url);
+for (const base of bases) {
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const url = `https://www.opticsplanet.com/${base}.html?_iv_page=${page}`;
+    const html = fetchPage(url);
+    const urlRe = /href="(https:\/\/www\.opticsplanet\.com\/nightstick-[^"]*\.html)"/g;
+    let m;
+    const before = productUrls.size;
+    while ((m = urlRe.exec(html)) !== null) {
+      const u = m[1];
+      if (u.includes('_iv_page') || u.endsWith('brand.html') || u.endsWith('flashlights.html')) continue;
+      productUrls.add(u);
+    }
+    const added = productUrls.size - before;
+    if (page % 5 === 0) console.log(`  ${base} page ${page}: ${added} new (${productUrls.size} total)`);
+    await Bun.sleep(1500);
   }
-  if (i < listingPages.length - 1) await Bun.sleep(2000);
 }
 
 console.log(`Found ${productUrls.size} product URLs`);
 
 // Step 2: Fetch each product page, extract all variant model+price pairs
 const allPrices = new Map<string, number>();
-const modelRe = /((?:NSP|NSR|TAC|USB|XPP|XPR|SFL|TSM|MTU?|VM|LGL|NSM|DCL)-\d{3,5}[A-Z]{0,3}\d?)/i;
+const modelRe = /((?:NSP|NSR|TAC|USB|XPP|XPR|SFL|TSM|MTU?|VM|LGL|LGC|NSM|DCL|FDL|TWM|TCM|MT)-\d{3,5}[A-Z]{0,3}\d?)/gi;
+
+/** Extract all Nightstick model numbers from a string */
+function extractModels(text: string): string[] {
+  const matches: string[] = [];
+  let mm;
+  const re = new RegExp(modelRe.source, 'gi');
+  while ((mm = re.exec(text)) !== null) {
+    matches.push(mm[1].toUpperCase());
+  }
+  return matches;
+}
 
 let i = 0;
 for (const url of productUrls) {
@@ -110,12 +119,34 @@ for (const url of productUrls) {
         const price = parseFloat(offer.price || offer.lowPrice || '0');
         if (price < 10 || price > 2000) continue;
 
-        const mm = modelRe.exec(sku);
-        if (mm) {
-          const model = mm[1].toUpperCase();
-          // Use lowest price for each model (best deal)
+        // Try SKU first, then product name/description
+        let models = extractModels(sku);
+        if (models.length === 0) {
+          models = extractModels(data.name || '');
+        }
+        if (models.length === 0) {
+          models = extractModels(data.description || '');
+        }
+
+        for (const model of models) {
           if (!allPrices.has(model) || price < allPrices.get(model)!) {
             allPrices.set(model, price);
+          }
+        }
+      }
+
+      // Also try product-level name if no offers had models
+      if (offerList.length > 0) {
+        const topPrice = parseFloat(
+          data.offers?.lowPrice || data.offers?.price ||
+          offerList[0]?.price || offerList[0]?.lowPrice || '0'
+        );
+        if (topPrice >= 10 && topPrice <= 2000) {
+          const nameModels = extractModels(data.name || '');
+          for (const model of nameModels) {
+            if (!allPrices.has(model)) {
+              allPrices.set(model, topPrice);
+            }
           }
         }
       }
