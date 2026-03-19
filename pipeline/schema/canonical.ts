@@ -171,7 +171,10 @@ export function hasRequiredAttributes(entry: FlashlightEntry): { valid: boolean;
 	if (!entry.led?.length) missing.push('led');
 	if (!entry.battery?.length) missing.push('battery');
 	if (!entry.performance?.claimed?.lumens?.length) missing.push('lumens');
-	if (!entry.performance?.claimed?.throw_m || entry.performance.claimed.throw_m <= 0) missing.push('throw_m');
+	// throw_m is N/A for headlamps, lanterns, and flood lights (area/diffuse beam)
+	const isFloodType = entry.type?.some(t => ['headlamp', 'lantern'].includes(t)) ||
+		/\bflood\b/i.test(entry.model ?? '');
+	if (!isFloodType && (!entry.performance?.claimed?.throw_m || entry.performance.claimed.throw_m <= 0)) missing.push('throw_m');
 	if (!entry.performance?.claimed?.runtime_hours?.length) missing.push('runtime_hours');
 	if (!entry.switch?.length) missing.push('switch');
 	if (!entry.features?.length) missing.push('features');
