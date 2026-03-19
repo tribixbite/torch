@@ -207,6 +207,7 @@ const stats = { runtime: 0, throw_m: 0, length: 0, weight: 0, total: 0 };
 const entries = db.prepare(`
   SELECT f.id, f.brand, f.model,
     f.runtime_hours, f.throw_m, f.length_mm, f.weight_g,
+    f.battery,
     r.text_content
   FROM flashlights f
   JOIN raw_spec_text r ON r.flashlight_id = f.id
@@ -249,21 +250,40 @@ const tx = db.transaction(() => {
       }
     }
 
-    // Length
+    // Length — with battery-based minimum validation
     if (!entry.length_mm || entry.length_mm <= 0) {
       const lengthVal = extractLength(text);
       if (lengthVal !== null) {
-        updateLength.run(lengthVal, entry.id);
-        stats.length++;
+        // Validate: length must be > battery length + headroom
+        const bat = (entry.battery as string) || '';
+        let minLength = 20; // absolute minimum for any light
+        if (bat.includes('18650')) minLength = 55;
+        else if (bat.includes('21700')) minLength = 55;
+        else if (bat.includes('26650')) minLength = 55;
+        else if (bat.includes('18350')) minLength = 45;
+        else if (bat.includes('16340')) minLength = 40;
+
+        if (lengthVal >= minLength) {
+          updateLength.run(lengthVal, entry.id);
+          stats.length++;
+        }
       }
     }
 
-    // Weight
+    // Weight — with battery-based minimum validation
     if (!entry.weight_g || entry.weight_g <= 0) {
       const weightVal = extractWeight(text);
       if (weightVal !== null) {
-        updateWeight.run(weightVal, entry.id);
-        stats.weight++;
+        // Validate: large battery lights should weigh > 30g
+        const bat = (entry.battery as string) || '';
+        let minWeight = 5; // absolute minimum
+        if (bat.includes('18650') || bat.includes('21700') || bat.includes('26650')) {
+          minWeight = 30;
+        }
+        if (weightVal >= minWeight && weightVal <= 5000) {
+          updateWeight.run(weightVal, entry.id);
+          stats.weight++;
+        }
       }
     }
 

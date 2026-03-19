@@ -96,6 +96,8 @@ const COLUMNS: ColumnMeta[] = [
 		extract: (e) => e.led },
 	{ id: 'trueled', display: 'LED', unit: '', cvis: 'never', link: 'led', srch: false, mode: ['any', 'all', 'only'], sortable: false,
 		extract: (e) => e.led },
+	{ id: 'led_options', display: 'LED&nbsp;options', unit: '', cvis: 'never', link: 'led', srch: true, mode: ['any'], sortable: false,
+		extract: (e) => e.led_options ?? [] },
 	{ id: 'battery', display: 'battery', unit: '', cvis: 'always', link: 'battery', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.battery },
 	{ id: 'wh', display: 'capacity', unit: '{si}Wh', cvis: 'never', link: 'battery', srch: false, mode: ['any'], sortable: true,
@@ -269,7 +271,7 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material']);
 	// Mega-multi: columns with many options that benefit from grouped display
-	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'battery', 'environment']);
+	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'led_options', 'battery', 'environment']);
 	const BOOLEAN_COLS = new Set(['features']);
 
 	// Range definitions: [min, max, decimals]

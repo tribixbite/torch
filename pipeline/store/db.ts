@@ -48,6 +48,7 @@ function initSchema(db: Database): void {
 			-- Optics
 			led TEXT NOT NULL DEFAULT '[]',            -- JSON array
 			led_color TEXT NOT NULL DEFAULT '[]',
+			led_options TEXT NOT NULL DEFAULT '[]',    -- Configurable LED choices (dropdown options)
 
 			-- Performance (claimed)
 			lumens TEXT DEFAULT '[]',                   -- JSON array of numbers
@@ -182,6 +183,13 @@ function initSchema(db: Database): void {
 		CREATE INDEX IF NOT EXISTS idx_raw_spec_flash ON raw_spec_text(flashlight_id);
 		CREATE INDEX IF NOT EXISTS idx_raw_spec_cat ON raw_spec_text(category);
 	`);
+
+	// Migration: add led_options column if missing (for existing DBs)
+	try {
+		db.exec(`ALTER TABLE flashlights ADD COLUMN led_options TEXT NOT NULL DEFAULT '[]'`);
+	} catch {
+		// Column already exists — ignore
+	}
 }
 
 // --- CRUD operations ---
@@ -192,7 +200,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 	const stmt = db.prepare(`
 		INSERT INTO flashlights (
 			id, family_id, model, brand, type, year, discontinued,
-			led, led_color, lumens, intensity_cd, throw_m, beam_angle,
+			led, led_color, led_options, lumens, intensity_cd, throw_m, beam_angle,
 			efficacy, cri, cct, tint_duv, runtime_hours, measured_performance,
 			battery, wh, charging, modes, levels, blink,
 			length_mm, bezel_mm, body_mm, weight_g, material, color, impact,
@@ -200,7 +208,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 			image_urls, asin, ean, upc, updated_at
 		) VALUES (
 			$id, $family_id, $model, $brand, $type, $year, $discontinued,
-			$led, $led_color, $lumens, $intensity_cd, $throw_m, $beam_angle,
+			$led, $led_color, $led_options, $lumens, $intensity_cd, $throw_m, $beam_angle,
 			$efficacy, $cri, $cct, $tint_duv, $runtime_hours, $measured_performance,
 			$battery, $wh, $charging, $modes, $levels, $blink,
 			$length_mm, $bezel_mm, $body_mm, $weight_g, $material, $color, $impact,
@@ -216,6 +224,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 			-- Array fields: only overwrite if new value is non-empty (preserve better data)
 			led = CASE WHEN excluded.led != '[]' THEN excluded.led ELSE led END,
 			led_color = CASE WHEN excluded.led_color != '[]' THEN excluded.led_color ELSE led_color END,
+			led_options = CASE WHEN excluded.led_options != '[]' THEN excluded.led_options ELSE led_options END,
 			lumens = CASE WHEN excluded.lumens != '[]' THEN excluded.lumens ELSE lumens END,
 			intensity_cd = COALESCE(excluded.intensity_cd, intensity_cd),
 			throw_m = COALESCE(excluded.throw_m, throw_m),
@@ -272,6 +281,7 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 		$discontinued: entry.discontinued ? 1 : 0,
 		$led: JSON.stringify(safeLed),
 		$led_color: JSON.stringify(entry.led_color),
+		$led_options: JSON.stringify(entry.led_options ?? []),
 		$lumens: JSON.stringify(claimed.lumens ?? []),
 		$intensity_cd: claimed.intensity_cd ?? null,
 		$throw_m: claimed.throw_m ?? null,
@@ -602,6 +612,7 @@ function rowToEntry(row: Record<string, unknown>): FlashlightEntry {
 		discontinued: row.discontinued === 1,
 		led: parseJson(row.led),
 		led_color: parseJson(row.led_color),
+		led_options: parseJson(row.led_options),
 		performance: {
 			claimed: {
 				lumens: parseJson(row.lumens),

@@ -116,6 +116,7 @@ function buildEntryFromSpecs(
 		type: specs.type ?? ['flashlight'],
 		led: specs.led ?? [],
 		led_color: specs.led_color ?? [],
+		led_options: specs.led_options ?? [],
 		performance: {
 			claimed: {
 				lumens: specs.lumens ?? [],
@@ -667,7 +668,8 @@ const CRAWLERS: SiteCrawler[] = [
 			// Normalize: extract the core model (e.g. "D4V2" from "Emisar D4V2 High Power LED Flashlight")
 			model = model.replace(/^(?:Emisar|Noctigon)\s+/i, '');
 			// Trim trailing descriptions
-			model = model.replace(/\s+(?:High\s+Power|Quad|Dual|Triple|Channel|LED|Flashlight|Headlamp|Right\s*Angle|Work\s*Light|Mule).*$/i, '').trim();
+			// "Mule" is a meaningful variant (no optic/lens) — keep it as distinct model
+			model = model.replace(/\s+(?:High\s+Power|Quad|Dual|Triple|Channel|LED|Flashlight|Headlamp|Right\s*Angle|Work\s*Light).*$/i, '').trim();
 			if (!model || model.length < 2) return null;
 
 			// Determine brand from model name or page title
@@ -692,7 +694,8 @@ const CRAWLERS: SiteCrawler[] = [
 			// Parse LED variants from <select> dropdown options
 			const leds: string[] = [];
 			// Find select elements labeled "LED" or "LED & Tint" or "Channel"
-			const selectRe = /<label[^>]*>([^<]*(?:LED|Tint|Emitter|Channel)[^<]*)<\/label>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			// intl-outdoor (Magento 1.x) uses <p> tags for option headings, not <label>
+			const selectRe = /<(?:label|p|div|span)[^>]*>([^<]*(?:LED|Tint|Emitter|Channel)[^<]*)<\/(?:label|p|div|span)>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
 			let sm;
 			while ((sm = selectRe.exec(html)) !== null) {
 				const optionsHtml = sm[2];
@@ -701,17 +704,27 @@ const CRAWLERS: SiteCrawler[] = [
 				while ((om = optRe.exec(optionsHtml)) !== null) {
 					const optText = om[1].replace(/<[^>]+>/g, '').trim();
 					if (!optText || /choose|select|please/i.test(optText)) continue;
-					// Clean LED name: extract core emitter from text like "Nichia 519A sm573 - 5700K D200 R9080 +$4.00"
+					// Clean LED name from formats like:
+					//   "Cool White - SST20, 6500K"
+					//   "Nichia 519A sm573 - 5700K D200 R9080 +$4.00"
 					const ledName = optText
-						.replace(/\s*\+?\$[\d.]+.*$/, '') // Remove price suffix
-						.replace(/\s*-\s*\d{4,5}K.*$/, '') // Remove CCT suffix for primary name
+						.replace(/\s*\+?\$[\d.]+.*$/, '')  // Remove price suffix
+						.replace(/&amp;/g, '&')             // Decode HTML entities
 						.trim();
 					if (ledName && ledName.length > 1 && !leds.includes(ledName)) {
 						leds.push(ledName);
 					}
 				}
 			}
-			if (leds.length > 0) specs.led = leds;
+			if (leds.length > 0) {
+				specs.led = leds.slice(0, 2); // Primary LED(s) for standard led field
+				if (leds.length > 2) {
+					// Configurable product with multiple LED options
+					specs.led_options = leds;
+					if (!specs.features) specs.features = [];
+					specs.features.push('configurable');
+				}
+			}
 
 			// Parse performance tables: "NTG35 5000K: 4200 lm / 17,100 cd"
 			const lumens: number[] = [];
@@ -773,12 +786,17 @@ const CRAWLERS: SiteCrawler[] = [
 			}
 
 			const images = extractImages(html, url);
-			const price = extractPagePrice(html);
-			if (price) specs.price_usd = price;
+			// intl-outdoor base price from itemprop="price"; skip sub-$5 placeholders
+			const basePrice = extractPagePrice(html);
+			if (basePrice && basePrice >= 5) {
+				specs.price_usd = basePrice;
+			}
+			// Surcharges are in <option price="N"> attrs (handled by JS on page)
 
 			// Extract colors from body color dropdown
 			const colors: string[] = [];
-			const colorSelectRe = /<label[^>]*>([^<]*(?:Body\s*Color|Color|Finish)[^<]*)<\/label>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
+			// Magento uses <p> tags for option headings, not <label>
+			const colorSelectRe = /<(?:label|p|div|span)[^>]*>([^<]*(?:Body\s*Color|Color|Finish)[^<]*)<\/(?:label|p|div|span)>[\s\S]*?<select[^>]*>([\s\S]*?)<\/select>/gi;
 			let cm;
 			while ((cm = colorSelectRe.exec(html)) !== null) {
 				const optionsHtml = cm[2];

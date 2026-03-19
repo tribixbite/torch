@@ -47,6 +47,7 @@ export const ExtractionResultSchema = z.object({
 	type: z.array(z.string()).optional(),
 	led: z.array(z.string()).optional(),
 	led_color: z.array(z.string()).optional(),
+	led_options: z.array(z.string()).optional(), // All configurable LED choices
 	lumens: z.array(z.number()).optional(),
 	intensity_cd: z.number().optional(),
 	throw_m: z.number().optional(),
@@ -88,6 +89,7 @@ export const FlashlightEntrySchema = z.object({
 	// Optics
 	led: z.array(z.string()),
 	led_color: z.array(z.string()),
+	led_options: z.array(z.string()).default([]), // Configurable LED choices (dropdown options)
 
 	// Performance (namespaced)
 	performance: z.object({
