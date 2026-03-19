@@ -368,7 +368,7 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 	// Throw from title: "500m Range", "500 meters beam distance", "1600Lumen 500 Meters", "5600lm 1500m"
 	if (!entry.performance?.claimed?.throw_m) {
 		const throwM = title.match(/(\d{2,4})\s*m(?:eters?)?\s*(?:range|beam|throw|distance)/i)
-			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m\b/i)
+			?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,4})\s*m(?:eters?)?\b/i)
 			// "1000Lumens 120 Meters" — lumens followed by meters
 			?? title.match(/\d+\s*lumens?\s+(\d{2,4})\s*meters?\b/i)
 			// "5600lm 1500m" — short lm/m format common in flashlight product titles
@@ -383,6 +383,19 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 				if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 				entry.performance.claimed.throw_m = val;
 				changed = true;
+			}
+		}
+		// Title throw from feet: "800ft beam" or "Beam 500 feet"
+		if (!entry.performance?.claimed?.throw_m) {
+			const throwFt = title.match(/(\d{2,5})\s*(?:ft\.?|feet|foot)\s*(?:range|beam|throw|distance)/i)
+				?? title.match(/(?:range|beam|throw|distance)[:\s]*(\d{2,5})\s*(?:ft\.?|feet|foot)/i);
+			if (throwFt) {
+				const meters = Math.round(parseInt(throwFt[1], 10) * 0.3048);
+				if (meters >= 10 && meters <= 5000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.throw_m = meters;
+					changed = true;
+				}
 			}
 		}
 	}

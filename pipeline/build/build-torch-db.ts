@@ -369,7 +369,18 @@ export async function buildTorchDb(): Promise<{
 	}
 	if (accessoryCount > 0) console.log(`  Classified ${accessoryCount} accessories (kept in DB, filterable by type)`);
 
-	// Keep all entries — accessories are now filterable via type column
+	// Classify blog posts — entries from /blogs/ or /blog/ URLs that aren't products
+	let blogCount = 0;
+	for (const entry of allEntries) {
+		const urls = [...(entry.info_urls ?? []), ...(entry.purchase_urls ?? [])].join(' ');
+		if (/\/blogs?\/|\/news\//.test(urls) && !entry.type.includes('blog') && !entry.type.includes('accessory')) {
+			entry.type = ['blog'];
+			blogCount++;
+		}
+	}
+	if (blogCount > 0) console.log(`  Classified ${blogCount} blog posts (excluded from main view)`);
+
+	// Keep all entries — accessories/blogs are filterable via type column
 	const entries = allEntries;
 
 	// Load sprite metadata if available (written by scrape-images.ts)

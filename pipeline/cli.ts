@@ -190,14 +190,14 @@ function cmdStats(): void {
 	if (totalFlashlights > 0) {
 		const entries = getAllFlashlights();
 		let validCount = 0;
-		let accessoryCount = 0;
+		let excludedCount = 0;
 		const missingCounts: Record<string, number> = {};
 
 		for (const entry of entries) {
-			// Count accessories (vision-classified or build-filtered)
-			if (entry.type?.includes('accessory')) {
-				accessoryCount++;
-				continue; // Don't count accessories in valid/missing stats
+			// Exclude non-product entries (accessories, blog posts, etc.)
+			if (entry.type?.includes('accessory') || entry.type?.includes('blog')) {
+				excludedCount++;
+				continue;
 			}
 			const { valid, missing } = hasRequiredAttributes(entry);
 			if (valid) validCount++;
@@ -206,8 +206,8 @@ function cmdStats(): void {
 			}
 		}
 
-		const flashlightCount = totalFlashlights - accessoryCount;
-		console.log(`\nAccessories excluded: ${accessoryCount}`);
+		const flashlightCount = totalFlashlights - excludedCount;
+		console.log(`\nExcluded (accessories/blogs): ${excludedCount}`);
 		console.log(`Flashlights: ${flashlightCount}, fully valid: ${validCount} (${((validCount / flashlightCount) * 100).toFixed(1)}%)`);
 		if (Object.keys(missingCounts).length > 0) {
 			console.log('Missing attribute breakdown:');
