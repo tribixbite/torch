@@ -188,9 +188,15 @@ function cmdStats(): void {
 	if (totalFlashlights > 0) {
 		const entries = getAllFlashlights();
 		let validCount = 0;
+		let accessoryCount = 0;
 		const missingCounts: Record<string, number> = {};
 
 		for (const entry of entries) {
+			// Count accessories (vision-classified or build-filtered)
+			if (entry.type?.includes('accessory')) {
+				accessoryCount++;
+				continue; // Don't count accessories in valid/missing stats
+			}
 			const { valid, missing } = hasRequiredAttributes(entry);
 			if (valid) validCount++;
 			for (const attr of missing) {
@@ -198,12 +204,14 @@ function cmdStats(): void {
 			}
 		}
 
-		console.log(`\nRequired attributes: ${validCount}/${totalFlashlights} fully valid (${((validCount / totalFlashlights) * 100).toFixed(1)}%)`);
+		const flashlightCount = totalFlashlights - accessoryCount;
+		console.log(`\nAccessories excluded: ${accessoryCount}`);
+		console.log(`Flashlights: ${flashlightCount}, fully valid: ${validCount} (${((validCount / flashlightCount) * 100).toFixed(1)}%)`);
 		if (Object.keys(missingCounts).length > 0) {
 			console.log('Missing attribute breakdown:');
 			const sorted = Object.entries(missingCounts).sort((a, b) => b[1] - a[1]);
 			for (const [attr, count] of sorted) {
-				console.log(`  ${attr}: ${count} missing (${((count / totalFlashlights) * 100).toFixed(1)}%)`);
+				console.log(`  ${attr}: ${count} missing (${((count / flashlightCount) * 100).toFixed(1)}%)`);
 			}
 		}
 	}

@@ -375,8 +375,8 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 			?? title.match(/\d+\s*lm\s+(\d{2,4})\s*m\b/i)
 			// "NNNm Thrower" or "NNNm Throw" or "NNNm Tactical"
 			?? title.match(/(\d{2,4})\s*m\s+(?:Throw(?:er|ing)?|Tactical|EDC|Spotlight|Flood)/i)
-			// "NNNm long distance" or "NNNN Meters Long Distance"
-			?? title.match(/(\d{3,5})\s*m(?:eters?)?\s+long[\s-]*(?:distance|range)/i);
+			// "NNNm long distance" or "NNNN Meters Long Distance" or "NNNN Meter Ultra-Long Range"
+			?? title.match(/(\d{3,5})\s*m(?:eters?)?\s+(?:ultra[\s-]*)?long[\s-]*(?:distance|range)/i);
 		if (throwM) {
 			const val = parseInt(throwM[1], 10);
 			if (val >= 20 && val <= 5000) {
@@ -540,8 +540,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+(?:\.\d+)?)[\s-]*hours?\s+(?:of\s+)?runtime/i,
 			// "up to X hours" or "maximum X hours" (common description format)
 			/(?:up\s+to|maximum|max\.?)\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i,
-			// Pelican/PowerTac: "High: 960 lumens / 3h" or "High: 741 lumens/1h 45m"
-			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)\s*\/?\s*(\d+(?:\.\d+)?)\s*(?:h|hours?)\b/i,
+			// Pelican/PowerTac/Streamlight: "High: 960 lumens / 3h" or "High: 50 Lumens - 1.5h"
+			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)\s*[\/\-]?\s*(\d+(?:\.\d+)?)\s*(?:h|hours?)\b/i,
 			// "Max Runtime: 65 hours" or "Max Runtime: 102 hours"
 			/max\s*runtime[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 			// "max runtime of 20 days" or "runtime: 55 days" — days→hours
@@ -952,10 +952,12 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+(?:\.\d+)?)\s*K\s*(?:candela|cd)\b/i,
 			// "Peak Beam Intensity: 5000 cd" or "Intensity: 12,500 candela"
 			/(?:peak\s+)?(?:beam\s+)?intensity[:\s]+(\d[\d,]*)\s*(?:cd|candela)?\b/i,
-			// "Candela: 33000" or "Candela 6500"
-			/candela[:\s]+(\d[\d,]*)\b/i,
+			// "Candela: 33000" or "Candela 6500" or "Light Intensity (candela) \n 900" or "Candela is 33K"
+			/candela\)?[:\s]+(?:is\s+)?(\d[\d,]*)\s*K?\b/i,
 			// "Lux at 1 meter (candela) is approximately 18,000" or "Lux (Candela) \n 6500"
 			/lux\s*(?:at\s*1\s*(?:m|meter)?)?\s*\(?\s*candela\s*\)?[:\s]*(?:is\s*)?(?:approximately\s*)?(\d[\d,]*(?:\.\d+)?)\s*K?\b/i,
+			// "107,200 candelas" or "1,450,000 candelas" — number before candela with commas
+			/(\d[\d,]+)\s*candelas?\b/i,
 			// "11K Lux (candela)" — value before label
 			/(\d+(?:\.\d+)?)\s*K?\s*(?:lux\s*\(?\s*candela\s*\)?|candela)\b/i,
 		];
@@ -989,6 +991,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:max|high)\s+lumens?\s+(\d[\d,]*)\b/i,
 			// Nightstick: "High Lumens: 350" or "Flashlight Lumens: 235"
 			/(?:high|flashlight|max)\s+lumens?[:\s]+(\d[\d,]*)\b/i,
+			// EagleTac: "4350 LED lumen" or "2000 LED lumen powered by XHP35"
+			/(\d[\d,]*)\s+LED\s+lumens?\b/i,
 			// Simple: "420 lumens" — must be standalone (not part of "max output: X lumens" already matched)
 			/\b(\d[\d,]*)\s+lumens?\b/i,
 		];
