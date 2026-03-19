@@ -2,7 +2,7 @@
  * Build step: converts SQLite data → FlashlightDB JSON format for the SPA.
  * Produces flashlights.now.json compatible with the existing frontend.
  */
-import { getAllFlashlights } from '../store/db.js';
+import { getAllFlashlights, updateEntryType } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
@@ -369,16 +369,28 @@ export async function buildTorchDb(): Promise<{
 	}
 	if (accessoryCount > 0) console.log(`  Classified ${accessoryCount} accessories (kept in DB, filterable by type)`);
 
-	// Classify blog posts — entries from /blogs/ or /blog/ URLs that aren't products
+	// Classify blog posts and non-product pages
 	let blogCount = 0;
 	for (const entry of allEntries) {
+		if (entry.type.includes('blog') || entry.type.includes('accessory')) continue;
 		const urls = [...(entry.info_urls ?? []), ...(entry.purchase_urls ?? [])].join(' ');
-		if (/\/blogs?\/|\/news\//.test(urls) && !entry.type.includes('blog') && !entry.type.includes('accessory')) {
+		const model = entry.model?.toLowerCase() ?? '';
+
+		const isBlog = /\/blogs?\/|\/news\//.test(urls);
+		// Category/landing pages: /pages/ or /collections/ URLs with "best" or "brightest" model titles
+		const isCategoryPage = /\/pages?\/|\/collections?\//.test(urls) &&
+			/^(?:best|brightest|top)\s/i.test(model);
+		// Manufacturer marketing pages: /best-*, /compare*, /guide*, /award*
+		const isMarketingPage = /\/(?:best-|compare|guide|award|faq)/i.test(urls) &&
+			!/\/products?\//i.test(urls); // Don't exclude actual product pages
+
+		if (isBlog || isCategoryPage || isMarketingPage) {
 			entry.type = ['blog'];
+			updateEntryType(entry.id, ['blog']);
 			blogCount++;
 		}
 	}
-	if (blogCount > 0) console.log(`  Classified ${blogCount} blog posts (excluded from main view)`);
+	if (blogCount > 0) console.log(`  Classified ${blogCount} non-product pages (excluded from main view)`);
 
 	// Keep all entries — accessories/blogs are filterable via type column
 	const entries = allEntries;

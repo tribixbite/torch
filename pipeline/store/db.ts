@@ -306,6 +306,15 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 	});
 }
 
+/** Update the type field for an entry (e.g., marking as 'blog' or 'accessory') */
+export function updateEntryType(id: string, type: string[]): void {
+	const db = getDb();
+	db.prepare(`UPDATE flashlights SET type = $type WHERE id = $id`).run({
+		$id: id,
+		$type: JSON.stringify(type),
+	});
+}
+
 /** Add a price record */
 export function addPrice(flashlightId: string, price: PriceEntry): void {
 	const db = getDb();
