@@ -1198,22 +1198,30 @@ const CRAWLERS: SiteCrawler[] = [
 		// Pelican.com uses Cloudflare that blocks bun/node TLS fingerprints
 		fetchFn: fetchWithCurl,
 		async discoverUrls() {
-			// Pelican corporate site — listing page at /us/en/products/flashlights
+			// Pelican corporate site — multiple category pages
 			// Uses curl to bypass Cloudflare TLS fingerprint blocking
 			const base = 'https://www.pelican.com';
-			const listUrl = `${base}/us/en/products/flashlights`;
+			const categories = [
+				'/us/en/products/flashlights',
+				'/us/en/products/tactical-flashlights',
+				'/us/en/products/headlamps',
+				'/us/en/products/right-angle-lights',
+				'/us/en/products/remote-area-lights',
+			];
 			const urls: string[] = [];
-			try {
-				const html = await fetchWithCurl(listUrl);
-				// Product URLs: /us/en/product/flashlights/<model>
-				const re = /href="([^"]*\/us\/en\/product\/flashlights\/[^"]+)"/gi;
-				let m;
-				while ((m = re.exec(html)) !== null) {
-					const fullUrl = m[1].startsWith('http') ? m[1] : `${base}${m[1]}`;
-					if (!urls.includes(fullUrl)) urls.push(fullUrl);
+			for (const cat of categories) {
+				try {
+					const html = await fetchWithCurl(`${base}${cat}`);
+					// Product URLs: /us/en/product/<category>/<model>
+					const re = /href="([^"]*\/us\/en\/product\/(?:flashlights|tactical-flashlights|headlamps|right-angle-lights|remote-area-lights)\/[^"]+)"/gi;
+					let m;
+					while ((m = re.exec(html)) !== null) {
+						const fullUrl = m[1].startsWith('http') ? m[1] : `${base}${m[1]}`;
+						if (!urls.includes(fullUrl)) urls.push(fullUrl);
+					}
+				} catch (err) {
+					console.log(`    Pelican ${cat} error: ${(err as Error).message}`);
 				}
-			} catch (err) {
-				console.log(`    Pelican listing error: ${(err as Error).message}`);
 			}
 			return urls;
 		},
