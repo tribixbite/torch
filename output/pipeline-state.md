@@ -1,25 +1,25 @@
 # Pipeline State — 2026-03-22
 
-## Current Status: Data quality cleanup — 69.6% valid
+## Current Status: Schema refinement + cleanup — 70.8% valid
 
-### Coverage (6,611 flashlights / 12,482 total DB / 9,172 in JSON)
+### Coverage (6,597 flashlights / 12,488 total DB / 9,164 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
 | price_usd | 98.2% | 118 |
-| color | 97.7% | 151 |
-| features | 97.6% | 160 |
-| battery | 97.4% | 174 |
-| weight_g | 97.3% | 181 |
-| switch | 96.2% | 250 |
-| lumens | 96.2% | 251 |
-| material | 95.1% | 325 |
-| led | 95.6% | 288 |
-| throw_m | 88.5% | 763 |
-| length_mm | 88.2% | 779 |
-| runtime | 85.8% | 936 |
+| color | 97.7% | 150 |
+| features | 97.8% | 148 |
+| battery | 97.4% | 172 |
+| weight_g | 97.3% | 175 |
+| switch | 96.4% | 240 |
+| lumens | 96.3% | 242 |
+| material | 95.2% | 317 |
+| led | 95.7% | 286 |
+| throw_m | 89.8% | 675 |
+| length_mm | 88.5% | 756 |
+| runtime | 86.1% | 916 |
 
-Fully valid: **4,598 entries (69.6%)**
+Fully valid: **4,672 entries (70.8%)**
 
 Note: Previous sessions inflated valid counts by including duplicate entries (same
 product listed by multiple retailers) in the flashlight total. Deep dedup removed
@@ -28,11 +28,13 @@ disproportionately valid (from major retailers with complete data).
 
 ### Session Gains (3/22)
 - **Data quality fixes**: Cleared 9999 lumens placeholders (4 Fenix entries), impossible throw values (Skylumen B01vn 6000m, Olight RN 800 4000m, Olight Seeker 2 5000m), Acebeam E75 155000lm placeholder
-- **Raw text fetch**: 101 new entries fetched (Pelican blocked by Cloudflare)
-- **AI parse**: 3 entries enriched from new raw text (manufacturers source)
+- **Raw text fetch**: 101 new entries fetched (Pelican blocked by Cloudflare — curl now also blocked)
+- **AI parse**: 7 entries enriched from new raw text (manufacturers + retailers)
 - **Enrichment cascade**: +130 total enrichments from parametrek/model crossref
-- **Accessory reclassification**: 11 genuinely non-flashlight entries reclassified (charging docks, cables, cradles, battery packs, category pages)
-- **Net result**: 4,561→4,598 valid (+37), 68.9%→69.6%
+- **Schema: throw_m optional for headlamps/lanterns/floods**: Flood lights and area lights don't have meaningful throw specs. Consistent with parametrek.com showing N/A. +47 newly valid entries.
+- **Adapter/junk reclassification**: 67 AC/DC power adapters from generic Amazon brands (KONKIN BOO, PKPOWER, SLLEA, etc.) reclassified as accessories
+- **Near-duplicate merging**: 6 more near-duplicates merged (Acebeam E70 MINI/E70mini, EagleTac M30LC2-C/M30LC2C, etc.)
+- **Net result**: 4,561→4,672 valid (+111), 68.9%→70.8%
 
 ### Session Gains (3/21)
 - **Cross-retailer smart dedup**: 601 entries merged across all brands — same model from different retailers (goinggear, batteryjunction, nealsgadgets, flashlightgo, torchdirect, flashlightworld) consolidated into single entries with best-quality data from each source. 822 fields recovered/upgraded during merge.
@@ -92,21 +94,21 @@ disproportionately valid (from major retailers with complete data).
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
 
-### Single-Field Blocker Analysis
+### Single-Field Blocker Analysis (with throw_m exemption for headlamps/lanterns/floods)
 | Field | Count | Top brands |
 |-------|-------|------------|
-| runtime_hours | 299 | Lumintop(43), Mateminco(25), Emisar(15), Amutorch(14), Olight(13) |
-| throw_m | 212 | Nightstick(40), Zebralight(38), Convoy(13), ARCHON(12), Streamlight(10) |
-| length_mm | 210 | Rayovac(16), Coast(13), Weltool(12), Petzl(12), Acebeam(12) |
-| led | 76 | Coast(20), Nextorch(12), Olight(10), Modlite(5), Wuben(3) |
-| price_usd | 50 | Nightstick(32), Lumintop(12), Fenix(4) |
+| runtime_hours | 294 | Lumintop(44), Mateminco(25), Amutorch(14), Emisar(14), BLF(12) |
+| length_mm | 181 | Rayovac(16), Petzl(12), Coast(12), Acebeam(12), Olight(9) |
+| throw_m | 165 | Nightstick(36), Zebralight(14), Convoy(12), ARCHON(11), Malkoff(9) |
+| led | 73 | Coast(20), Nextorch(12), Olight(9), Modlite(5), Wuben(3) |
+| price_usd | 49 | Nightstick(33), Lumintop(13), Armytek(2) |
 | color | 44 | Striker(7), UST(3), ThruNite(3), Petzl(3), Coast(3) |
-| weight_g | 30 | Acebeam(8), Streamlight(4), Loop Gear(3) |
-| material | 30 | Wagan(7), Nite Ize(4), UST(3), Klarus(3), Loop Gear(3) |
-| switch | 27 | Sunrei(7), Olight(4), Knog(3), Fireflies(2) |
+| material | 31 | Wagan(7), UST(3), Nite Ize(3), Klarus(3), Loop Gear(3) |
+| switch | 28 | Sunrei(7), Olight(4), Knog(3), Fireflies(2) |
+| weight_g | 22 | Acebeam(8), Loop Gear(3), ReyLight(2) |
 | lumens | 14 | Tank007(4), ReyLight(3), FourSevens(3) |
-| battery | 8 | Coast(3), Imalent(1), Trustfire(1) |
-| features | 4 | Haikelite(1), ARCHON(1), Maxtoch(1), Acebeam(1) |
+| battery | 7 | Coast(3), Imalent(1), Trustfire(1) |
+| features | 2 | Haikelite(1), ARCHON(1) |
 
 ### Diminishing Returns
 The remaining gaps are genuinely missing data — product pages don't contain the information.
