@@ -450,6 +450,25 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 		}
 	}
 
+	// LED options from variant options (Shopify stores like Killzone use "LED", "LED Options" etc.)
+	const ledOptions: string[] = [];
+	const ledOptionAxis = product.options.find((o) =>
+		/^(?:LED|Emitter|LED\s*Option|LED\s*Options|LED\s*Tint|Emitter\s*Option|EMITTER\s*OPTION)$/i.test(o.name.trim())
+	);
+	if (ledOptionAxis) {
+		// Filter out non-LED values that retailers mix into the LED dropdown
+		// (color/finish names like "Polished silver titanium", "A: Pixel Camo 1")
+		// LED values contain known emitter keywords; filter out color/finish contamination
+		// ("Polished silver titanium", "A: Pixel Camo 1", "Stonewashed titanium")
+		const ledKeyword = /sst|ntg|519|e21|e17|sft|xhp|fc-?40|w[12]\b|csl[np]|cool\s*white|warm\s*white|uv|sbt|nichia|cree|luminus|osram|deep\s*red|green|blue|amber|\d{3,4}\s*k\b|\d+nm\b/i;
+		for (const val of ledOptionAxis.values) {
+			const cleaned = val.trim();
+			if (cleaned && ledKeyword.test(cleaned)) {
+				ledOptions.push(cleaned);
+			}
+		}
+	}
+
 	// Images (filter out spec charts, icons)
 	const imageUrls = product.images
 		.filter((img) => !img.alt || !/spec|chart|diagram|icon|badge|logo/i.test(img.alt))
@@ -744,15 +763,26 @@ function shopifyToEntry(product: ShopifyProduct, brand: string, storeUrl: string
 	// Resolve final weight — prefer variant grams, fall back to parsed spec (including Ledlenser tags)
 	const finalWeight = weight_g ?? specs.weight_g;
 
-	const id = generateId(brand, model, specs.leds?.[0]);
+	// For configurable products (>2 LED options), omit LED from ID to avoid duplicates
+	const isConfigurable = ledOptions.length > 2;
+	const ledForId = isConfigurable ? undefined : specs.leds?.[0];
+	const id = generateId(brand, model, ledForId);
+
+	// If no LEDs parsed from specs but we have dropdown options, use first 1-2 as primary
+	const primaryLeds = specs.leds?.length ? specs.leds : (ledOptions.length ? ledOptions.slice(0, 2) : []);
+
+	if (isConfigurable) {
+		features.push('configurable');
+	}
 
 	return {
 		id,
 		model,
 		brand,
 		type: types,
-		led: specs.leds ?? [],
+		led: primaryLeds,
 		led_color: specs.ledColors ?? [],
+		led_options: isConfigurable ? ledOptions : [],
 		performance: {
 			claimed: {
 				lumens: specs.lumens ?? [],

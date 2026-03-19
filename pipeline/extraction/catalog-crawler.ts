@@ -721,9 +721,11 @@ const CRAWLERS: SiteCrawler[] = [
 						.replace(/\s*\+?\$[\d.]+.*$/, '')  // Remove price suffix
 						.replace(/&amp;/g, '&')             // Decode HTML entities
 						.trim();
-					if (ledName && ledName.length > 1 && !leds.includes(ledName)) {
-						leds.push(ledName);
-					}
+					// Filter out non-LED values (body finish options mixed into LED dropdown)
+				const isLed = /sst|ntg|519|e21|e17|sft|xhp|fc-?40|w[12]\b|csl[np]|cool\s*white|warm\s*white|uv|sbt|nichia|cree|luminus|osram|deep\s*red|green|blue|amber|\d{3,4}\s*k\b|\d+nm\b/i;
+				if (ledName && ledName.length > 1 && !leds.includes(ledName) && isLed.test(ledName)) {
+					leds.push(ledName);
+				}
 				}
 			}
 			if (leds.length > 0) {
