@@ -557,8 +557,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)\s*[\/\-]?\s*(\d+(?:\.\d+)?)\s*(?:h|hours?)\b/i,
 			// "Max Runtime: 65 hours" or "Max Runtime: 102 hours"
 			/max\s*runtime[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
-			// "max runtime of 20 days" or "runtime: 55 days" — days→hours
-			/(?:max\s+)?runtime\s+(?:of\s+)?(\d+(?:\.\d+)?)\s*days?\b/i,
+			// "max runtime of 20 days" or "runtime: 55 days" or "Max runtime: 55 days" — days→hours
+			/(?:max\s+)?runtime[:\s]+(?:of\s+)?(\d+(?:\.\d+)?)\s*days?\b/i,
 			// "Runtime: High / 17.5h" or "Runtime:\nHigh / 8h" — mode-prefixed with slash
 			/runtime[:\s]+(?:high|turbo|max|burst)[:\s/]+(\d+(?:\.\d+)?)\s*(?:h|hours?|hrs?)\b/i,
 			// "Runtime on High: ... X:YY" — H:MM format in runtime context (hours:minutes)
@@ -834,6 +834,10 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/size[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/i,
 			// "Size(mm):276(length)x108(head)" — nealsgadgets/Acebeam format
 			/size\s*\(?mm\)?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:\(length\))?\s*[x×*]/i,
+			// "Height 142 mm" or "Height: 155mm" — Ledlenser spec format (height = length for flashlights)
+			/\bheight[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/i,
+			// "Height: 6.1 in" or "Height: 5.5 inches" — inches format
+			/\bheight[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i,
 		];
 		for (const re of lengthPatterns) {
 			const m = combined.match(re);
@@ -944,8 +948,12 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/beam\s*distance\s+(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
 			// "reach up to 250 meters" or "reaches 500m"
 			/reach(?:es)?\s+(?:up\s+to\s+)?(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
-			// "distance of 380m" or "distance: 1000 meters"
-			/distance\s+(?:of\s+)?(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
+			// "distance of 380m" or "distance: 1000 meters" or "Distance: 370 meters"
+			/distance[:\s]+(?:of\s+)?(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
+			// "illumination distance: 500 ft" or "light distance: 1000 feet" — feet→meters
+			/(?:illumination|lighting|light)\s*distance[:\s]+(\d{2,5})\s*(?:ft\.?|feet|foot)\b/i,
+			// "distance: 1500 feet" or "distance: 500 ft." — standalone distance in feet
+			/distance[:\s]+(\d{2,5})\s*(?:ft\.?|feet|foot)\b/i,
 		];
 		for (const re of throwPatterns) {
 			const m = combined.match(re);
