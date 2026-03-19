@@ -358,11 +358,14 @@ export async function buildTorchDb(): Promise<{
 
 	// If the model name contains strong flashlight indicators, it's a flashlight even if it mentions accessories
 	const IS_FLASHLIGHT = /\b(\d+\s*lumens?|\d+\s*lm\b|flashlight|headlamp|headlight|lantern|torch|work\s*light|flood\s*light|spot\s*light|penlight|pen\s*light|searchlight|rechargeable.*led|led.*rechargeable)\b/i;
+	// Standalone battery products — "6V Alkaline Lantern Battery with Spring Terminals"
+	const STANDALONE_BATTERY = /\d+\s*V\s+(?:alkaline|zinc|carbon|lithium|nimh|nicd).*\bbattery\b/i;
 
 	let accessoryCount = 0;
 	for (const entry of allEntries) {
 		// PURE_ACCESSORY and GLOW_TUBE always classify (start-of-name match is strong enough)
-		const isPure = PURE_ACCESSORY.test(entry.model) || GLOW_TUBE_ONLY.test(entry.model);
+		const isPure = PURE_ACCESSORY.test(entry.model) || GLOW_TUBE_ONLY.test(entry.model)
+			|| (STANDALONE_BATTERY.test(entry.model) && !(/\b(flashlight|headlamp|torch)\b/i.test(entry.model)));
 		// ACCESSORY_PATTERNS is weaker — skip if the model also looks like a flashlight
 		const isPatternMatch = ACCESSORY_PATTERNS.test(entry.model) && !IS_FLASHLIGHT.test(entry.model);
 		if ((isPure || isPatternMatch) && !entry.type.includes('accessory')) {
