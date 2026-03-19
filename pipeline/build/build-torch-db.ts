@@ -352,18 +352,22 @@ export async function buildTorchDb(): Promise<{
 	console.log(`  ${allEntries.length} entries from SQLite`);
 
 	// Classify accessories — keep them in the DB but add "accessory" to their type
-	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|replacement lamp|replacement bulb|replacement battery|replacement nimh|replacement xenon|traffic.*wand|accessory lens|gift card|mouse pad|sticker|poster|headband(?! light)|charger(?! led| rechargeable| flashlight))\b/i;
+	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|replacement lamp|replacement bulb|replacement battery|replacement nimh|replacement xenon|traffic.*wand|accessory lens|gift card|mouse pad|sticker|poster|headband(?! light)|charger(?! led| rechargeable| flashlight)|(?:color |red |blue |green |flashlight )(?:filter|diffuser)s?\b(?! (?:tip|included|set))|silicone (?:flashlight )?diffuser|filters? for (?:flashlight|light)|filter - \d)/i;
 	const GLOW_TUBE_ONLY = /^(gitd\b|.*\bglow tubes?\b(?!.*\b(flashlight|headlamp|torch)\b))/i;
-	const PURE_ACCESSORY = /^(?:battery pack|holster|diffuser|charger|mount|strap|case|pouch|headband|glass lens|schneider gelion)\b/i;
+	const PURE_ACCESSORY = /^(?:battery pack|holster|diffuser|charger|mount|strap|case|pouch|headband|glass lens|schneider gelion|fs[rbg]\d|mf[bdgr]\d|color filter|nf\d+ filter)\b/i;
+
+	// If the model name contains strong flashlight indicators, it's a flashlight even if it mentions accessories
+	const IS_FLASHLIGHT = /\b(\d+\s*lumens?|\d+\s*lm\b|flashlight|headlamp|headlight|lantern|torch|work\s*light|flood\s*light|spot\s*light|penlight|pen\s*light|searchlight|rechargeable.*led|led.*rechargeable)\b/i;
 
 	let accessoryCount = 0;
 	for (const entry of allEntries) {
-		const isAccessory =
-			ACCESSORY_PATTERNS.test(entry.model) ||
-			GLOW_TUBE_ONLY.test(entry.model) ||
-			PURE_ACCESSORY.test(entry.model);
-		if (isAccessory && !entry.type.includes('accessory')) {
+		// PURE_ACCESSORY and GLOW_TUBE always classify (start-of-name match is strong enough)
+		const isPure = PURE_ACCESSORY.test(entry.model) || GLOW_TUBE_ONLY.test(entry.model);
+		// ACCESSORY_PATTERNS is weaker — skip if the model also looks like a flashlight
+		const isPatternMatch = ACCESSORY_PATTERNS.test(entry.model) && !IS_FLASHLIGHT.test(entry.model);
+		if ((isPure || isPatternMatch) && !entry.type.includes('accessory')) {
 			entry.type = ['accessory'];
+			updateEntryType(entry.id, ['accessory']);
 			accessoryCount++;
 		}
 	}

@@ -208,7 +208,10 @@ export function upsertFlashlight(entry: FlashlightEntry): void {
 			$image_urls, $asin, $ean, $upc, $updated_at
 		) ON CONFLICT(id) DO UPDATE SET
 			family_id = COALESCE(excluded.family_id, family_id),
-			type = CASE WHEN excluded.type != '[]' THEN excluded.type ELSE type END,
+			type = CASE
+				WHEN type LIKE '%accessory%' OR type LIKE '%blog%' THEN type
+				WHEN excluded.type != '[]' THEN excluded.type
+				ELSE type END,
 			year = COALESCE(excluded.year, year),
 			-- Array fields: only overwrite if new value is non-empty (preserve better data)
 			led = CASE WHEN excluded.led != '[]' THEN excluded.led ELSE led END,
