@@ -532,6 +532,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:high\s+)?runtime\s*\(h\)[:\s]*(\d+(?:\.\d+)?)/i,
 			// Olight spec table: "Runtime (Hours) 85 5 1.5 3" — first value
 			/runtime\s*\(hours?\)\s*(\d+(?:\.\d+)?)\b/i,
+			// "run times are: 1h for turbo" or "run times are these: 1h"
+			/run\s*times?\s+(?:are\s+)?(?:these)?[:\s]+(\d+(?:\.\d+)?)\s*(?:h|hours?|hrs?)\b/i,
 			// NitecoreStore/BJ table: "Runtime ... NN hours" — use [\s\S] not [^.] to cross decimals
 			/runtime[\s\S]{0,300}?(\d+(?:\.\d+)?)\s*hours\b/i,
 			// "80-hour runtime" or "72 hours of runtime"
@@ -793,8 +795,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/length[\s\S]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
 			// "NNN inches long" or "NNN inches in length" — inches as length
 			/(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length)\b/i,
-			// Olight: "Length (mm / in) \n 63mm / 2.48in"
-			/length\s*\(mm\b[^)]*\)\s+(\d{2,4}(?:\.\d+)?)\s*mm/i,
+			// Olight: "Length (mm / in) \n 63mm / 2.48in" or "Length (mm / in) \n 155 / 6.10"
+			/length\s*\(mm\b[^)]*\)[\s\S]{0,20}?(\d{2,4}(?:\.\d+)?)\s*(?:mm)?/i,
 			// Battery Junction: "X in (Y mm)" near length — capture the mm value (cross newlines)
 			/length[\s\S]{0,60}?\d+(?:\.\d+)?\s*in\.?\s*\((\d+(?:\.\d+)?)\s*mm\)/i,
 			// "Dimensions: 135mm x 25mm" — first number is usually length
@@ -807,6 +809,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/size[:\s]+(\d{2,4}(?:\.\d+)?)\s*[*×x]\s*\d+/i,
 			// "Size:117.7mm" — bare mm value after Size
 			/size[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/i,
+			// "Size(mm):276(length)x108(head)" — nealsgadgets/Acebeam format
+			/size\s*\(?mm\)?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:\(length\))?\s*[x×*]/i,
 		];
 		for (const re of lengthPatterns) {
 			const m = combined.match(re);
@@ -887,44 +891,44 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Throw extraction from raw text (only if missing)
 	if (!entry.performance?.claimed?.throw_m) {
 		const throwPatterns = [
-			// "Beam Distance: 500m" or "Throw: 250 meters" or "Max Throw: 1500m"
-			/(?:beam\s*distance|throw|range)[:\s]+(\d{2,5})\s*(?:m|meters?)\b/i,
+			// "Beam Distance: 500m" or "Throw: 250 meters" or "Max Throw: 1500m" or "Beam Range: 36m"
+			/(?:beam\s*(?:distance|range)|throw|range)[:\s]+(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
 			// "ANSI throw 500m" or "FL1 throw: 500m"
 			/(?:ANSI|FL1)\s+(?:beam\s*)?(?:distance|throw)[:\s]+(\d{2,5})\s*m/i,
-			// "500m beam distance" or "1500m throw"
-			/(\d{2,5})\s*m\s*(?:beam\s*distance|throw|range)\b/i,
+			// "500m beam distance" or "1500m throw" or "36 m beam range"
+			/(\d{2,5})\s*m\s*(?:beam\s*(?:distance|range)|throw|range)\b/i,
 			// "Peak Beam Distance: 250 meters" — decimal allowed, "meters" spelled out
-			/(?:peak\s+)?beam\s*distance[:\s]+(\d+(?:\.\d+)?)\s*(?:m|meters?)\b/i,
+			/(?:peak\s+)?beam\s*distance[:\s]+(\d+(?:\.\d+)?)\s*(?:m|met(?:er|re)s?)\b/i,
 			// "Max Beam Distance 780 feet" or "Beam Reach: 800 ft" — feet→meters (decimal allowed)
-			/(?:beam\s*(?:distance|reach)|throw)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet)\b/i,
+			/(?:beam\s*(?:distance|reach|range)|throw)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet|foot)\b/i,
 			// "Beam Distance: 311.00ft (94.79m)" — decimal feet with meters in parens
-			/beam\s*distance[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)\s*\(?(\d+(?:\.\d+)?)\s*m\)?/i,
+			/beam\s*(?:distance|range)[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet|foot)\s*\(?(\d+(?:\.\d+)?)\s*m\)?/i,
 			// "Beam Distance: 500.00ft 152.40 m" — decimal feet followed by meters (no parens)
-			/beam\s*distance[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)\s+(\d+(?:\.\d+)?)\s*m\b/i,
+			/beam\s*(?:distance|range)[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet|foot)\s+(\d+(?:\.\d+)?)\s*m\b/i,
 			// "Beam Distance (High/Low): 197.00 ft./127.00 ft. (60.05 m/38.71 m)" — take first meter value
-			/beam\s*distance\s*\([^)]*\)[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)[^(]*\((\d+(?:\.\d+)?)\s*m/i,
+			/beam\s*(?:distance|range)\s*\([^)]*\)[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet|foot)[^(]*\((\d+(?:\.\d+)?)\s*m/i,
 			// "220-meter beam distance" or "NNN-meter throw" — hyphenated
-			/(\d{1,5})[\s-]+meters?\s+(?:beam\s*distance|throw|range|beam)\b/i,
-			// "beam distance of 9 meters" or "throw of 380m"
-			/(?:beam\s*distance|throw|range)\s+of\s+(\d{1,5})\s*(?:m|meters?)\b/i,
+			/(\d{1,5})[\s-]+meters?\s+(?:beam\s*(?:distance|range)|throw|range|beam)\b/i,
+			// "beam distance of 9 meters" or "throw of 380m" or "beam range of 36m"
+			/(?:beam\s*(?:distance|range)|throw|range)\s+of\s+(\d{1,5})\s*(?:m|met(?:er|re)s?)\b/i,
 			// "beam distance -- Max 919 ft" or "Beam distance - High 804 ft" — mode after dashes
-			/beam\s*distance\s*[-–—]+\s*(?:max|high|turbo)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet)\b/i,
+			/beam\s*(?:distance|range)\s*[-–—]+\s*(?:max|high|turbo)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet|foot)\b/i,
 			// "reach 250 yards" or "throw of 350 yards" — yards→meters
-			/(?:beam\s*(?:distance|reach)|throw|reach(?:es)?)[:\s]+(?:up\s+to\s+)?(\d+)\s*(?:yards?|yds?)\b/i,
-			// "1500 feet beam" or "780 ft throw" (number before unit+keyword) — feet→meters
-			/(\d{2,5})\s*(?:ft\.?|feet)\s*(?:beam\s*distance|throw|beam)\b/i,
+			/(?:beam\s*(?:distance|reach|range)|throw|reach(?:es)?)[:\s]+(?:up\s+to\s+)?(\d+)\s*(?:yards?|yds?)\b/i,
+			// "1500 feet beam" or "780 ft throw" or "630 foot throw" — feet→meters
+			/(\d{2,5})\s*(?:ft\.?|feet|foot)\s*(?:beam\s*(?:distance|range)|throw|beam|range)\b/i,
 			// "beam distance 500 m" — relaxed spacing
-			/beam\s*distance\s+(\d{2,5})\s*(?:m|meters?)\b/i,
+			/beam\s*distance\s+(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
 			// "reach up to 250 meters" or "reaches 500m"
-			/reach(?:es)?\s+(?:up\s+to\s+)?(\d{2,5})\s*(?:m|meters?)\b/i,
+			/reach(?:es)?\s+(?:up\s+to\s+)?(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
 			// "distance of 380m" or "distance: 1000 meters"
-			/distance\s+(?:of\s+)?(\d{2,5})\s*(?:m|meters?)\b/i,
+			/distance\s+(?:of\s+)?(\d{2,5})\s*(?:m|met(?:er|re)s?)\b/i,
 		];
 		for (const re of throwPatterns) {
 			const m = combined.match(re);
 			if (m) {
 				// Convert feet or yards to meters if matched
-				const isFeet = /ft|feet/i.test(m[0]);
+				const isFeet = /ft|feet|foot/i.test(m[0]);
 				const isYards = /yards?|yds?/i.test(m[0]);
 				const val = isFeet ? Math.round(parseFloat(m[1]) * 0.3048)
 					: isYards ? Math.round(parseFloat(m[1]) * 0.9144)
