@@ -641,8 +641,9 @@ const CRAWLERS: SiteCrawler[] = [
 					let m;
 					while ((m = re.exec(html)) !== null) {
 						const url = m[1];
-						// Filter to product pages (not category, cart, account pages)
+						// Filter to product pages (not category, cart, account, or LED-filter pages)
 						if (!/components|accessories|checkout|customer|catalogsearch|review/i.test(url) &&
+							!/\/led\/|\/led\.html/i.test(url) && // Skip LED-filter subcategory pages
 							/led|flashlight|headlamp|mule|emisar|noctigon/i.test(url)) {
 							if (!productUrls.includes(url)) productUrls.push(url);
 						}
@@ -665,6 +666,11 @@ const CRAWLERS: SiteCrawler[] = [
 			// Skip components/accessories (not flashlights)
 			const fullTitle = model.toLowerCase();
 			if (/\b(?:replacement|spare|pcb|optic|glass|lens|lanyard|clip|tube|extension|button|ring|aux|auxiliary|magnet.*cap|bezel.*ring|o-ring|gasket|driver)\b/i.test(fullTitle)) {
+				return null;
+			}
+			// Skip category/filter page names that aren't real products
+			if (/^(?:single|dual|triple|headlamps?|led|nichia|osram|luminus|getian|cree|mule|link)$/i.test(model) ||
+				/^(?:luminus\s+s[a-z]+\s+\d|osram\s+white|getian\s+gt)/i.test(model)) {
 				return null;
 			}
 
