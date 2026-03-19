@@ -497,6 +497,15 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bABS\s*(?:plastic|body)?\b/, 'ABS'],
 			// "fiberglass reinforced" or "glass-filled" = polymer
 			[/\b(?:fiberglass|glass[\s-]*(?:filled|reinforced))\b/i, 'polymer'],
+			// "plastic housing" or "plastic body" or "plastic casing" = polymer
+			[/\bplastic\s*(?:housing|body|casing|shell|construction)\b/i, 'polymer'],
+			// "robust metal housing" or "metal body" — too generic for specific material
+			// "magnesium alloy" or "Mg alloy" — lightweight material used in some headlamps
+			[/\bmagnesium\s*(?:alloy)?\b/i, 'magnesium'],
+			// "Body: Aluminum" or "Body: Anodized Aluminum" — spec table with newline
+			[/\b(?:primary\s+)?material[\s\S]{0,20}?anodi[sz]ed\s*alum/i, 'aluminum'],
+			// "Construction: Aluminum" or "Housing: Aluminum"
+			[/\b(?:construction|housing|casing|chassis)[:\s]+(?:anodi[sz]ed\s+)?alum/i, 'aluminum'],
 		];
 		const detected: string[] = [];
 		for (const [re, mat] of matPatterns) {
@@ -535,6 +544,17 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/max\s*runtime[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 			// "max runtime of 20 days" or "runtime: 55 days" — days→hours
 			/(?:max\s+)?runtime\s+(?:of\s+)?(\d+(?:\.\d+)?)\s*days?\b/i,
+			// "Runtime: High / 17.5h" or "Runtime:\nHigh / 8h" — mode-prefixed with slash
+			/runtime[:\s]+(?:high|turbo|max|burst)[:\s/]+(\d+(?:\.\d+)?)\s*(?:h|hours?|hrs?)\b/i,
+			// "Runtime on High: ... X:YY" — H:MM format in runtime context (hours:minutes)
+			/runtime[\s\S]{0,200}?(?:high|turbo|max)[:\s]+(?:\d+\s*(?:lumens?|lm)\s*(?:for|\/)\s*)?(\d+):(\d{2})\b/i,
+		];
+		// Compact XhYm format patterns — "1h58min", "1h 45m", "4h55min"
+		const runtimeCompactPatterns = [
+			// "RUNTIME \n 1h58min" or "runtime: 2h30min" — hours+minutes compact
+			/runtime[\s\S]{0,100}?(\d+)\s*h\s*(\d+)\s*m(?:in)?\b/i,
+			// "Xh YYm" in mode table: "High \n 500lm \n 1h45m"
+			/(?:high|turbo|max|burst)[\s\S]{0,80}?(\d+)\s*h\s*(\d+)\s*m(?:in)?\b/i,
 		];
 		// Minute-based patterns (converted to hours)
 		const runtimeMinPatterns = [
@@ -547,15 +567,39 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		for (const re of runtimeHoursPatterns) {
 			const m = combined.match(re);
 			if (m) {
-				let hrs = parseFloat(m[1]);
+				let hrs: number;
+				if (m[2] !== undefined) {
+					// H:MM format — group 1 is hours, group 2 is minutes
+					hrs = parseInt(m[1], 10) + parseInt(m[2], 10) / 60;
+				} else {
+					hrs = parseFloat(m[1]);
+				}
 				// Convert days to hours if the pattern matched "days"
 				if (/days?\b/i.test(m[0])) hrs *= 24;
+				hrs = Math.round(hrs * 100) / 100;
 				if (hrs > 0 && hrs < 10000) {
 					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 					entry.performance.claimed.runtime_hours = [hrs];
 					changed = true;
 					foundRuntime = true;
 					break;
+				}
+			}
+		}
+		// Compact XhYm format: "1h58min", "2h30m"
+		if (!foundRuntime) {
+			for (const re of runtimeCompactPatterns) {
+				const m = combined.match(re);
+				if (m) {
+					const hrs = parseInt(m[1], 10) + parseInt(m[2], 10) / 60;
+					const rounded = Math.round(hrs * 100) / 100;
+					if (rounded > 0 && rounded < 10000) {
+						if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+						entry.performance.claimed.runtime_hours = [rounded];
+						changed = true;
+						foundRuntime = true;
+						break;
+					}
 				}
 			}
 		}
