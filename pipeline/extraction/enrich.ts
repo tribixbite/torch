@@ -304,7 +304,7 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 			[/\bXP[\s-]?C\b/i, 'XP-C'], [/\bXQ[\s-]?E\b/i, 'XQ-E'],
 			[/\bXPH[\s-]?\d+/i, 'XHP35'],
 			[/\bSST[\s-]?\d+\w?\b/i, ''], [/\bSFT[\s-]?\d+\w?\b/i, ''],
-			[/\bSBT[\s-]?\d+\w?\b/i, ''],
+			[/\bSBT[\s-]?\d+\w?\b/i, ''], [/\bSFQ[\s-]?\d+\w?\b/i, ''], [/\bSSQ[\s-]?\d+\w?\b/i, ''],
 			[/\b519A\b/, '519A'], [/\b219[BCF]\b/, ''],
 			[/\bLH351D\b/i, 'LH351D'], [/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bNichia\b/i, 'Nichia'], [/\bOsram\b/i, 'Osram'],
@@ -643,6 +643,11 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bLUXEON\s*(?:HL|MX|TX|V|V2)?\s*\w*\b/i, ''],
 			[/\bSFH\s*55\b/i, 'SFH55'],
 			[/\bSFT[\s-]?25\w?\b/i, ''],
+			// Luminus SFQ/SSQ family (newer high-density emitters)
+			[/\bSFQ[\s-]?60(?:\.\d+)?\b/i, ''],
+			[/\bSFQ[\s-]?40(?:\.\d+)?\b/i, ''],
+			[/\bSSQ[\s-]?55(?:\.\d+)?\b/i, ''],
+			[/\bSSQ[\s-]?40(?:\.\d+)?\b/i, ''],
 			// Other
 			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bOsram\s*(?:CSLNM1|CULNM1|CULPM1|KW\s*CSLNM|PM1)\.?\w*\b/i, ''],
@@ -771,13 +776,26 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:peak\s+)?beam\s*distance[:\s]+(\d+(?:\.\d+)?)\s*(?:m|meters?)\b/i,
 			// "Max Beam Distance 780 feet" or "Beam Reach: 800 ft" — feet→meters
 			/(?:beam\s*(?:distance|reach)|throw)[:\s]+(\d+)\s*(?:ft|feet)\b/i,
+			// "reach 250 yards" or "throw of 350 yards" — yards→meters
+			/(?:beam\s*(?:distance|reach)|throw|reach(?:es)?)[:\s]+(?:up\s+to\s+)?(\d+)\s*(?:yards?|yds?)\b/i,
+			// "1500 feet beam" or "780 ft throw" (number before unit+keyword) — feet→meters
+			/(\d{2,5})\s*(?:ft|feet)\s*(?:beam\s*distance|throw|beam)\b/i,
+			// "beam distance 500 m" — relaxed spacing
+			/beam\s*distance\s+(\d{2,5})\s*(?:m|meters?)\b/i,
+			// "reach up to 250 meters" or "reaches 500m"
+			/reach(?:es)?\s+(?:up\s+to\s+)?(\d{2,5})\s*(?:m|meters?)\b/i,
+			// "distance of 380m" or "distance: 1000 meters"
+			/distance\s+(?:of\s+)?(\d{2,5})\s*(?:m|meters?)\b/i,
 		];
 		for (const re of throwPatterns) {
 			const m = combined.match(re);
 			if (m) {
-				// Convert feet to meters if the pattern matched feet
+				// Convert feet or yards to meters if matched
 				const isFeet = /ft|feet/i.test(m[0]);
-				const val = isFeet ? Math.round(parseFloat(m[1]) * 0.3048) : Math.round(parseFloat(m[1]));
+				const isYards = /yards?|yds?/i.test(m[0]);
+				const val = isFeet ? Math.round(parseFloat(m[1]) * 0.3048)
+					: isYards ? Math.round(parseFloat(m[1]) * 0.9144)
+					: Math.round(parseFloat(m[1]));
 				if (val >= 10 && val <= 5000) {
 					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 					entry.performance.claimed.throw_m = val;
