@@ -352,20 +352,28 @@ export async function buildTorchDb(): Promise<{
 	console.log(`  ${allEntries.length} entries from SQLite`);
 
 	// Classify accessories — keep them in the DB but add "accessory" to their type
-	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|replacement lamp|replacement bulb|replacement battery|replacement nimh|replacement xenon|traffic.*wand|accessory lens|gift card|mouse pad|sticker|poster|headband(?! light)|charger(?! led| rechargeable| flashlight)|(?:color |red |blue |green |flashlight )(?:filter|diffuser)s?\b(?! (?:tip|included|set))|silicone (?:flashlight )?diffuser|filters? for (?:flashlight|light)|filter - \d|signal cone|nylon sheath|diffuser wand|diffuser tip for|helmet (?:clip|attachment|holder)|flashlight ring(?:\b)|wrist (?:flashlight )?clip|storage bag)/i;
+	const ACCESSORY_PATTERNS = /\b(o-ring|pocket clip|split ring|dummy cell|resistor|shipping protection|tail cap replacement|battery spacer|lens cap|lanyard|wrist strap|belt holster|diffuser cap|filter cap|driver tool|charging dock|replacement lamp|replacement bulb|replacement battery|replacement nimh|replacement xenon|traffic.*wand|accessory lens|gift card|mouse pad|sticker|poster|headband(?! light)|(?<!power |pd )charger(?! led| rechargeable| flashlight)|(?:color |red |blue |green |flashlight )(?:filter|diffuser)s?\b(?! (?:tip|included|set))|silicone (?:flashlight )?diffuser|filters? for (?:flashlight|light)|filter - \d|signal cone|nylon sheath|diffuser wand|diffuser tip for|helmet (?:clip|attachment|holder)|flashlight ring(?:\b)|wrist (?:flashlight )?clip|storage bag|leather holster|nylon holster|duty holster|safety wand|switch module|lamp module|lamp assembly|lens kit|lens reflector assembly|face cap assembly|grip ring|mag tube rail|charging rack|power cord|(?:ac|dc) cord|remote switch|headstrap|head(?:lamp)? strap|body kit(?! flashlight)|(?:flat top|button top)\s+(?:li-ion|lithium)|(?:lithium[- ]?ion|li-ion|nimh|nicd|nickel)\s+(?:battery|cell)\b(?! (?:flashlight|headlamp|powered)))/i;
 	const GLOW_TUBE_ONLY = /^(gitd\b|.*\bglow tubes?\b(?!.*\b(flashlight|headlamp|torch)\b))/i;
-	const PURE_ACCESSORY = /^(?:battery pack|holster|diffuser|charger|mount|strap|case|pouch|headband|glass lens|schneider gelion|fs[rbg]\d|mf[bdgr]\d|color filter|nf\d+ filter|a[a-z]{2}-\d|apb-\d|fx-wd|bm0\d)\b/i;
+	const PURE_ACCESSORY = /^(?:battery pack|holster|diffuser|charger|mount|strap|case|pouch|headband|glass lens|schneider gelion|fs[rbg]\d|mf[bdgr]\d|color filter|nf\d+ filter|a[a-z]{2}-\d|apb-\d|fx-wd|bm0\d|\d+mAh)\b/i;
 
 	// If the model name contains strong flashlight indicators, it's a flashlight even if it mentions accessories
 	const IS_FLASHLIGHT = /\b(\d+\s*lumens?|\d+\s*lm\b|flashlight|headlamp|headlight|lantern|torch|work\s*light|flood\s*light|spot\s*light|penlight|pen\s*light|searchlight|rechargeable.*led|led.*rechargeable)\b/i;
 	// Standalone battery products — "6V Alkaline Lantern Battery with Spring Terminals"
 	const STANDALONE_BATTERY = /\d+\s*V\s+(?:alkaline|zinc|carbon|lithium|nimh|nicd).*\bbattery\b/i;
+	// Battery cell products — "18650 3300mAh", "21700 5100mah", "16650 Vapcell INR16650"
+	// Matches model starting with a cell format number (5 digits) + mAh/mah or "Li-ion"/"Rechargeable Cell"
+	const BATTERY_CELL = /^\d{5}\b.*\b(?:\d+\s*m[Aa][Hh]|li-ion|rechargeable\s+cell|unprotected|protected\s+\d)\b/i;
+	// "mAh" + "Battery" models without flashlight/headlamp (e.g., "RC260 18650 2600mAh ... Battery")
+	const MAH_BATTERY = /\d+\s*m[Aa][Hh]\b.*\b(?:battery|battery\s+stick|power\s+pack)\b/i;
 
 	let accessoryCount = 0;
 	for (const entry of allEntries) {
 		// PURE_ACCESSORY and GLOW_TUBE always classify (start-of-name match is strong enough)
+		const noFlashword = !(/\b(flashlight|headlamp|headlight|torch|lantern)\b/i.test(entry.model));
 		const isPure = PURE_ACCESSORY.test(entry.model) || GLOW_TUBE_ONLY.test(entry.model)
-			|| (STANDALONE_BATTERY.test(entry.model) && !(/\b(flashlight|headlamp|torch)\b/i.test(entry.model)));
+			|| (STANDALONE_BATTERY.test(entry.model) && noFlashword)
+			|| (BATTERY_CELL.test(entry.model) && noFlashword)
+			|| (MAH_BATTERY.test(entry.model) && noFlashword && !IS_FLASHLIGHT.test(entry.model));
 		// ACCESSORY_PATTERNS is weaker — skip if the model also looks like a flashlight
 		const isPatternMatch = ACCESSORY_PATTERNS.test(entry.model) && !IS_FLASHLIGHT.test(entry.model);
 		if ((isPure || isPatternMatch) && !entry.type.includes('accessory')) {
