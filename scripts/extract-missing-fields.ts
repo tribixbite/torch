@@ -63,7 +63,7 @@ function extractRuntime(text: string): number[] {
 function extractThrow(text: string): number | null {
   const patterns = [
     // "beam distance: 210m" / "throw: 300m" / "max beam distance 500m"
-    /(?:beam\s+distance|throw(?:\s+distance)?|peak\s+beam\s+distance|max(?:imum)?\s+(?:beam\s+)?distance)\s*[:=]\s*(?:up\s+to\s+)?(\d+\.?\d*)\s*(?:m(?:eters?)?|ft|yards?)\b/gi,
+    /(?:beam\s+distance|throw(?:\s+distance)?|peak\s+beam\s+distance|max(?:imum)?\s+(?:beam\s+)?distance)\s*[-:=]\s*(?:up\s+to\s+)?(\d+\.?\d*)\s*(?:m(?:eters?)?|ft|yards?)\b/gi,
     // "210m beam distance" / "300m throw"
     /(\d+\.?\d*)\s*(?:m(?:eters?)?)\s+(?:beam\s+distance|throw(?:\s+distance)?|peak\s+beam|max\s+beam)/gi,
     // "distance of 300m" / "range of 200m"
@@ -71,11 +71,11 @@ function extractThrow(text: string): number | null {
     // "XXXm throw" / "XXXm beam"
     /(\d+)\s*m\s+(?:throw|beam)/gi,
     // "beam intensity XXXXX cd" - calculate throw
-    /(?:beam\s+)?intensity\s*[:=]\s*(\d[\d,]*)\s*(?:cd|candela)/gi,
+    /(?:beam\s+)?intensity\s*[-:=]\s*(\d[\d,]*)\s*(?:cd|candela)/gi,
     // "XXX,XXX candela"
     /(\d[\d,]+)\s*(?:cd|candela)/gi,
     // "XXft" / "XXX feet" beam distance
-    /(?:beam\s+distance|throw)\s*[:=]\s*(?:up\s+to\s+)?(\d+\.?\d*)\s*(?:ft|feet|foot)\b/gi,
+    /(?:beam\s+distance|throw)\s*[-:=]\s*(?:up\s+to\s+)?(\d+\.?\d*)\s*(?:ft|feet|foot)\b/gi,
   ];
 
   let bestThrow: number | null = null;
@@ -114,18 +114,24 @@ function extractThrow(text: string): number | null {
 // ===== LENGTH EXTRACTION =====
 function extractLength(text: string): number | null {
   const patterns = [
-    // "length: 132.5mm" / "overall length: 5.21 in"
-    /(?:overall\s+)?length\s*[:=]\s*(\d+\.?\d*)\s*mm/gi,
-    /(?:overall\s+)?length\s*[:=]\s*(\d+\.?\d*)\s*(?:in(?:ch(?:es)?)?|")\b/gi,
-    /(?:overall\s+)?length\s*[:=]\s*(\d+\.?\d*)\s*cm\b/gi,
+    // "length: 132.5mm" / "length - 120mm" / "overall length: 5.21 in"
+    /(?:overall\s+)?length\s*[-:=]\s*(\d+\.?\d*)\s*mm/gi,
+    /(?:overall\s+)?length\s*[-:=]\s*(\d+\.?\d*)\s*(?:in(?:ch(?:es)?)?|")\b/gi,
+    /(?:overall\s+)?length\s*[-:=]\s*(\d+\.?\d*)\s*cm\b/gi,
+    // "X.XX in (Ymm)" — "5.21 in (132mm)"
+    /(?:overall\s+)?length\s*[-:=]\s*(\d+\.?\d*)\s*(?:in(?:ch(?:es)?)?|")\s*\((\d+\.?\d*)\s*mm\)/gi,
     // "132.5mm (length)" / "132.5mm overall"
     /(\d+\.?\d*)\s*mm\s*(?:\(?\s*(?:overall\s+)?length)/gi,
     // "size: AxBxCmm" — take largest value as length
-    /(?:size|dimensions?)\s*[:=]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*mm/gi,
+    /(?:size|dimensions?)\s*[-:=]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*mm/gi,
     // "LxWxH mm" format
     /(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*[x×*]\s*(\d+\.?\d*)\s*mm/gi,
-    // "X.XX in" near "length"
+    // "X.XX in (Ymm)" standalone
     /(\d+\.?\d*)\s*(?:in(?:ch(?:es)?)?|")\s*\(?\s*(\d+\.?\d*)\s*mm\s*\)?/gi,
+    // "Length Xmm" / "Length X mm" (no separator)
+    /(?:overall\s+)?length\s+(\d+\.?\d*)\s*mm/gi,
+    // "X.XX in" or "X.XX inches" near length context
+    /(?:overall\s+)?length\s*[-:=]\s*(\d+\.?\d*)\s*["″]/gi,
   ];
 
   let bestLength: number | null = null;
@@ -170,10 +176,12 @@ function extractLength(text: string): number | null {
 // ===== WEIGHT EXTRACTION =====
 function extractWeight(text: string): number | null {
   const patterns = [
-    /(?:net\s+)?weight\s*[:=]\s*(?:approx\.?\s*)?(\d+\.?\d*)\s*g(?:rams?)?\b/gi,
-    /(?:net\s+)?weight\s*[:=]\s*(?:approx\.?\s*)?(\d+\.?\d*)\s*(?:oz|ounces?)\b/gi,
+    /(?:net\s+)?weight\s*[-:=]\s*(?:approx\.?\s*)?(\d+\.?\d*)\s*g(?:rams?)?\b/gi,
+    /(?:net\s+)?weight\s*[-:=]\s*(?:approx\.?\s*)?(\d+\.?\d*)\s*(?:oz|ounces?)\b/gi,
     /(\d+\.?\d*)\s*g\s*\(?(?:with(?:out)?|excl|incl|including|excluding)/gi,
     /(\d+\.?\d*)\s*(?:oz|ounces?)\s*\(?(?:with(?:out)?|excl|incl)/gi,
+    // "Weight Xg" / "Weight - Xg" (no separator or dash)
+    /(?:net\s+)?weight\s+(?:approx\.?\s*)?(\d+\.?\d*)\s*g(?:rams?)?\b/gi,
   ];
 
   let bestWeight: number | null = null;
