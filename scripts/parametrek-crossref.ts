@@ -24,12 +24,31 @@ console.log(`Loaded ${data.length} parametrek entries with ${head.length} column
 const col: Record<string, number> = {};
 head.forEach((h, i) => col[h] = i);
 
+// Brand alias mapping: parametrek name → list of our brand names (after normalize)
+// Allows one parametrek brand to map to multiple of our brands
+const brandAliasMap: Record<string, string[]> = {
+  'led lenser': ['ledlenser'],
+  'mag instrument': ['maglite'],
+  'intl outdoor': ['emisar', 'noctigon'],  // intl-outdoor.com sells both brands
+  'hds systems': ['hds'],
+  'l3 illumination': ['l3'],
+  'underwater kinetics': ['uk'],
+};
+
 // Build parametrek lookup by normalized "brand|model"
 function normalize(s: string): string {
   return s.toLowerCase()
     .replace(/[^a-z0-9]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// Get all brand keys for a parametrek brand (aliased + original)
+function getBrandKeys(s: string): string[] {
+  const n = normalize(s);
+  const aliases = brandAliasMap[n];
+  if (aliases) return aliases;
+  return [n];
 }
 
 // Extract core model identifier from a model string
@@ -48,17 +67,19 @@ const parametrekByBrandModel = new Map<string, any[]>();
 const parametrekByBrandCore = new Map<string, any[]>();
 
 for (const entry of data) {
-  const brand = normalize(entry[col.brand] || '');
+  const brands = getBrandKeys(entry[col.brand] || '');
   const model = normalize(entry[col.model] || '');
   const core = extractCoreModel(entry[col.model] || '');
 
-  const key = `${brand}|${model}`;
-  parametrekByBrandModel.set(key, entry);
+  // Index under all brand aliases
+  for (const brand of brands) {
+    const key = `${brand}|${model}`;
+    parametrekByBrandModel.set(key, entry);
 
-  // Also index by brand + core model
-  const coreKey = `${brand}|${core}`;
-  if (!parametrekByBrandCore.has(coreKey)) {
-    parametrekByBrandCore.set(coreKey, entry);
+    const coreKey = `${brand}|${core}`;
+    if (!parametrekByBrandCore.has(coreKey)) {
+      parametrekByBrandCore.set(coreKey, entry);
+    }
   }
 }
 
