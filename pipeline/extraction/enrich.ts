@@ -398,6 +398,18 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 				}
 			}
 		}
+		// Title throw from yards: "3171 Yards" or "NNN Yard Range"
+		if (!entry.performance?.claimed?.throw_m) {
+			const throwYd = title.match(/(\d{2,5})\s*(?:yards?|yd)\b/i);
+			if (throwYd) {
+				const meters = Math.round(parseInt(throwYd[1], 10) * 0.9144);
+				if (meters >= 10 && meters <= 5000) {
+					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
+					entry.performance.claimed.throw_m = meters;
+					changed = true;
+				}
+			}
+		}
 	}
 
 	// Material from title
