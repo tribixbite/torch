@@ -122,6 +122,8 @@ function applyResults(
 		if (!entry) continue;
 
 		if (result.type === 'not_flashlight') {
+			// Persist accessory classification to DB
+			db.prepare(`UPDATE flashlights SET type = '["accessory"]' WHERE id = ?`).run(entry.id);
 			notFlashlight++;
 			continue;
 		}
