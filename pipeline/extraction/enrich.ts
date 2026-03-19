@@ -733,12 +733,16 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			// "Length: 135mm" or "Length: 135 mm" or "Overall Length: 5.3 in"
 			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*mm\b/i,
 			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i,
+			// "L:104mm" or "L: 104mm" — abbreviation with colon
+			/\bL[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/,
 			// "135mm (length)" or "135mm long"
 			/(\d{2,4}(?:\.\d+)?)\s*mm\s*(?:\(?(?:overall|length|long|L)\)?)/i,
 			// Table cell: "135 mm" near "length" keyword (extended range for multiline)
 			/length[^.]{0,80}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
 			// "5.3 in" or "5.3 inches" near length (extended range)
 			/length[^.]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+			// "NNN inches long" or "NNN inches in length" — inches as length
+			/(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length)\b/i,
 			// Olight: "Length (mm / in) \n 63mm / 2.48in"
 			/length\s*\(mm\b[^)]*\)\s+(\d{2,4}(?:\.\d+)?)\s*mm/i,
 			// Battery Junction: "X in (Y mm)" near length — capture the mm value
@@ -747,6 +751,12 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/dimensions?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:mm)?\s*[x×]/i,
 			// "X mm x Y mm" dimensions without keyword (first = length if >50mm)
 			/(\d{2,4}(?:\.\d+)?)\s*mm\s*[x×]\s*\d{2,4}(?:\.\d+)?\s*mm/i,
+			// "Dimensions: 5.88 x 1.1 Inches" — inches dimensions (first = longest)
+			/dimensions?[:\s]+(\d+(?:\.\d+)?)\s*[x×]\s*\d+(?:\.\d+)?\s*(?:inches?|in\.?)\b/i,
+			// "Size: 110.2*37*25.4mm" — asterisk-delimited (Lumintop format)
+			/size[:\s]+(\d{2,4}(?:\.\d+)?)\s*[*×x]\s*\d+/i,
+			// "Size:117.7mm" — bare mm value after Size
+			/size[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/i,
 		];
 		for (const re of lengthPatterns) {
 			const m = combined.match(re);
