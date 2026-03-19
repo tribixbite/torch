@@ -1,33 +1,33 @@
 # Pipeline State — 2026-03-21
 
-## Current Status: Massive cross-retailer dedup + data quality — 71.4% valid
+## Current Status: Dedup + Fenix placeholder cleanup — 71.3% valid
 
-### Coverage (10,122 flashlights / 12,452 total)
+### Coverage (10,093 flashlights / 12,451 total)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | 100.0% | 1 |
-| price_usd | 98.4% | 157 |
-| color | 97.7% | 235 |
+| price_usd | 97.9% | 210 |
+| color | 97.8% | 220 |
 | battery | 97.6% | 243 |
 | features | 97.2% | 282 |
-| switch | 96.3% | 375 |
-| weight_g | 96.5% | 353 |
+| switch | 96.3% | 371 |
+| weight_g | 96.7% | 336 |
 | lumens | 96.3% | 376 |
-| led | 95.7% | 432 |
-| material | 95.4% | 465 |
-| throw_m | 89.6% | 1,052 |
-| length_mm | 87.8% | 1,239 |
-| runtime | 87.2% | 1,297 |
+| led | 95.8% | 427 |
+| material | 95.4% | 464 |
+| throw_m | 89.7% | 1,040 |
+| length_mm | 87.9% | 1,226 |
+| runtime | 87.2% | 1,291 |
 
-Fully valid: **7,231 entries (71.4%)**
+Fully valid: **7,195 entries (71.3%)**
 
 ### Near-Valid Distribution
 | Missing | Count | Cumulative |
 |---------|-------|------------|
-| 0 | 7,231 | 7,231 (71.4%) |
-| 1 | ~1,282 | ~8,513 (~84.1%) |
-| 2 | ~500 | ~9,013 (~89.0%) |
-| 3+ | ~1,109 | 10,122 (100%) |
+| 0 | 7,195 | 7,195 (71.3%) |
+| 1 | ~1,333 | ~8,528 (~84.5%) |
+| 2 | ~500 | ~9,028 (~89.5%) |
+| 3+ | ~1,065 | 10,093 (100%) |
 
 ### Session Gains (3/21)
 - **Cross-retailer smart dedup**: 601 entries merged across all brands — same model from different retailers (goinggear, batteryjunction, nealsgadgets, flashlightgo, torchdirect, flashlightworld) consolidated into single entries with best-quality data from each source. 822 fields recovered/upgraded during merge.
@@ -39,6 +39,7 @@ Fully valid: **7,231 entries (71.4%)**
 - **Modlite model cleanup**: Fixed 6 entries with `<br><br>` HTML artifacts in model names
 - **Diffuser filter fix**: 4 Olight Diffuser Filter accessories wrongly merged into Diffuse flashlight — restored as accessories
 - **Marauder Mini restoration**: Restored Marauder Mini (7000lm) as distinct from Marauder Mini 2 (10000lm)
+- **Fenix $79.95 placeholder cleanup**: 240 fenixlighting.com entries with systematic placeholder price. 28 category pages reclassified as blog (Camping Headlamps, Tactical Flashlights, etc.). 200 placeholder prices cleared. 17 real prices recovered via model cross-reference. 14 duplicate entries merged.
 
 ### Previous Session Gains (3/20 continued)
 - **Placeholder price cleanup**: 57 fake prices cleared (Armytek $1-$6, SureFire $1, Acebeam $2, Skylumen $9999, Armytek $6500)
@@ -82,16 +83,18 @@ Fully valid: **7,231 entries (71.4%)**
 ### Single-Field Blocker Analysis
 | Field | Count | Top brands |
 |-------|-------|------------|
-| length_mm | 442 | Princeton Tec(30), Skylumen(28), Olight(26), Maglite(25) |
-| throw_m | 338 | Zebralight(44), Nightstick(31), Convoy(20) |
-| led | 151 | Coast(29), Olight(23), Nextorch(20) |
-| price_usd | 99 | Nightstick(60), Lumintop(22), EagleTac(1) |
-| material | 80 | Wagan(12), Energizer(9), Titanium(9) |
-| color | 69 | Fenix(7), Striker(7), Coast(6) |
-| weight_g | 47 | Acebeam(16), Loop Gear(5) |
-| switch | 39 | Sunrei(7), Olight(5) |
-| battery | 31 | Imalent(8), Lumintop(8) |
-| features | 22 | Maxtoch(4), Skylumen(3) |
+| runtime_hours | 375 | Lumintop(53), Mateminco(26), Emisar(17), BLF(16), Amutorch(15) |
+| length_mm | 317 | Princeton Tec(30), Maglite(19), Armytek(19), Spotlight(19) |
+| throw_m | 243 | Zebralight(41), Nightstick(40), Convoy(19), Streamlight(17) |
+| led | 99 | Coast(21), Nextorch(15), Olight(10), Fenix(10) |
+| price_usd | 95 | Fenix(45), Nightstick(32), Lumintop(13), Armytek(2) |
+| color | 54 | Striker(7), UST(4), Fenix(4), Petzl(4) |
+| weight_g | 42 | Acebeam(16), Loop Gear(5), Streamlight(4) |
+| material | 35 | Wagan(7), Nite Ize(4), UST(3) |
+| switch | 30 | Sunrei(7), Olight(5), Knog(3) |
+| lumens | 20 | Tank007(8), ReyLight(3), FourSevens(3) |
+| battery | 12 | Nitecore(3), Coast(3), Imalent(2) |
+| features | 10 | Maxtoch(2), Acebeam(2) |
 
 ### Diminishing Returns
 The remaining gaps are genuinely missing data — product pages don't contain the information.
