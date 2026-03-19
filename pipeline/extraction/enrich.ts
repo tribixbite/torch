@@ -669,8 +669,10 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bTIR\s*(?:optic|lens)?\b/i, 'LED'],
 			// "Lamp Type: LED" or "Light Source: LED" or "Bulb: LED" — spec table format
 			[/(?:lamp|light\s*source|bulb|emitter)\s*(?:type)?[:\s]+LED\b/i, 'LED'],
-			// Generic "LED" only when in a structured spec context (not just product description)
-			[/\bLED\s*(?:flashlight|headlamp|light)\b/i, 'LED'],
+			// Generic "LED" in product context — flashlight/headlamp/spotlight/lantern/technology
+			[/\bLED\s*(?:flashlight|headlamp|headlight|spotlight|lantern|light|technology|work\s*light)\b/i, 'LED'],
+			// "LED" in title context (very generic but title already established as flashlight product)
+			[/\bLED\b/, 'LED'],
 		];
 		for (const [re, name] of ledRawPatterns) {
 			const m = combined.match(re);
