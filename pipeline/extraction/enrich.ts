@@ -814,6 +814,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Length extraction from raw text (only if missing)
 	if (!entry.length_mm) {
 		const lengthPatterns = [
+			// "Length: 148.2 ±0.5 mm" — tolerance notation (must be before general pattern)
+			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*±\s*\d+(?:\.\d+)?\s*mm\b/i,
 			// "Length: 135mm" or "Length: 135 mm" or "Overall Length: 5.3 in"
 			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*mm\b/i,
 			/(?:overall\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\b/i,
@@ -868,6 +870,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Weight extraction from raw text (only if missing)
 	if (!entry.weight_g) {
 		const weightPatterns = [
+			// "Weight: 121 ± 1 g" — tolerance notation (must be before general pattern)
+			/weight[\s\S]{0,30}?(\d+(?:\.\d+)?)\s*±\s*\d+(?:\.\d+)?\s*(?:grams?|g)\b/i,
 			// "Weight: 120g" or "Weight: 120 g" — cross newlines with [\s\S]
 			/weight[\s\S]{0,60}?(\d+(?:\.\d+)?)\s*(?:grams?|g)\b/i,
 			// "4.2 oz" or "4.2 ounces" near weight — cross newlines

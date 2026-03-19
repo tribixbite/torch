@@ -398,8 +398,16 @@ export async function buildTorchDb(): Promise<{
 		// Manufacturer marketing pages: /best-*, /compare*, /guide*, /award*
 		const isMarketingPage = /\/(?:best-|compare|guide|award|faq)/i.test(urls) &&
 			!/\/products?\//i.test(urls); // Don't exclude actual product pages
+		// Model name looks like an article title, not a product name
+		// Catches "Best EDC Flashlights This Year", "Guide Tactical Flashlights", etc.
+		// Guard: skip if model contains a product model number (e.g. "LD70", "TK30", "PD35")
+		const hasModelNumber = /\b[A-Z]{1,4}\d{1,4}[A-Z]?\b/i.test(entry.model ?? '');
+		const isArticleTitle = !hasModelNumber && (
+			/\b(?:guide|vs |comparison|ranked|reviewed|this year|you need|everything you need|how to |what is the best|pros and cons|holiday gift|top rated|gift guide)\b/i.test(model) ||
+			/^(?:best|choosing|the best|the \d+ best)\s/i.test(model)
+		);
 
-		if (isBlog || isCategoryPage || isMarketingPage) {
+		if (isBlog || isCategoryPage || isMarketingPage || isArticleTitle) {
 			entry.type = ['blog'];
 			updateEntryType(entry.id, ['blog']);
 			blogCount++;
