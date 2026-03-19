@@ -1,33 +1,29 @@
 # Pipeline State — 2026-03-21
 
-## Current Status: Dedup + Fenix placeholder cleanup — 71.3% valid
+## Current Status: Massive dedup + build fix — 71.0% valid (honest count)
 
-### Coverage (10,093 flashlights / 12,451 total)
+### Coverage (7,963 flashlights / 12,451 total DB)
 | Field | Coverage | Missing |
 |-------|----------|---------|
-| purchase_url | 100.0% | 1 |
-| price_usd | 97.9% | 210 |
-| color | 97.8% | 220 |
-| battery | 97.6% | 243 |
-| features | 97.2% | 282 |
-| switch | 96.3% | 371 |
-| weight_g | 96.7% | 336 |
-| lumens | 96.3% | 376 |
-| led | 95.8% | 427 |
-| material | 95.4% | 464 |
-| throw_m | 89.7% | 1,040 |
-| length_mm | 87.9% | 1,226 |
-| runtime | 87.2% | 1,291 |
+| purchase_url | ~100% | ~1 |
+| price_usd | 98.0% | 158 |
+| color | 98.0% | 163 |
+| features | 97.9% | 165 |
+| battery | 97.6% | 190 |
+| weight_g | 97.4% | 209 |
+| switch | 96.9% | 243 |
+| lumens | 96.7% | 265 |
+| material | 95.9% | 329 |
+| led | 95.8% | 331 |
+| throw_m | 89.8% | 816 |
+| length_mm | 88.8% | 893 |
+| runtime | 87.2% | 1,016 |
 
-Fully valid: **7,195 entries (71.3%)**
+Fully valid: **5,653 entries (71.0%)**
 
-### Near-Valid Distribution
-| Missing | Count | Cumulative |
-|---------|-------|------------|
-| 0 | 7,195 | 7,195 (71.3%) |
-| 1 | ~1,333 | ~8,528 (~84.5%) |
-| 2 | ~500 | ~9,028 (~89.5%) |
-| 3+ | ~1,065 | 10,093 (100%) |
+Note: Previous sessions inflated valid counts by including duplicate entries (same
+product listed by multiple retailers) in the flashlight total. Build script now
+properly filters `type='removed'` entries.
 
 ### Session Gains (3/21)
 - **Cross-retailer smart dedup**: 601 entries merged across all brands — same model from different retailers (goinggear, batteryjunction, nealsgadgets, flashlightgo, torchdirect, flashlightworld) consolidated into single entries with best-quality data from each source. 822 fields recovered/upgraded during merge.
@@ -40,6 +36,12 @@ Fully valid: **7,195 entries (71.3%)**
 - **Diffuser filter fix**: 4 Olight Diffuser Filter accessories wrongly merged into Diffuse flashlight — restored as accessories
 - **Marauder Mini restoration**: Restored Marauder Mini (7000lm) as distinct from Marauder Mini 2 (10000lm)
 - **Fenix $79.95 placeholder cleanup**: 240 fenixlighting.com entries with systematic placeholder price. 28 category pages reclassified as blog (Camping Headlamps, Tactical Flashlights, etc.). 200 placeholder prices cleared. 17 real prices recovered via model cross-reference. 14 duplicate entries merged.
+- **Fenix cross-retailer dedup**: 98 Fenix entries merged — same models from batteryjunction, fenixlighting, fenix-store, flashlightworld, torchdirect consolidated.
+- **BatteryJunction color variant dedup**: 117 entries merged across all brands — color variants (Black/Blue/Green/Purple/etc.) of identical products from batteryjunction.com.
+- **Acebeam blog/junk cleanup**: 42 acebeam.com entries reclassified as blog (category pages, blog posts with $49 placeholder price — "IP Rating", "Color Temperature", "Sitemap", testing campaigns, etc.). 16 Acebeam product duplicates merged.
+- **General cross-retailer dedup**: 773 entries merged across 57 brands — same products listed by multiple retailers with different model name formats.
+- **Build script fix**: Excluded `type='removed'` entries from JSON output. Stats now correctly count only active flashlights (7,963 vs previously inflated ~10,000).
+- **Stats fix**: `pipeline/cli.ts` stats now properly excludes removed/not_flashlight entries from valid count.
 
 ### Previous Session Gains (3/20 continued)
 - **Placeholder price cleanup**: 57 fake prices cleared (Armytek $1-$6, SureFire $1, Acebeam $2, Skylumen $9999, Armytek $6500)
@@ -83,18 +85,18 @@ Fully valid: **7,195 entries (71.3%)**
 ### Single-Field Blocker Analysis
 | Field | Count | Top brands |
 |-------|-------|------------|
-| runtime_hours | 375 | Lumintop(53), Mateminco(26), Emisar(17), BLF(16), Amutorch(15) |
-| length_mm | 317 | Princeton Tec(30), Maglite(19), Armytek(19), Spotlight(19) |
-| throw_m | 243 | Zebralight(41), Nightstick(40), Convoy(19), Streamlight(17) |
-| led | 99 | Coast(21), Nextorch(15), Olight(10), Fenix(10) |
-| price_usd | 95 | Fenix(45), Nightstick(32), Lumintop(13), Armytek(2) |
-| color | 54 | Striker(7), UST(4), Fenix(4), Petzl(4) |
-| weight_g | 42 | Acebeam(16), Loop Gear(5), Streamlight(4) |
-| material | 35 | Wagan(7), Nite Ize(4), UST(3) |
-| switch | 30 | Sunrei(7), Olight(5), Knog(3) |
-| lumens | 20 | Tank007(8), ReyLight(3), FourSevens(3) |
+| runtime_hours | 339 | Lumintop(51), Mateminco(26), Emisar(16), Amutorch(15), Olight(14) |
+| length_mm | 245 | Weltool(16), Rayovac(16), Acebeam(16), Armytek(15), Coast(15) |
+| throw_m | 232 | Zebralight(41), Nightstick(40), Convoy(19), ARCHON(13) |
+| led | 93 | Coast(20), Nextorch(15), Olight(10), Fenix(9), Modlite(8) |
+| price_usd | 78 | Nightstick(32), Fenix(24), Lumintop(13), Acebeam(4) |
+| color | 49 | Striker(7), Fenix(4), Petzl(4), UST(3) |
+| weight_g | 39 | Acebeam(13), Loop Gear(5), Streamlight(4) |
+| material | 32 | Wagan(7), Nite Ize(4), UST(3), Klarus(3) |
+| switch | 28 | Sunrei(7), Olight(4), Knog(3) |
+| lumens | 19 | Tank007(8), ReyLight(3), FourSevens(3) |
 | battery | 12 | Nitecore(3), Coast(3), Imalent(2) |
-| features | 10 | Maxtoch(2), Acebeam(2) |
+| features | 11 | Acebeam(3), Maxtoch(2) |
 
 ### Diminishing Returns
 The remaining gaps are genuinely missing data — product pages don't contain the information.

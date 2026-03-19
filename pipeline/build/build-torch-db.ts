@@ -417,8 +417,9 @@ export async function buildTorchDb(): Promise<{
 	}
 	if (blogCount > 0) console.log(`  Classified ${blogCount} non-product pages (excluded from main view)`);
 
-	// Keep all entries — accessories/blogs are filterable via type column
-	const entries = allEntries;
+	// Filter out removed entries — they're dedup artifacts that serve no purpose in the JSON
+	// Keep accessories/blogs — they're filterable via type column
+	const entries = allEntries.filter(e => !e.type.includes('removed'));
 
 	// Load sprite metadata if available (written by scrape-images.ts)
 	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');

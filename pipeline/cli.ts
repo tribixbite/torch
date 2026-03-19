@@ -194,8 +194,8 @@ function cmdStats(): void {
 		const missingCounts: Record<string, number> = {};
 
 		for (const entry of entries) {
-			// Exclude non-product entries (accessories, blog posts, etc.)
-			if (entry.type?.includes('accessory') || entry.type?.includes('blog')) {
+			// Exclude non-product entries (accessories, blog posts, removed dedup artifacts, etc.)
+			if (entry.type?.includes('accessory') || entry.type?.includes('blog') || entry.type?.includes('removed') || entry.type?.includes('not_flashlight')) {
 				excludedCount++;
 				continue;
 			}
@@ -206,7 +206,7 @@ function cmdStats(): void {
 			}
 		}
 
-		const flashlightCount = totalFlashlights - excludedCount;
+		const flashlightCount = entries.length - excludedCount;
 		console.log(`\nExcluded (accessories/blogs): ${excludedCount}`);
 		console.log(`Flashlights: ${flashlightCount}, fully valid: ${validCount} (${((validCount / flashlightCount) * 100).toFixed(1)}%)`);
 		if (Object.keys(missingCounts).length > 0) {
