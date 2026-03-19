@@ -521,31 +521,35 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:of\s+)?runtime/i,
 			// Nightstick spec table format: "High Runtime (h): 3.0"
 			/(?:high\s+)?runtime\s*\(h\)[:\s]*(\d+(?:\.\d+)?)/i,
-			// Battery Junction mode table: "Runtime ... 4hours ... 65hours" (no space)
-			/runtime[^.]{0,200}?(\d+(?:\.\d+)?)hours\b/i,
+			// Olight spec table: "Runtime (Hours) 85 5 1.5 3" — first value
+			/runtime\s*\(hours?\)\s*(\d+(?:\.\d+)?)\b/i,
+			// NitecoreStore/BJ table: "Runtime ... NNhours" — use [\s\S] not [^.] to cross decimals
+			/runtime[\s\S]{0,300}?(\d+(?:\.\d+)?)hours\b/i,
 			// "80-hour runtime" or "72 hours of runtime"
 			/(\d+(?:\.\d+)?)[\s-]*hours?\s+(?:of\s+)?runtime/i,
 			// "up to X hours" or "maximum X hours" (common description format)
 			/(?:up\s+to|maximum|max\.?)\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i,
 			// Pelican/PowerTac: "High: 960 lumens / 3h" or "High: 741 lumens/1h 45m"
 			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)\s*\/?\s*(\d+(?:\.\d+)?)\s*(?:h|hours?)\b/i,
-			// Nitecorestore table: "0.5*hour" or "2.5hours" — with possible * or + separator
-			/runtime[^.]{0,200}?(\d+(?:\.\d+)?)\s*[*+]?\s*hours?\b/i,
 			// "Max Runtime: 65 hours" or "Max Runtime: 102 hours"
 			/max\s*runtime[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
+			// "max runtime of 20 days" or "runtime: 55 days" — days→hours
+			/(?:max\s+)?runtime\s+(?:of\s+)?(\d+(?:\.\d+)?)\s*days?\b/i,
 		];
 		// Minute-based patterns (converted to hours)
 		const runtimeMinPatterns = [
 			/(?:runtime|run\s*time)[:\s：]*~?\s*(\d+)\s*(?:minutes?|mins?)\b/i,
 			/~?\s*(\d+)\s*(?:minutes?|mins?)\s*(?:of\s+)?runtime/i,
-			// BJ mode table: "Runtime ... 65minutes" (no space)
-			/runtime[^.]{0,200}?(\d+)minutes\b/i,
+			// BJ mode table: "Runtime ... 65minutes" — use [\s\S] not [^.] to cross decimals
+			/runtime[\s\S]{0,300}?(\d+)minutes\b/i,
 		];
 		let foundRuntime = false;
 		for (const re of runtimeHoursPatterns) {
 			const m = combined.match(re);
 			if (m) {
-				const hrs = parseFloat(m[1]);
+				let hrs = parseFloat(m[1]);
+				// Convert days to hours if the pattern matched "days"
+				if (/days?\b/i.test(m[0])) hrs *= 24;
 				if (hrs > 0 && hrs < 10000) {
 					if (!entry.performance) entry.performance = { claimed: {} } as FlashlightEntry['performance'];
 					entry.performance.claimed.runtime_hours = [hrs];
