@@ -63,13 +63,39 @@ function extractCoreModel(model: string): string {
   return normalize(cleaned);
 }
 
+// Strip spec suffixes from model names for fuzzy matching
+// "Warrior Ultra 2500lm Tactical Flashlight" → "warrior ultra"
+// "Baton 3 S2R 1200lm Rechargeable" → "baton 3 s2r"
+function stripSpecs(model: string): string {
+  return normalize(model)
+    // Remove lumen/distance/weight/runtime specs: "2500lm", "470m", "1800 lumens", "220m"
+    .replace(/\b\d+\s*(?:lm|lumen|lumens|mah|cd|candela)\b/gi, '')
+    .replace(/\b\d+\s*(?:mm|cm|inches?|in|"|ft|feet)\b/gi, '')
+    .replace(/\b\d+\s*(?:oz|grams?|g)\b/gi, '')
+    .replace(/\b\d+\s*(?:hours?|hrs?|h|minutes?|mins?)\b/gi, '')
+    .replace(/\b\d+m\b/g, '')  // "470m" throw distance
+    .replace(/\b\d+k\b/g, '')  // "6500k" CCT
+    // Remove generic descriptors (keep "mini", "pro", etc. that are part of model names)
+    .replace(/\b(?:led|flashlight|headlamp|torch|lights?|rechargeable|tactical|edc|keychain|lantern|work\s*light|camping|hunting|thrower|floody|flood|usb[- ]?c?|magnetic|clip|flat|slim|compact|portable|professional|long\s*range|high\s*power|ultra\s*bright|wireless|remote|with|and|for|the|of|in|on|from|by|to|a|an|muli\s*color|multi\s*color)\b/gi, '')
+    // Remove material/color suffixes
+    .replace(/\b(?:aluminum|titanium|copper|brass|stainless|polymer|oal|material|black|white|grey|gray|silver|gold|red|blue|green|orange|yellow|pink|purple)\b/gi, '')
+    // Remove wattage-like numbers without unit context ("1700" but keep "3" in "Baton 3")
+    .replace(/\b\d{4,}\b/g, '')
+    // Clean up multiple spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const parametrekByBrandModel = new Map<string, any[]>();
 const parametrekByBrandCore = new Map<string, any[]>();
+const parametrekByBrandStripped = new Map<string, any[]>();
 
 for (const entry of data) {
   const brands = getBrandKeys(entry[col.brand] || '');
   const model = normalize(entry[col.model] || '');
   const core = extractCoreModel(entry[col.model] || '');
+
+  const stripped = stripSpecs(entry[col.model] || '');
 
   // Index under all brand aliases
   for (const brand of brands) {
@@ -80,10 +106,18 @@ for (const entry of data) {
     if (!parametrekByBrandCore.has(coreKey)) {
       parametrekByBrandCore.set(coreKey, entry);
     }
+
+    // Index by stripped (spec-free) model name
+    if (stripped.length >= 2) {
+      const strippedKey = `${brand}|${stripped}`;
+      if (!parametrekByBrandStripped.has(strippedKey)) {
+        parametrekByBrandStripped.set(strippedKey, entry);
+      }
+    }
   }
 }
 
-console.log(`Indexed ${parametrekByBrandModel.size} by brand+model, ${parametrekByBrandCore.size} by brand+core`);
+console.log(`Indexed ${parametrekByBrandModel.size} by brand+model, ${parametrekByBrandCore.size} by brand+core, ${parametrekByBrandStripped.size} by brand+stripped`);
 
 // Get our entries missing at least one key field
 const entries = db.prepare(`
@@ -125,10 +159,12 @@ const tx = db.transaction(() => {
     const brand = normalize(entry.brand);
     const model = normalize(entry.model);
     const core = extractCoreModel(entry.model);
+    const stripped = stripSpecs(entry.model);
 
-    // Try exact match first, then core model match
+    // Try exact match first, then core model, then stripped model
     let pk = parametrekByBrandModel.get(`${brand}|${model}`);
     if (!pk) pk = parametrekByBrandCore.get(`${brand}|${core}`);
+    if (!pk && stripped.length >= 2) pk = parametrekByBrandStripped.get(`${brand}|${stripped}`);
     if (!pk) continue;
 
     matched++;
