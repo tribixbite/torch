@@ -1,74 +1,59 @@
-# Pipeline State — 2026-03-19
+# Pipeline State — 2026-03-20
 
-## Current Status: Parametrek enrichment + Amazon prices — 71.0% valid
+## Current Status: OpticsPlanet prices + data cleanup — 71.7% valid
 
-### Coverage (9,416 flashlights / 12,233 total)
+### Coverage (9,546 flashlights / 12,454 total)
 | Field | Coverage | Missing |
 |-------|----------|---------|
-| purchase_url | 99.0% | ~94 |
-| color | 99.1% | 85 |
-| battery | 97.8% | 204 |
-| switch | 97.6% | 228 |
-| features | 97.2% | 263 |
-| material | 96.8% | 306 |
-| led | 96.6% | 317 |
-| lumens | 95.9% | 384 |
-| price_usd | 96.0% | 377 |
-| weight_g | 95.6% | 413 |
-| throw_m | 90.1% | 932 |
-| length_mm | 87.2% | 1,209 |
-| runtime | 86.9% | 1,236 |
+| purchase_url | 100.0% | 4 |
+| color | 98.2% | 172 |
+| battery | 97.1% | 273 |
+| switch | 96.1% | 371 |
+| features | 96.1% | 370 |
+| material | 96.0% | 380 |
+| lumens | 94.7% | 514 |
+| led | 95.7% | 411 |
+| weight_g | 95.7% | 409 |
+| price_usd | 97.9% | 197 |
+| throw_m | 88.7% | 1,078 |
+| length_mm | 86.5% | 1,286 |
+| runtime | 85.6% | 1,380 |
 
-Fully valid: **6,683 entries (71.0%)**
+Fully valid: **6,848 entries (71.7%)**
 
 ### Near-Valid Distribution
 | Missing | Count | Cumulative |
 |---------|-------|------------|
-| 0 | 6,683 | 6,683 (71.0%) |
-| 1 | ~1,170 | ~7,853 (~83%) |
-| 2 | ~560 | ~8,413 (~89%) |
-| 3 | ~380 | ~8,793 (~93%) |
+| 0 | 6,848 | 6,848 (71.7%) |
+| 1 | ~1,340 | ~8,188 (~85.8%) |
+| 2 | ~530 | ~8,718 (~91.3%) |
+| 3 | ~290 | ~9,008 (~94.3%) |
 
-### Single-Field Blockers (~1,170 entries missing exactly 1 field)
+### Single-Field Blockers (~1,340 entries missing exactly 1 field)
 | Blocker | Count | Fillable? |
 |---------|-------|-----------|
-| runtime | ~392 | Hard — custom/budget lights without ANSI runtime |
-| length | ~330 | Hard — mostly headlamps without length specs |
-| price | ~210 | Hard — Nightstick B2B ($0), Amazon has 30 ASINs |
-| throw | ~209 | Hard — floody/headlamp lights without throw data |
+| runtime | ~390 | Hard — custom/budget lights without ANSI runtime |
+| length | ~320 | Hard — mostly headlamps without length specs |
+| throw | ~220 | Hard — floody/headlamp lights without throw data |
+| price | ~120 | Partially — 80+ Nightstick still B2B, Lumintop manufacturer-only |
 | led | ~110 | Hard — generic "LED" entries |
-| weight | ~45 | Hard — not in source text |
-| material | ~33 | Hard — not in source text |
+| weight | ~40 | Hard — not in source text |
+| material | ~30 | Hard — not in source text |
 
-### Biggest Brand Gaps (near-valid, missing 1 field)
-| Brand | Count | Missing | Fixable? |
-|-------|-------|---------|----------|
-| Nightstick | 205 | price | B2B site $0; only 30 ASINs available |
-| Lumintop | 51 | runtime | No runtime on lumintop.com |
-| Olight | 68 | runtime/length | Manufacturer site incomplete |
-| Acebeam | 56 | length/runtime | Manufacturer site incomplete |
-| Zebralight | 41 | throw | Floody lights, no throw spec (parametrek also empty) |
-| Coast | 40 | length | Limited specs on coast.com |
-| Princeton Tec | 36 | length | Headlamps without length specs |
-| Mateminco | 26 | runtime | Chinese brand, no ANSI data |
+### Session Gains (3/20)
+- **OpticsPlanet Nightstick prices**: 180 model+price pairs, 156 prices updated (2 scraper runs)
+- **Data quality cleanup**: 225+ junk entries reclassified (chargers, adapters, mounts, batteries, multi-packs, category pages)
+- **Malformed type JSON fix**: 187 entries had bare string types instead of JSON arrays
+- **Dedup**: 60 duplicate groups merged (61 entries removed)
+- **Model cross-ref cascade**: +20 fixes from post-cleanup cross-referencing
 
-### Session Gains (3/19)
+### Previous Session Gains (3/19)
 - **Parametrek cross-reference**: +8,291 fixes across 3,583 matched entries
-  - beam_angle +3,388, year +3,335, length +336, runtime +254
-  - intensity +186, throw +185, weight +140, price +111
-  - lumens +96, battery +78, features +52, led +40, material +36, switch +43, color +12
 - Brand aliases (Led Lenser→Ledlenser, Mag Instrument→Maglite, Intl Outdoor→Emisar/Noctigon)
 - Spec-stripped fuzzy matching for model names with embedded specs
 - Amazon ASIN price lookup: ~50 prices filled from Amazon product pages
-- Dedup cleanup + bad ASIN reversal
-
-### Previous Session Gains (3/18-3/19)
-- Core model cross-ref: +891 fixes (initial run)
-- Data quality cleanup: ~800 bad values cleared
-- Pattern extraction: +60 length, +7 runtime, +27 material, +14 LED
-- Dedup: 117 entries merged (103 groups)
-- Emisar/Noctigon re-crawl: +40 entries with LED options
-- Raw text: 328 new entries fetched (keepa, intl-outdoor)
+- Model-crossref UNIQUE constraint fix: unlocked LED/switch/material/color cross-references
+- OpticsPlanet initial run: 92 Nightstick prices
 
 ### Enrichment Tools Available
 | Script | Purpose |
@@ -78,13 +63,15 @@ Fully valid: **6,683 entries (71.0%)**
 | `scripts/dedup-models.ts` | Merge duplicate brand+model entries |
 | `scripts/parametrek-crossref.ts` | Cross-reference with parametrek.com data |
 | `scripts/amazon-price-lookup.ts` | Get prices from Amazon by ASIN |
+| `scripts/opticsplanet-nightstick-prices.ts` | Nightstick prices from OpticsPlanet |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
 
 ### Diminishing Returns
 The remaining gaps are genuinely missing data — product pages don't contain the information.
 Major remaining strategies:
-1. **Keepa price scraping** — 377 entries need price, Keepa at -1 tokens (1/min refill)
+1. **Keepa price scraping** — 197 entries need price, Keepa token refill rate 1/min
 2. **Cloudflare-blocked sites** — Pelican (72), Convoy, Sofirn, Wurkkos need headless browser
 3. **BLF review posts** — community-measured data, rate-limited
-4. **Additional parametrek matching** — ~5,800 of our entries have no parametrek equivalent
+4. **Runtime gap**: 1,380 entries — mostly Chinese brands without ANSI runtime
+5. **Length/throw gaps**: headlamps, floody lights without these specs
