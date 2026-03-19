@@ -3,7 +3,7 @@
 > Auto-generated 2026-03-19. Values are % of entries that have the attribute.
 
 ## Legend
-- **Tot**: Total entries | **Val**: Fully valid count (%) — all 14 required attrs present
+- **Tot**: Total entries | **Val**: Fully valid count (%) — all 12 required attrs present
 - **lm**: lumens | **thr**: throw_m | **led**: LED | **bat**: battery
 - **sw**: switch | **len**: length_mm | **rt**: runtime_hours | **mat**: material
 - **col**: color | **feat**: features | **pri**: price_usd | **wt**: weight_g
@@ -12,123 +12,122 @@
 
 | Brand | Tot | Val | lm | thr | led | bat | sw | len | rt | mat | col | feat | pri | wt | Next Action |
 |-------|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|------|-----|-----|-------------|
-| Fenix | 1206 | 765 (63%) | 96 | 86 | 85 | 90 | 90 | 79 | 88 | 88 | 77 | 99 | 100 | 83 | Fill length (79%) and color (77%) |
-| Nitecore | 906 | 681 (75%) | 92 | 90 | 89 | 93 | 89 | 91 | 96 | 90 | 89 | 97 | 100 | 99 | Strong — fill led/sw/color gaps |
-| Olight | 866 | 633 (73%) | 99 | 93 | 89 | 91 | 97 | 83 | 88 | 94 | 97 | 100 | 100 | 98 | Fill length (83%) and led (89%) |
-| Acebeam | 709 | 460 (65%) | 90 | 83 | 98 | 96 | 95 | 76 | 80 | 96 | 95 | 90 | 99 | 79 | Fill length (76%) and weight (79%) |
-| Nightstick | 575 | 119 (21%) | 88 | 64 | 90 | 93 | 76 | 71 | 70 | 90 | 94 | 88 | 47 | 82 | Keepa for price (47%), fill throw/len |
-| Lumintop | 479 | 225 (47%) | 87 | 81 | 90 | 88 | 88 | 77 | 58 | 94 | 94 | 85 | 92 | 95 | Fill runtime (58%) and length (77%) |
-| Streamlight | 414 | 280 (68%) | 94 | 90 | 93 | 88 | 95 | 91 | 88 | 81 | 92 | 97 | 100 | 98 | Fill material (81%) and battery (88%) |
-| Ledlenser | 402 | 217 (54%) | 79 | 77 | 89 | 79 | 75 | 63 | 73 | 69 | 79 | 98 | 100 | 90 | Fill length (63%), material (69%) |
-| Klarus | 296 | 197 (67%) | 94 | 82 | 85 | 91 | 92 | 87 | 84 | 81 | 86 | 95 | 100 | 99 | Fill material (81%) and throw (82%) |
-| Coast | 277 | 90 (32%) | 91 | 63 | 62 | 85 | 88 | 76 | 68 | 79 | 78 | 97 | 100 | 100 | Fill led (62%), throw (63%), rt (68%) |
-| Nextorch | 273 | 145 (53%) | 84 | 71 | 61 | 76 | 75 | 85 | 82 | 85 | 83 | 95 | 100 | 96 | Fill led (61%), throw (71%), sw (75%) |
-| JETBeam | 272 | 215 (79%) | 95 | 91 | 93 | 91 | 95 | 87 | 90 | 93 | 94 | 96 | 98 | 100 | Good — fill length (87%), rt (90%) |
-| Maglite | 261 | 77 (30%) | 49 | 54 | 77 | 79 | 68 | 37 | 51 | 62 | 76 | 99 | 100 | 96 | Re-scrape for lumens (49%), length (37%) |
-| Rovyvon | 259 | 173 (67%) | 80 | 76 | 79 | 82 | 85 | 83 | 74 | 90 | 92 | 90 | 100 | 99 | Fill runtime (74%), throw (76%) |
-| PowerTac | 224 | 97 (43%) | 53 | 50 | 57 | 71 | 69 | 54 | 47 | 59 | 75 | 77 | 100 | 97 | Re-scrape all — low across board |
-| SureFire | 195 | 139 (71%) | 88 | 82 | 89 | 87 | 92 | 78 | 83 | 91 | 95 | 91 | 93 | 84 | Fill length (78%), weight (84%) |
-| Weltool | 185 | 68 (37%) | 69 | 69 | 81 | 86 | 87 | 57 | 64 | 91 | 91 | 81 | 100 | 97 | Fill length (57%), runtime (64%) |
-| FourSevens | 183 | 17 (9%) | 23 | 25 | 28 | 34 | 43 | 41 | 24 | 96 | 72 | 56 | 98 | 93 | Re-scrape — sparse specs across all |
-| Princeton Tec | 177 | 131 (74%) | 97 | 97 | 99 | 99 | 96 | 81 | 94 | 91 | 94 | 97 | 100 | 99 | Fill length (81%), material (91%) |
-| Pelican | 175 | 154 (88%) | 93 | 91 | 99 | 93 | 98 | 92 | 93 | 97 | 99 | 100 | 100 | 94 | Excellent — fill weight (94%), len (92%) |
-| Skylumen | 169 | 0 (0%) | 41 | 53 | 79 | 72 | 76 | 7 | 1 | 49 | 92 | 59 | 99 | 92 | Custom/modded — no runtime/length avail |
-| Armytek | 165 | 111 (67%) | 98 | 95 | 98 | 98 | 96 | 75 | 95 | 99 | 95 | 98 | 100 | 92 | Fill length (75%), weight (92%) |
-| Petzl | 163 | 82 (50%) | 85 | 85 | 87 | 87 | 84 | 71 | 81 | 82 | 76 | 90 | 100 | 98 | Fill length (71%), color (76%) |
-| EagleTac | 147 | 122 (83%) | 97 | 97 | 98 | 99 | 98 | 96 | 94 | 99 | 93 | 99 | 96 | 97 | Strong — fill color (93%), rt (94%) |
-| Convoy | 137 | 109 (80%) | 96 | 83 | 99 | 99 | 98 | 99 | 94 | 99 | 99 | 99 | 100 | 100 | Fill throw (83%), runtime (94%) |
-| Imalent | 137 | 77 (56%) | 83 | 80 | 83 | 80 | 83 | 80 | 69 | 85 | 94 | 85 | 99 | 88 | Fill runtime (69%), length (80%) |
-| Malkoff | 120 | 10 (8%) | 48 | 36 | 47 | 67 | 58 | 35 | 44 | 72 | 82 | 71 | 100 | 98 | Re-scrape — sparse specs, need all |
-| Wuben | 115 | 69 (60%) | 79 | 77 | 78 | 98 | 81 | 70 | 70 | 84 | 86 | 97 | 98 | 89 | Fill length (70%), runtime (70%) |
-| ReyLight | 110 | 4 (4%) | 20 | 24 | 69 | 73 | 68 | 35 | 26 | 93 | 86 | 84 | 100 | 68 | Re-scrape — need lm/throw/rt/len/wt |
-| Sunwayman | 108 | 93 (86%) | 96 | 95 | 97 | 97 | 98 | 96 | 88 | 99 | 99 | 99 | 100 | 100 | Strong — fill runtime (88%) |
-| Rayovac | 107 | 50 (47%) | 91 | 91 | 99 | 99 | 91 | 67 | 76 | 83 | 73 | 93 | 100 | 97 | Fill length (67%), color (73%) |
-| Emisar | 105 | 47 (45%) | 89 | 79 | 94 | 97 | 84 | 90 | 60 | 93 | 93 | 93 | 98 | 95 | Fill runtime (60%), throw (79%) |
-| Fitorch | 102 | 55 (54%) | 84 | 78 | 86 | 90 | 83 | 75 | 81 | 83 | 83 | 94 | 100 | 96 | Fill length (75%), throw (78%) |
-| UST | 101 | 62 (61%) | 100 | 88 | 98 | 95 | 89 | 89 | 82 | 87 | 91 | 95 | 100 | 100 | Fill runtime (82%), material (87%) |
-| Nealsgadgets | 95 | 25 (26%) | 82 | 73 | 85 | 84 | 90 | 68 | 45 | 81 | 98 | 82 | 100 | 95 | Fill runtime (45%), length (68%) |
-| Nite Ize | 95 | 72 (76%) | 97 | 95 | 99 | 98 | 98 | 94 | 93 | 92 | 92 | 100 | 100 | 98 | Good — fill material (92%), color (92%) |
-| Energizer | 87 | 39 (45%) | 100 | 98 | 100 | 99 | 99 | 85 | 77 | 79 | 81 | 99 | 100 | 100 | Fill runtime (77%), material (79%) |
-| Skilhunt | 79 | 60 (76%) | 89 | 86 | 98 | 99 | 86 | 86 | 79 | 85 | 90 | 99 | 100 | 96 | Fill runtime (79%), material (85%) |
-| Mateminco | 77 | 37 (48%) | 94 | 94 | 94 | 92 | 88 | 90 | 56 | 95 | 96 | 90 | 100 | 99 | Fill runtime (56%), switch (88%) |
-| ThruNite | 75 | 61 (81%) | 100 | 100 | 100 | 99 | 100 | 93 | 91 | 100 | 96 | 99 | 100 | 95 | Strong — fill length (93%), wt (95%) |
-| Inova | 73 | 64 (88%) | 99 | 100 | 100 | 100 | 99 | 99 | 89 | 100 | 100 | 100 | 100 | 99 | Excellent — fill runtime (89%) |
-| Spotlight | 72 | 17 (24%) | 100 | 100 | 100 | 100 | 100 | 24 | 88 | 78 | 99 | 100 | 100 | 63 | Fill length (24%), weight (63%) |
-| Manker | 70 | 66 (94%) | 100 | 97 | 100 | 100 | 97 | 97 | 99 | 100 | 99 | 100 | 100 | 99 | Near-complete — best brand |
-| Smith And Wesson | 66 | 45 (68%) | 86 | 85 | 99 | 99 | 86 | 80 | 80 | 86 | 77 | 86 | 100 | 100 | Fill color (77%), length (80%) |
-| MecArmy | 65 | 57 (88%) | 99 | 97 | 99 | 99 | 97 | 94 | 95 | 99 | 100 | 100 | 100 | 100 | Excellent — fill length (94%) |
-| Nebo | 60 | 58 (97%) | 98 | 98 | 98 | 100 | 100 | 100 | 100 | 98 | 98 | 100 | 100 | 100 | Near-complete — best small brand |
-| Zebralight | 53 | 5 (9%) | 94 | 9 | 94 | 100 | 94 | 100 | 89 | 94 | 94 | 94 | 100 | 98 | **CRITICAL**: throw_m at 9% — FL1 derive |
-| Lightstar | 51 | 38 (75%) | 96 | 94 | 98 | 96 | 98 | 78 | 96 | 96 | 98 | 100 | 100 | 98 | Fill length (78%) |
+| Fenix | 820 | 749 (91%) | 100 | 96 | 97 | 99 | 98 | 95 | 96 | 100 | 96 | 100 | 100 | 96 | Strong — fill length (95%), throw (96%) |
+| Olight | 758 | 618 (82%) | 100 | 94 | 93 | 96 | 99 | 90 | 93 | 99 | 100 | 100 | 100 | 98 | Fill length (90%), led (93%) |
+| Nitecore | 719 | 668 (93%) | 99 | 98 | 97 | 98 | 100 | 98 | 99 | 98 | 100 | 100 | 100 | 99 | Excellent — fill led (97%), bat (98%) |
+| Acebeam | 623 | 450 (72%) | 94 | 88 | 99 | 97 | 97 | 81 | 85 | 100 | 97 | 93 | 100 | 83 | Fill length (81%), weight (83%) |
+| Lumintop | 417 | 229 (55%) | 96 | 90 | 97 | 93 | 96 | 84 | 66 | 99 | 98 | 94 | 91 | 95 | Fill runtime (66%), length (84%), price (91%) |
+| Nightstick | 403 | 153 (38%) | 98 | 71 | 100 | 100 | 86 | 78 | 83 | 99 | 99 | 94 | 67 | 93 | Keepa for price (67%), fill throw (71%) |
+| Streamlight | 297 | 262 (88%) | 100 | 94 | 99 | 100 | 100 | 98 | 97 | 98 | 99 | 100 | 100 | 98 | Strong — fill throw (94%), rt (97%) |
+| Ledlenser | 254 | 216 (85%) | 100 | 97 | 100 | 99 | 100 | 88 | 97 | 96 | 100 | 100 | 100 | 100 | Fill length (88%), material (96%) |
+| JETBeam | 236 | 213 (90%) | 100 | 96 | 100 | 100 | 100 | 97 | 95 | 100 | 100 | 100 | 98 | 100 | Strong — fill rt (95%), throw (96%) |
+| Klarus | 209 | 191 (91%) | 100 | 96 | 97 | 97 | 99 | 95 | 97 | 100 | 100 | 100 | 100 | 100 | Strong — fill length (95%), throw (96%) |
+| Rovyvon | 201 | 169 (84%) | 97 | 93 | 96 | 99 | 100 | 96 | 90 | 98 | 100 | 100 | 100 | 100 | Fill runtime (90%), throw (93%) |
+| Coast | 186 | 89 (48%) | 97 | 77 | 65 | 94 | 100 | 85 | 75 | 99 | 100 | 99 | 100 | 99 | Fill led (65%), rt (75%), throw (77%) |
+| Nextorch | 183 | 140 (77%) | 99 | 94 | 84 | 97 | 96 | 97 | 97 | 95 | 98 | 99 | 100 | 99 | Fill led (84%), throw (94%) |
+| Pelican | 169 | 153 (91%) | 94 | 93 | 99 | 94 | 100 | 93 | 93 | 99 | 100 | 100 | 100 | 94 | Strong — fill throw (93%), wt (94%) |
+| SureFire | 156 | 134 (86%) | 100 | 96 | 100 | 98 | 99 | 92 | 96 | 100 | 96 | 100 | 100 | 97 | Fill length (92%), color (96%) |
+| Princeton Tec | 154 | 120 (78%) | 100 | 100 | 99 | 100 | 100 | 83 | 96 | 95 | 99 | 100 | 100 | 99 | Fill length (83%), material (95%) |
+| Armytek | 143 | 108 (76%) | 100 | 97 | 100 | 100 | 100 | 78 | 97 | 100 | 100 | 100 | 100 | 92 | Fill length (78%), weight (92%) |
+| Convoy | 134 | 110 (82%) | 97 | 86 | 100 | 99 | 99 | 99 | 96 | 100 | 99 | 99 | 100 | 100 | Fill throw (86%), runtime (96%) |
+| EagleTac | 129 | 117 (91%) | 98 | 99 | 100 | 100 | 100 | 97 | 96 | 100 | 99 | 100 | 97 | 98 | Strong — fill rt (96%), pri (97%) |
+| Weltool | 129 | 63 (49%) | 81 | 82 | 89 | 97 | 97 | 71 | 80 | 98 | 97 | 94 | 100 | 98 | Fill length (71%), runtime (80%) |
+| Skylumen | 127 | 0 (0%) | 50 | 64 | 94 | 82 | 93 | 9 | 0 | 57 | 100 | 67 | 98 | 96 | Custom/modded — no runtime/length avail |
+| Maglite | 115 | 77 (67%) | 82 | 83 | 97 | 100 | 97 | 77 | 81 | 90 | 100 | 99 | 100 | 98 | Fill length (77%), runtime (81%) |
+| PowerTac | 112 | 94 (84%) | 100 | 96 | 97 | 100 | 100 | 97 | 88 | 99 | 100 | 100 | 100 | 98 | Fill runtime (88%), throw (96%) |
+| Imalent | 111 | 77 (69%) | 99 | 95 | 99 | 91 | 97 | 95 | 80 | 100 | 100 | 96 | 100 | 97 | Fill runtime (80%), battery (91%) |
+| Sunwayman | 101 | 91 (90%) | 100 | 99 | 100 | 100 | 100 | 98 | 91 | 100 | 100 | 100 | 100 | 100 | Strong — fill runtime (91%), length (98%) |
+| Emisar | 94 | 45 (48%) | 90 | 80 | 96 | 98 | 88 | 91 | 61 | 96 | 94 | 95 | 98 | 95 | Fill runtime (61%), throw (80%) |
+| Wuben | 88 | 67 (76%) | 95 | 93 | 90 | 98 | 97 | 88 | 86 | 99 | 98 | 97 | 99 | 94 | Fill runtime (86%), length (88%) |
+| Nealsgadgets | 82 | 24 (29%) | 93 | 78 | 94 | 91 | 96 | 74 | 51 | 84 | 100 | 89 | 100 | 94 | Fill runtime (51%), length (74%) |
+| Petzl | 80 | 67 (84%) | 100 | 100 | 100 | 100 | 100 | 86 | 99 | 100 | 100 | 100 | 100 | 99 | Fill length (86%), weight (99%) |
+| Nite Ize | 78 | 66 (85%) | 96 | 95 | 100 | 97 | 99 | 96 | 95 | 95 | 100 | 100 | 100 | 99 | Fill material (95%), throw (95%) |
+| Rayovac | 75 | 47 (63%) | 100 | 100 | 100 | 100 | 100 | 68 | 89 | 97 | 97 | 100 | 100 | 97 | Fill length (68%), runtime (89%) |
+| Fitorch | 74 | 55 (74%) | 99 | 92 | 96 | 100 | 99 | 82 | 96 | 100 | 100 | 100 | 100 | 95 | Fill length (82%), throw (92%) |
+| Inova | 71 | 63 (89%) | 100 | 100 | 100 | 100 | 100 | 100 | 90 | 100 | 100 | 100 | 100 | 99 | Excellent — fill runtime (90%) |
+| Mateminco | 70 | 37 (53%) | 99 | 99 | 99 | 99 | 97 | 96 | 59 | 100 | 99 | 96 | 100 | 99 | Fill runtime (59%), switch (97%) |
+| UST | 70 | 54 (77%) | 100 | 100 | 100 | 100 | 100 | 96 | 86 | 93 | 99 | 100 | 100 | 100 | Fill runtime (86%), material (93%) |
+| Energizer | 69 | 39 (57%) | 100 | 99 | 100 | 99 | 100 | 83 | 78 | 83 | 100 | 100 | 100 | 100 | Fill runtime (78%), length (83%) |
+| ThruNite | 69 | 58 (84%) | 100 | 100 | 100 | 99 | 100 | 93 | 90 | 100 | 100 | 99 | 100 | 94 | Fill runtime (90%), length (93%) |
+| Skilhunt | 68 | 60 (88%) | 100 | 100 | 100 | 100 | 100 | 91 | 91 | 99 | 100 | 100 | 100 | 100 | Fill length (91%), runtime (91%) |
+| Manker | 67 | 64 (96%) | 100 | 97 | 100 | 100 | 99 | 97 | 99 | 100 | 100 | 100 | 100 | 99 | Near-complete — best brand |
+| Spotlight | 67 | 17 (25%) | 100 | 100 | 100 | 100 | 100 | 25 | 88 | 78 | 100 | 100 | 100 | 66 | Fill length (25%), weight (66%) |
+| ReyLight | 64 | 4 (6%) | 31 | 38 | 91 | 94 | 84 | 52 | 44 | 94 | 95 | 91 | 100 | 83 | Re-scrape — need lm/throw/rt/len/wt |
+| MecArmy | 63 | 56 (89%) | 100 | 98 | 100 | 100 | 97 | 95 | 97 | 100 | 100 | 100 | 100 | 100 | Excellent — fill length (95%), sw (97%) |
+| Nebo | 56 | 56 (100%) | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | Complete — perfect coverage |
+| Smith And Wesson | 51 | 45 (88%) | 100 | 100 | 100 | 100 | 100 | 96 | 92 | 100 | 100 | 100 | 100 | 100 | Fill runtime (92%), length (96%) |
 | Tank007 | 51 | 15 (29%) | 49 | 59 | 94 | 98 | 100 | 78 | 100 | 94 | 100 | 100 | 100 | 98 | Fill lumens (49%), throw (59%) |
-| Fireflies | 46 | 24 (52%) | 80 | 74 | 83 | 89 | 83 | 85 | 72 | 91 | 98 | 89 | 100 | 94 | Fill runtime (72%), throw (74%) |
+| Zebralight | 50 | 5 (10%) | 100 | 10 | 100 | 100 | 100 | 100 | 94 | 100 | 100 | 100 | 100 | 98 | **CRITICAL**: throw_m at 10% — FL1 derive |
+| Malkoff | 49 | 6 (12%) | 94 | 55 | 86 | 98 | 90 | 49 | 88 | 86 | 100 | 96 | 100 | 96 | Fill length (49%), throw (55%) |
+| Lightstar | 44 | 38 (86%) | 100 | 98 | 100 | 100 | 100 | 91 | 100 | 100 | 100 | 100 | 100 | 98 | Fill length (91%), weight (98%) |
+| Lumapower | 39 | 31 (79%) | 100 | 100 | 100 | 100 | 100 | 100 | 79 | 100 | 100 | 100 | 100 | 100 | Fill runtime (79%) — sole bottleneck |
+| FourSevens | 38 | 17 (45%) | 84 | 63 | 92 | 97 | 100 | 89 | 82 | 100 | 100 | 100 | 100 | 100 | Fill throw (63%), runtime (82%) |
 
 ## Summary Stats
 
-- **Total entries**: 12,528 across 217 brands
-- **Top 50 brands**: 11,235 entries (89.7% of total)
-- **Fully valid**: 7,009 (55.9% overall)
-- **Near-valid (missing 1)**: 1,853 entries
-- **Near-valid (missing 2)**: 833 entries
+- **Total DB entries**: 12,437 across 143 brands
+- **Total flashlights**: 9,416 (excludes accessories/batteries/chargers/blog/not_flashlight)
+- **Top 50 brands**: 9,281 entries (98.6% of flashlights)
+- **Fully valid**: 6,848 (72.7% of flashlights)
+- **Near-valid (missing 1)**: 1,278 entries
+- **Near-valid (missing 2)**: 540 entries
 
-### Attribute Coverage (overall)
+### Attribute Coverage (overall, flashlights only)
 
 | Attribute | Coverage |
 |-----------|----------|
-| type | 100.0% |
 | purchase_urls | 100.0% |
-| features | 96.8% |
-| weight_g | 93.0% |
-| color | 92.1% |
-| battery | 89.0% |
-| material | 89.0% |
-| switch | 86.8% |
-| led | 86.4% |
-| lumens | 85.8% |
-| throw_m | 79.1% |
-| runtime_hours | 76.8% |
-| length_mm | 76.5% |
-| price_usd | 96.8% |
+| price_usd | 98.0% |
+| features | 97.5% |
+| lumens | 96.4% |
+| battery | 96.2% |
+| weight_g | 96.1% |
+| color | 95.1% |
+| switch | 95.3% |
+| led | 94.3% |
+| material | 93.8% |
+| throw_m | 88.9% |
+| runtime_hours | 86.3% |
+| length_mm | 85.5% |
 
 ### Near-Valid Bottleneck (missing exactly 1 attribute)
 
 | Missing Attr | Count | % of Near-Valid |
 |-------------|-------|-----------------|
-| runtime | 425 | 22.9% |
-| length | 404 | 21.8% |
-| color | 253 | 13.7% |
-| throw | 237 | 12.8% |
-| price | 181 | 9.8% |
-| led | 135 | 7.3% |
-| material | 65 | 3.5% |
-| switch | 55 | 3.0% |
-| weight | 47 | 2.5% |
-| lumens | 21 | 1.1% |
-| battery | 18 | 1.0% |
-| features | 10 | 0.5% |
-| purchase_urls | 2 | 0.1% |
+| runtime | 407 | 31.8% |
+| length | 358 | 28.0% |
+| throw | 235 | 18.4% |
+| color | 151 | 11.8% |
+| led | 125 | 9.8% |
+| price | 97 | 7.6% |
+| material | 53 | 4.1% |
+| switch | 44 | 3.4% |
+| weight | 43 | 3.4% |
+| lumens | 20 | 1.6% |
+| battery | 13 | 1.0% |
+| features | 10 | 0.8% |
 
 ### Top Brands by Valid %
 
 | Brand | Valid % |
 |-------|--------|
-| Nebo | 97% |
-| Manker | 94% |
-| Pelican | 88% |
-| MecArmy | 88% |
-| Inova | 88% |
-| Sunwayman | 86% |
-| EagleTac | 83% |
-| ThruNite | 81% |
-| Convoy | 80% |
-| JETBeam | 79% |
+| Nebo | 100% |
+| Manker | 96% |
+| Nitecore | 93% |
+| Klarus | 91% |
+| Fenix | 91% |
+| Pelican | 91% |
+| EagleTac | 91% |
+| JETBeam | 90% |
+| Sunwayman | 90% |
+| MecArmy | 89% |
 
 ## Priority Actions
 
-1. **Runtime (425 near-valid)** — largest single-attr bottleneck. Cross-ref review sites and re-scrape product pages.
-2. **Length (404 near-valid)** — second largest gap. Spotlight at 24%, Maglite at 37%, ReyLight at 35%.
-3. **Zebralight throw_m (9%)** — 53 entries, excellent on all other attrs. Derive via FL1 formula from intensity_cd if available.
-4. **Nightstick price (47%)** — 575 entries, only 21% valid. Keepa price fill in progress.
-5. **Color (253 near-valid)** — vision pipeline may help for remaining gaps.
-6. **FourSevens/Malkoff/ReyLight** — very low coverage across the board, need re-scrape with better extractors.
-7. **Skylumen** — 169 entries, 0% valid, custom/modded lights with sparse specs. Low ROI to pursue.
+1. **Runtime (407 near-valid)** — largest single-attr bottleneck. Emisar (61%), Nealsgadgets (51%), Lumintop (66%), Skylumen (0%).
+2. **Length (358 near-valid)** — second largest gap. Spotlight at 25%, Malkoff at 49%, ReyLight at 52%.
+3. **Throw (235 near-valid)** — Zebralight at 10% (derive via FL1 from intensity_cd), Tank007 at 59%, FourSevens at 63%.
+4. **Nightstick price (67%)** — 403 entries, only 38% valid. Keepa price fill needed.
+5. **Coast led (65%)** — 186 entries, JS-rendered pages need CFC/headless extraction.
+6. **ReyLight** — 64 entries, 6% valid, sparse specs across the board. Re-scrape needed.
+7. **Skylumen** — 127 entries, 0% valid, custom/modded lights with no runtime/length. Low ROI.
