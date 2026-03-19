@@ -312,6 +312,8 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 			[/\bC4\s*LED\b/i, 'C4 LED'], [/\bUV\s*LED\b/i, 'UV LED'],
 			[/\bRGB\s*LED\b/i, 'RGB LED'],
 			[/\bWhite\s*Laser\b/i, 'White Laser'],
+			// Generic fallback — "LED" in title (e.g., "Fenix E01 V2.0 LED Flashlight")
+			[/\bLED\b/, 'LED'],
 		];
 		for (const [re, name] of ledPatterns) {
 			const m = title.match(re);
@@ -662,6 +664,13 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bCOB\b/, 'COB'],
 			[/\bUV\s*LED\b/i, 'UV LED'],
 			[/\bWhite\s*Laser\b/i, 'White Laser'],
+			// Generic fallbacks — must be LAST (low specificity)
+			[/\bCree\b/i, 'Cree LED'],
+			[/\bTIR\s*(?:optic|lens)?\b/i, 'LED'],
+			// "Lamp Type: LED" or "Light Source: LED" or "Bulb: LED" — spec table format
+			[/(?:lamp|light\s*source|bulb|emitter)\s*(?:type)?[:\s]+LED\b/i, 'LED'],
+			// Generic "LED" only when in a structured spec context (not just product description)
+			[/\bLED\s*(?:flashlight|headlamp|light)\b/i, 'LED'],
 		];
 		for (const [re, name] of ledRawPatterns) {
 			const m = combined.match(re);
