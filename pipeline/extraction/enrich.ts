@@ -901,18 +901,18 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Battery extraction from raw text (only if missing)
 	if (!entry.battery?.length) {
 		const batteryPatterns: [RegExp, string][] = [
-			[/\b1\s*[x×]\s*21700\b/i, '21700'], [/\bpowered\s+by\s+(?:a\s+)?21700\b/i, '21700'],
+			[/\b\d\s*[x×*]\s*21700\b/i, '21700'], [/\bpowered\s+by\s+(?:a\s+)?21700\b/i, '21700'],
 			[/\bbattery[:\s]+21700\b/i, '21700'], [/\buses?\s+(?:a\s+)?21700\b/i, '21700'],
-			[/\b1\s*[x×]\s*18650\b/i, '18650'], [/\bpowered\s+by\s+(?:a\s+)?18650\b/i, '18650'],
+			[/\b\d\s*[x×*]\s*18650\b/i, '18650'], [/\bpowered\s+by\s+(?:a\s+)?18650\b/i, '18650'],
 			[/\bbattery[:\s]+18650\b/i, '18650'], [/\buses?\s+(?:a\s+)?18650\b/i, '18650'],
-			[/\b1\s*[x×]\s*18350\b/i, '18350'], [/\bbattery[:\s]+18350\b/i, '18350'],
-			[/\b1\s*[x×]\s*14500\b/i, '14500'], [/\bbattery[:\s]+14500\b/i, '14500'],
-			[/\b1\s*[x×]\s*26650\b/i, '26650'], [/\bbattery[:\s]+26650\b/i, '26650'],
-			[/\b1\s*[x×]\s*26800\b/i, '26800'], [/\bbattery[:\s]+26800\b/i, '26800'],
-			[/\b1\s*[x×]\s*16340\b/i, '16340'], [/\bbattery[:\s]+16340\b/i, '16340'],
+			[/\b\d\s*[x×*]\s*18350\b/i, '18350'], [/\bbattery[:\s]+18350\b/i, '18350'],
+			[/\b\d\s*[x×*]\s*14500\b/i, '14500'], [/\bbattery[:\s]+14500\b/i, '14500'],
+			[/\b\d\s*[x×*]\s*26650\b/i, '26650'], [/\bbattery[:\s]+26650\b/i, '26650'],
+			[/\b\d\s*[x×*]\s*26800\b/i, '26800'], [/\bbattery[:\s]+26800\b/i, '26800'],
+			[/\b\d\s*[x×*]\s*16340\b/i, '16340'], [/\bbattery[:\s]+16340\b/i, '16340'],
 			[/\bCR123A?\b/i, 'CR123A'],
-			[/\bbattery[:\s]+AA\b/i, 'AA'], [/\b(?:1|2|3)\s*[x×]\s*AA\b(?!A)/i, 'AA'],
-			[/\bbattery[:\s]+AAA\b/i, 'AAA'], [/\b(?:1|2|3)\s*[x×]\s*AAA\b/i, 'AAA'],
+			[/\bbattery[:\s]+AA\b/i, 'AA'], [/\b(?:1|2|3)\s*[x×*]\s*AA\b(?!A)/i, 'AA'],
+			[/\bbattery[:\s]+AAA\b/i, 'AAA'], [/\b(?:1|2|3)\s*[x×*]\s*AAA\b/i, 'AAA'],
 			[/\bbuilt[\s-]*in\s+(?:Li[\s-]*(?:ion|po)?\s+)?(?:\d+\s*mAh\s+)?battery\b/i, 'built-in'],
 		];
 		for (const [re, bat] of batteryPatterns) {
