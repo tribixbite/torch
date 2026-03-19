@@ -141,7 +141,7 @@ function detectColorFromModelName(entry: FlashlightEntry): boolean {
 		'blue': 'blue', 'navy': 'blue', 'cobalt': 'blue', 'sapphire': 'blue',
 		'green': 'green', 'olive': 'green', 'od green': 'green', 'odg': 'green',
 		'orange': 'orange',
-		'yellow': 'yellow',
+		'yellow': 'yellow', 'safety yellow': 'yellow', 'hi-vis': 'yellow',
 		'purple': 'purple', 'violet': 'purple',
 		'white': 'white',
 		'silver': 'silver', 'chrome': 'silver',
@@ -149,11 +149,20 @@ function detectColorFromModelName(entry: FlashlightEntry): boolean {
 		'copper': 'copper',
 		'brass': 'brass',
 		'brown': 'brown', 'tan': 'brown', 'desert': 'brown', 'sand': 'brown',
-		'fde': 'brown', 'flat dark earth': 'brown',
+		'fde': 'brown', 'flat dark earth': 'brown', 'coyote': 'brown',
 		'camo': 'camo', 'camouflage': 'camo',
 		'teal': 'teal', 'turquoise': 'teal',
 		'rainbow': 'rainbow', 'gold': 'gold', 'titanium gray': 'gray',
 		'khaki': 'brown', 'beige': 'brown', 'stonewash': 'gray',
+	};
+
+	// Also check model suffix codes (common flashlight naming convention)
+	const suffixCodes: Record<string, string> = {
+		'-bk': 'black', ' bk': 'black', '-blk': 'black',
+		'-tn': 'brown', '-fde': 'brown',
+		'-od': 'green', '-odg': 'green',
+		'-rd': 'red', '-bl': 'blue',
+		'-gy': 'gray', '-sv': 'silver',
 	};
 
 	const title = entry.model.toLowerCase();
@@ -161,6 +170,16 @@ function detectColorFromModelName(entry: FlashlightEntry): boolean {
 	for (const [keyword, color] of Object.entries(colorKeywords)) {
 		if (title.includes(keyword) && !detected.includes(color)) {
 			detected.push(color);
+		}
+	}
+
+	// Check suffix codes if no keyword match (e.g. "-BK" = black)
+	if (detected.length === 0) {
+		for (const [suffix, color] of Object.entries(suffixCodes)) {
+			if (title.endsWith(suffix) && !detected.includes(color)) {
+				detected.push(color);
+				break;
+			}
 		}
 	}
 
@@ -452,10 +471,22 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	if (!entry.material?.length) {
 		const matPatterns: [RegExp, string][] = [
 			[/\b(?:6061|7075|A6061)[\s-]*T6?\s*alum/i, 'aluminum'],
-			[/\balumini?um\s*(?:alloy|body|construction|housing)?\b/i, 'aluminum'],
+			[/\balumini?um\s*(?:alloy|body|construction|housing|shell|barrel|tube)?\b/i, 'aluminum'],
 			// "anodized" or "type III" hard-anodize indicates aluminum body
 			[/\b(?:hard[\s-]*)?anodi[sz]ed\b/i, 'aluminum'],
 			[/\btype\s*(?:II|III)\s*(?:hard[\s-]*)?anodi[sz]/i, 'aluminum'],
+			// "Mil-Spec" finish or "MIL-STD" hardcoat = aluminum
+			[/\b(?:mil[\s-]*spec|MIL[\s-]*STD)\s*(?:hard[\s-]*(?:coat|anod))/i, 'aluminum'],
+			// "aircraft-grade" or "aerospace-grade" = aluminum
+			[/\b(?:aircraft|aerospace)[\s-]*grade\b/i, 'aluminum'],
+			// Spec table: "Material: Aluminum" or "Body: Aluminum alloy"
+			[/\b(?:body\s+)?material[:\s]+alum/i, 'aluminum'],
+			[/\b(?:body\s+)?material[:\s]+(?:stainless|steel)/i, 'stainless steel'],
+			[/\b(?:body\s+)?material[:\s]+(?:titanium|Ti\b)/i, 'titanium'],
+			[/\b(?:body\s+)?material[:\s]+(?:polymer|plastic|nylon|ABS)/i, 'polymer'],
+			[/\b(?:body\s+)?material[:\s]+(?:polycarbonate|PC\b)/i, 'polycarbonate'],
+			[/\b(?:body\s+)?material[:\s]+(?:copper)/i, 'copper'],
+			[/\b(?:body\s+)?material[:\s]+(?:brass)/i, 'brass'],
 			[/\bstainless\s*steel\b/i, 'stainless steel'],
 			[/\bpolycarbonate\b/i, 'polycarbonate'],
 			[/\btitanium\b/i, 'titanium'],
@@ -464,6 +495,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bcopper\s*(?:body|construction|housing)?\b/i, 'copper'],
 			[/\bbrass\s*(?:body|construction|housing)?\b/i, 'brass'],
 			[/\bABS\s*(?:plastic|body)?\b/, 'ABS'],
+			// "fiberglass reinforced" or "glass-filled" = polymer
+			[/\b(?:fiberglass|glass[\s-]*(?:filled|reinforced))\b/i, 'polymer'],
 		];
 		const detected: string[] = [];
 		for (const [re, mat] of matPatterns) {
@@ -494,6 +527,12 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d+(?:\.\d+)?)[\s-]*hours?\s+(?:of\s+)?runtime/i,
 			// "up to X hours" or "maximum X hours" (common description format)
 			/(?:up\s+to|maximum|max\.?)\s+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i,
+			// Pelican/PowerTac: "High: 960 lumens / 3h" or "High: 741 lumens/1h 45m"
+			/(?:high|turbo|max)[:\s]+\d+\s*(?:lumens?|lm)\s*\/?\s*(\d+(?:\.\d+)?)\s*(?:h|hours?)\b/i,
+			// Nitecorestore table: "0.5*hour" or "2.5hours" — with possible * or + separator
+			/runtime[^.]{0,200}?(\d+(?:\.\d+)?)\s*[*+]?\s*hours?\b/i,
+			// "Max Runtime: 65 hours" or "Max Runtime: 102 hours"
+			/max\s*runtime[:\s]+(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i,
 		];
 		// Minute-based patterns (converted to hours)
 		const runtimeMinPatterns = [
@@ -792,12 +831,24 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(\d{2,5})\s*m\s*(?:beam\s*distance|throw|range)\b/i,
 			// "Peak Beam Distance: 250 meters" — decimal allowed, "meters" spelled out
 			/(?:peak\s+)?beam\s*distance[:\s]+(\d+(?:\.\d+)?)\s*(?:m|meters?)\b/i,
-			// "Max Beam Distance 780 feet" or "Beam Reach: 800 ft" — feet→meters
-			/(?:beam\s*(?:distance|reach)|throw)[:\s]+(\d+)\s*(?:ft|feet)\b/i,
+			// "Max Beam Distance 780 feet" or "Beam Reach: 800 ft" — feet→meters (decimal allowed)
+			/(?:beam\s*(?:distance|reach)|throw)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet)\b/i,
+			// "Beam Distance: 311.00ft (94.79m)" — decimal feet with meters in parens
+			/beam\s*distance[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)\s*\(?(\d+(?:\.\d+)?)\s*m\)?/i,
+			// "Beam Distance: 500.00ft 152.40 m" — decimal feet followed by meters (no parens)
+			/beam\s*distance[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)\s+(\d+(?:\.\d+)?)\s*m\b/i,
+			// "Beam Distance (High/Low): 197.00 ft./127.00 ft. (60.05 m/38.71 m)" — take first meter value
+			/beam\s*distance\s*\([^)]*\)[:\s]+\d+(?:\.\d+)?\s*(?:ft\.?|feet)[^(]*\((\d+(?:\.\d+)?)\s*m/i,
+			// "220-meter beam distance" or "NNN-meter throw" — hyphenated
+			/(\d{1,5})[\s-]+meters?\s+(?:beam\s*distance|throw|range|beam)\b/i,
+			// "beam distance of 9 meters" or "throw of 380m"
+			/(?:beam\s*distance|throw|range)\s+of\s+(\d{1,5})\s*(?:m|meters?)\b/i,
+			// "beam distance -- Max 919 ft" or "Beam distance - High 804 ft" — mode after dashes
+			/beam\s*distance\s*[-–—]+\s*(?:max|high|turbo)[:\s]+(\d+(?:\.\d+)?)\s*(?:ft\.?|feet)\b/i,
 			// "reach 250 yards" or "throw of 350 yards" — yards→meters
 			/(?:beam\s*(?:distance|reach)|throw|reach(?:es)?)[:\s]+(?:up\s+to\s+)?(\d+)\s*(?:yards?|yds?)\b/i,
 			// "1500 feet beam" or "780 ft throw" (number before unit+keyword) — feet→meters
-			/(\d{2,5})\s*(?:ft|feet)\s*(?:beam\s*distance|throw|beam)\b/i,
+			/(\d{2,5})\s*(?:ft\.?|feet)\s*(?:beam\s*distance|throw|beam)\b/i,
 			// "beam distance 500 m" — relaxed spacing
 			/beam\s*distance\s+(\d{2,5})\s*(?:m|meters?)\b/i,
 			// "reach up to 250 meters" or "reaches 500m"
