@@ -36,7 +36,7 @@ const STORE_DOMAINS = [
 	'nextorch.com', 'rovyvon.com', 'jetbeamlight.com', 'armytek.com',
 	'powertac.com', 'imalentstore.com', 'malkoffdevices.com', 'wubenlight.com',
 	'reylight.net', 'foursevens.com', 'eagtac.com', 'intl-outdoor.com',
-	'zebralight.com', 'sofirnlight.com', 'wurkkos.com', 'skilhunt.com',
+	'zebralight.com', 'sofirnlight.com', 'wurkkos.com', 'skilhunt.com', 'klaruslight.com', 'klarus.net',
 	'shop.pelican.com', 'maglite.com', 'modlite.com', 'surefire.com', 'coastportland.com',
 	'clouddefensive.com', 'loopgear.com', 'skylumen.com',
 	// Multi-brand retailers
