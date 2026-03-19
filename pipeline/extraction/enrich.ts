@@ -323,7 +323,7 @@ function enrichFromTitle(entry: FlashlightEntry): boolean {
 			[/\bXP[\s-]?C\b/i, 'XP-C'], [/\bXQ[\s-]?E\b/i, 'XQ-E'],
 			[/\bXPH[\s-]?\d+/i, 'XHP35'],
 			[/\bSST[\s-]?\d+\w?\b/i, ''], [/\bSFT[\s-]?\d+\w?\b/i, ''],
-			[/\bSBT[\s-]?\d+\w?\b/i, ''], [/\bSFQ[\s-]?\d+\w?\b/i, ''], [/\bSSQ[\s-]?\d+\w?\b/i, ''],
+			[/\bSBT[\s-]?\d+\w?\b/i, ''], [/\bSFQ[\s-]?\d+\w?\b/i, ''], [/\bSSQ[\s-]?\d+\w?\b/i, ''], [/\bSFN[\s-]?\d+\w?\b/i, ''],
 			[/\b519A\b/, '519A'], [/\b219[BCF]\b/, ''],
 			[/\bLH351D\b/i, 'LH351D'], [/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bNichia\b/i, 'Nichia'], [/\bOsram\b/i, 'Osram'],
@@ -743,11 +743,13 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			[/\bLUXEON\s*(?:HL|MX|TX|V|V2)?\s*\w*\b/i, ''],
 			[/\bSFH\s*55\b/i, 'SFH55'],
 			[/\bSFT[\s-]?25\w?\b/i, ''],
-			// Luminus SFQ/SSQ family (newer high-density emitters)
+			// Luminus SFQ/SSQ/SFN family (newer high-density emitters)
 			[/\bSFQ[\s-]?60(?:\.\d+)?\b/i, ''],
 			[/\bSFQ[\s-]?40(?:\.\d+)?\b/i, ''],
 			[/\bSSQ[\s-]?55(?:\.\d+)?\b/i, ''],
 			[/\bSSQ[\s-]?40(?:\.\d+)?\b/i, ''],
+			[/\bSFN[\s-]?60(?:\.\d+)?\b/i, ''],
+			[/\bSFN[\s-]?40(?:\.\d+)?\b/i, ''],
 			// Other
 			[/\bGT[\s-]?FC40\b/i, 'GT-FC40'],
 			[/\bOsram\s*(?:CSLNM1|CULNM1|CULPM1|KW\s*CSLNM|PM1)\.?\w*\b/i, ''],
