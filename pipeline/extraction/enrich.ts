@@ -741,16 +741,16 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/\bL[:\s]+(\d{2,4}(?:\.\d+)?)\s*mm\b/,
 			// "135mm (length)" or "135mm long"
 			/(\d{2,4}(?:\.\d+)?)\s*mm\s*(?:\(?(?:overall|length|long|L)\)?)/i,
-			// Table cell: "135 mm" near "length" keyword (extended range for multiline)
-			/length[^.]{0,80}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
-			// "5.3 in" or "5.3 inches" near length (extended range)
-			/length[^.]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+			// Table cell: "135 mm" near "length" keyword — cross newlines
+			/length[\s\S]{0,80}?(\d{2,4}(?:\.\d+)?)\s*mm/i,
+			// "5.3 in" or "5.3 inches" near length — cross newlines
+			/length[\s\S]{0,80}?(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
 			// "NNN inches long" or "NNN inches in length" — inches as length
 			/(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length)\b/i,
 			// Olight: "Length (mm / in) \n 63mm / 2.48in"
 			/length\s*\(mm\b[^)]*\)\s+(\d{2,4}(?:\.\d+)?)\s*mm/i,
-			// Battery Junction: "X in (Y mm)" near length — capture the mm value
-			/length[^.]{0,60}?\d+(?:\.\d+)?\s*in\s*\((\d+)\s*mm\)/i,
+			// Battery Junction: "X in (Y mm)" near length — capture the mm value (cross newlines)
+			/length[\s\S]{0,60}?\d+(?:\.\d+)?\s*in\.?\s*\((\d+(?:\.\d+)?)\s*mm\)/i,
 			// "Dimensions: 135mm x 25mm" — first number is usually length
 			/dimensions?[:\s]+(\d{2,4}(?:\.\d+)?)\s*(?:mm)?\s*[x×]/i,
 			// "X mm x Y mm" dimensions without keyword (first = length if >50mm)
@@ -782,14 +782,18 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Weight extraction from raw text (only if missing)
 	if (!entry.weight_g) {
 		const weightPatterns = [
-			// "Weight: 120g" or "Weight: 120 g" or "Weight (w/o battery): 85g"
-			/weight[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*(?:grams?|g)\b/i,
-			// "4.2 oz" or "4.2 ounces" near weight
-			/weight[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*(?:oz|ounces?)\b/i,
+			// "Weight: 120g" or "Weight: 120 g" — cross newlines with [\s\S]
+			/weight[\s\S]{0,60}?(\d+(?:\.\d+)?)\s*(?:grams?|g)\b/i,
+			// "4.2 oz" or "4.2 ounces" near weight — cross newlines
+			/weight[\s\S]{0,60}?(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?)\b/i,
 			// "120g (weight)" or "120g without battery"
 			/(\d+(?:\.\d+)?)\s*(?:grams?|g)\s*\(?(?:weight|without|w\/o|incl|with)\b/i,
 			// Table cell: "120 g" near "weight" keyword
 			/(?:net\s+)?weight[:\s]+(\d+(?:\.\d+)?)\s*g\b/i,
+			// "weighs 1.98 oz" or "weighs 120g"
+			/weighs?\s+(?:only\s+)?(\d+(?:\.\d+)?)\s*(?:oz\.?|ounces?|grams?|g)\b/i,
+			// Battery Junction: "Weight \n X oz (Y g)" — capture grams from parens
+			/weight[\s\S]{0,30}?\d+(?:\.\d+)?\s*oz[^(]*\((\d+(?:\.\d+)?)\s*g\)/i,
 		];
 		for (const re of weightPatterns) {
 			const m = combined.match(re);
