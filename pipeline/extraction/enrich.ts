@@ -395,36 +395,38 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 	// Switch type extraction (only if missing)
 	if (!entry.switch?.length) {
 		const switchPatterns: [RegExp, string][] = [
-			[/\btail[\s-]*(?:cap\s+)?switch\b/i, 'tail'],
-			[/\bside[\s-]*switch\b/i, 'side'],
-			[/\bbody[\s-]*(?:mounted\s+)?switch\b/i, 'side'],
-			[/\bhead[\s-]*switch\b/i, 'side'],
-			[/\brear[\s-]*switch\b/i, 'tail'],
-			[/\brotary\b.*?\bswitch\b|\bswitch\b.*?\brotary\b/i, 'rotary'],
-			[/\btwist(?:y)?[\s-]*(?:head|switch)\b/i, 'twisty'],
+			[/\btail[\s-]*(?:cap\s+)?switch(?:es)?\b/i, 'tail'],
+			[/\bside[\s-]*switch(?:es)?\b/i, 'side'],
+			[/\bbody[\s-]*(?:mounted\s+)?switch(?:es)?\b/i, 'side'],
+			[/\bhead[\s-]*switch(?:es)?\b/i, 'side'],
+			[/\brear[\s-]*switch(?:es)?\b/i, 'tail'],
+			[/\brotary\b.*?\bswitch(?:es)?\b|\bswitch(?:es)?\b.*?\brotary\b/i, 'rotary'],
+			[/\btwist(?:y)?[\s-]*(?:head|switch(?:es)?)\b/i, 'twisty'],
 			[/\bpush[\s-]*button\b/i, 'push button'],
-			[/\btactical[\s-]*(?:tail\s+)?switch\b/i, 'tail'],
-			[/\bdual[\s-]*(?:mode\s+)?(?:tail\s+)?switch\b/i, 'dual'],
-			[/\btriple[\s-]*switch\b/i, 'dual'],
-			[/\belectronic[\s-]*(?:side\s+)?switch\b/i, 'electronic'],
+			[/\btactical[\s-]*(?:tail\s+)?switch(?:es)?\b/i, 'tail'],
+			[/\bdual[\s-]*(?:mode\s+)?(?:tail\s+|body\s+)?switch(?:es)?\b/i, 'dual'],
+			[/\btriple[\s-]*switch(?:es)?\b/i, 'dual'],
+			[/\belectronic[\s-]*(?:side\s+)?switch(?:es)?\b/i, 'electronic'],
 			[/\bmagnetic[\s-]*(?:ring|control|selector)\b/i, 'magnetic ring'],
 			[/\bclicky\b/i, 'tail'],
-			// Spec table format: "Switch\nBody" or "Switch: Body"
-			[/\bswitch[:\s]+body\b/i, 'side'],
-			[/\bswitch[:\s]+tail\b/i, 'tail'],
-			[/\bswitch[:\s]+side\b/i, 'side'],
-			[/\bswitch[:\s]+head\b/i, 'side'],
-			[/\bswitch[:\s]+rear\b/i, 'tail'],
-			[/\bswitch[:\s]+rotary\b/i, 'rotary'],
-			[/\bswitch[:\s]+twist\b/i, 'twisty'],
-			[/\bswitch[:\s]+electronic\b/i, 'electronic'],
+			// "tactical tail" without "switch" — common shorthand
+			[/\btactical\s+tail\b/i, 'tail'],
+			// Spec table format: "Switch\nBody" or "Switch: Body" or "Switches\nSide Switch"
+			[/\bswitch(?:es)?[:\s]+body\b/i, 'side'],
+			[/\bswitch(?:es)?[:\s]+tail\b/i, 'tail'],
+			[/\bswitch(?:es)?[:\s]+side\b/i, 'side'],
+			[/\bswitch(?:es)?[:\s]+head\b/i, 'side'],
+			[/\bswitch(?:es)?[:\s]+rear\b/i, 'tail'],
+			[/\bswitch(?:es)?[:\s]+rotary\b/i, 'rotary'],
+			[/\bswitch(?:es)?[:\s]+twist\b/i, 'twisty'],
+			[/\bswitch(?:es)?[:\s]+electronic\b/i, 'electronic'],
 			// "Switch Type: Push buttons" (spec table)
 			[/\bswitch\s+type[:\s]+(?:push\s*button|mechanical)/i, 'push button'],
 			[/\bswitch\s+type[:\s]+(?:tail|rear)/i, 'tail'],
 			[/\bswitch\s+type[:\s]+(?:side|body)/i, 'side'],
 			[/\bswitch\s+type[:\s]+(?:twist|rotary)/i, 'twisty'],
 			// "e-switch" pattern
-			[/\be[\s-]*switch\b/i, 'electronic'],
+			[/\be[\s-]*switch(?:es)?\b/i, 'electronic'],
 		];
 		const detected: string[] = [];
 		for (const [re, switchType] of switchPatterns) {
@@ -447,6 +449,9 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		const matPatterns: [RegExp, string][] = [
 			[/\b(?:6061|7075|A6061)[\s-]*T6?\s*alum/i, 'aluminum'],
 			[/\balumini?um\s*(?:alloy|body|construction|housing)?\b/i, 'aluminum'],
+			// "anodized" or "type III" hard-anodize indicates aluminum body
+			[/\b(?:hard[\s-]*)?anodi[sz]ed\b/i, 'aluminum'],
+			[/\btype\s*(?:II|III)\s*(?:hard[\s-]*)?anodi[sz]/i, 'aluminum'],
 			[/\bstainless\s*steel\b/i, 'stainless steel'],
 			[/\bpolycarbonate\b/i, 'polycarbonate'],
 			[/\btitanium\b/i, 'titanium'],
