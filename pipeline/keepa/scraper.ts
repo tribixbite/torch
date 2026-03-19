@@ -16,7 +16,7 @@ import {
 } from '../store/db.js';
 import { BRANDS, getBrandSearchTerms, type BrandConfig } from '../config/brands.js';
 
-const BATCH_SIZE = 100; // Keepa max per request
+const BATCH_SIZE = 20; // Smaller batches to start scraping sooner (20 tokens = 20 min wait vs 100 min)
 const DETAIL_TOKEN_COST = 1; // per ASIN
 const FINDER_TOKEN_COST = 11; // per finder query
 
