@@ -46,6 +46,14 @@ function extractRuntime(text: string): number[] {
     /(\d+)\s*(?:hours?|hrs?|h)\s*,?\s*(\d+)\s*(?:min(?:ute)?s?|m)\b/gi,
     // Standalone "X h" on its own line (table format) — requires line boundary
     /(?:^|\n)\s*(\d+\.?\d*)\s*h\s*(?:\n|$)/gim,
+    // Nightstick-style: "Runtime (h): X.X" / "High Runtime (h): 3.0"
+    /(?:(?:high|med|low|turbo)\s+)?runtime\s*\(h\)\s*[-:=]\s*(\d+\.?\d*)/gi,
+    // Nightstick-style: "Runtime (min): X" → convert to hours
+    /(?:(?:high|med|low|turbo)\s+)?runtime\s*\(min\)\s*[-:=]\s*(\d+\.?\d*)/gi,
+    // "Xlm Xhours" / "Xlm Xhrs" (mode table like "180lm 15hours")
+    /\d+\s*(?:lumens?|lm)\s*[;,]?\s*(\d+\.?\d*)\s*(?:hours?|hrs?)\b/gi,
+    // "Xhours" next to lumens with semicolon: "1lm 900hours;"
+    /(\d+)\s*(?:hours?|hrs?)\s*[;,]/gi,
   ];
 
   for (const pat of rtPatterns) {
@@ -58,7 +66,7 @@ function extractRuntime(text: string): number[] {
       } else {
         val = parseFloat(m[1]);
         // Check if matched as minutes-only pattern
-        if (pat.source.includes('min(?:ute)?') && !pat.source.includes('hours?')) {
+        if ((pat.source.includes('min(?:ute)?') || pat.source.includes('\\(min\\)')) && !pat.source.includes('hours?')) {
           val = val / 60;
         }
       }
@@ -98,6 +106,12 @@ function extractThrow(text: string): number | null {
     /(\d[\d,]+)\s*(?:cd|candela)/gi,
     // "XXft" / "XXX feet" beam distance
     /(?:beam\s+distance|throw|beam\s+range)\s*[-:=]\s*(?:up\s+to\s+)?(\d+\.?\d*)\s*(?:ft|feet|foot)\b/gi,
+    // Nightstick-style: "Beam Distance (m): X" / "High Beam Distance (m): 190"
+    /(?:(?:high|med|low|turbo)\s+)?beam\s+distance\s*\(m\)\s*[-:=]\s*(\d+\.?\d*)/gi,
+    // "Beam Distance (ft): X" / "High Beam Distance (ft): 620"
+    /(?:(?:high|med|low|turbo)\s+)?beam\s+distance\s*\(ft\)\s*[-:=]\s*(\d+\.?\d*)/gi,
+    // Nightstick-style: "Candela: XXXX" / "High Candela: 9150"
+    /(?:(?:high|med|low|turbo)\s+)?candela\s*[-:=]\s*(\d[\d,]*)/gi,
   ];
 
   let bestThrow: number | null = null;
@@ -108,7 +122,7 @@ function extractThrow(text: string): number | null {
       let val = parseFloat(m[1].replace(/,/g, ''));
 
       // If candela, convert to throw: throw_m = 2 * sqrt(cd)
-      if (pat.source.includes('cd|candela') || pat.source.includes('intensity')) {
+      if (pat.source.includes('cd|candela') || pat.source.includes('intensity') || pat.source.includes('candela\\s*[-:=]')) {
         if (val > 100) { // Only if > 100 cd (sanity)
           val = 2 * Math.sqrt(val);
         } else {
@@ -117,7 +131,7 @@ function extractThrow(text: string): number | null {
       }
 
       // If feet, convert to meters
-      if (pat.source.includes('ft|feet|foot')) {
+      if (pat.source.includes('ft|feet|foot') || pat.source.includes('\\(ft\\)')) {
         val = val * 0.3048;
       }
 
