@@ -1,30 +1,38 @@
-# Pipeline State — 2026-03-21
+# Pipeline State — 2026-03-22
 
-## Current Status: Deep dedup + data recovery — 68.6% valid
+## Current Status: Data quality cleanup — 69.6% valid
 
-### Coverage (6,615 flashlights / 12,451 total DB / 9,172 in JSON)
+### Coverage (6,611 flashlights / 12,482 total DB / 9,172 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
-| price_usd | 97.6% | 162 |
-| color | 97.7% | 153 |
-| features | 97.5% | 163 |
-| battery | 97.4% | 173 |
-| weight_g | 97.0% | 197 |
+| price_usd | 98.2% | 118 |
+| color | 97.7% | 151 |
+| features | 97.6% | 160 |
+| battery | 97.4% | 174 |
+| weight_g | 97.3% | 181 |
 | switch | 96.2% | 250 |
-| lumens | 96.2% | 250 |
+| lumens | 96.2% | 251 |
 | material | 95.1% | 325 |
-| led | 95.6% | 293 |
-| throw_m | 88.5% | 764 |
-| length_mm | 87.6% | 820 |
-| runtime | 85.8% | 938 |
+| led | 95.6% | 288 |
+| throw_m | 88.5% | 763 |
+| length_mm | 88.2% | 779 |
+| runtime | 85.8% | 936 |
 
-Fully valid: **4,540 entries (68.6%)**
+Fully valid: **4,598 entries (69.6%)**
 
 Note: Previous sessions inflated valid counts by including duplicate entries (same
 product listed by multiple retailers) in the flashlight total. Deep dedup removed
 ~3,200 duplicate entries. Valid % dropped from 71% because merged entries were
 disproportionately valid (from major retailers with complete data).
+
+### Session Gains (3/22)
+- **Data quality fixes**: Cleared 9999 lumens placeholders (4 Fenix entries), impossible throw values (Skylumen B01vn 6000m, Olight RN 800 4000m, Olight Seeker 2 5000m), Acebeam E75 155000lm placeholder
+- **Raw text fetch**: 101 new entries fetched (Pelican blocked by Cloudflare)
+- **AI parse**: 3 entries enriched from new raw text (manufacturers source)
+- **Enrichment cascade**: +130 total enrichments from parametrek/model crossref
+- **Accessory reclassification**: 11 genuinely non-flashlight entries reclassified (charging docks, cables, cradles, battery packs, category pages)
+- **Net result**: 4,561→4,598 valid (+37), 68.9%→69.6%
 
 ### Session Gains (3/21)
 - **Cross-retailer smart dedup**: 601 entries merged across all brands — same model from different retailers (goinggear, batteryjunction, nealsgadgets, flashlightgo, torchdirect, flashlightworld) consolidated into single entries with best-quality data from each source. 822 fields recovered/upgraded during merge.
@@ -87,14 +95,14 @@ disproportionately valid (from major retailers with complete data).
 ### Single-Field Blocker Analysis
 | Field | Count | Top brands |
 |-------|-------|------------|
-| runtime_hours | 298 | Lumintop(41), Mateminco(25), Emisar(15), Amutorch(14), Olight(13) |
-| throw_m | 211 | Nightstick(40), Zebralight(38), Convoy(13), ARCHON(12), Streamlight(10) |
+| runtime_hours | 299 | Lumintop(43), Mateminco(25), Emisar(15), Amutorch(14), Olight(13) |
+| throw_m | 212 | Nightstick(40), Zebralight(38), Convoy(13), ARCHON(12), Streamlight(10) |
 | length_mm | 210 | Rayovac(16), Coast(13), Weltool(12), Petzl(12), Acebeam(12) |
-| led | 76 | Coast(20), Nextorch(12), Olight(10), Modlite(5) |
-| price_usd | 71 | Nightstick(32), Fenix(20), Lumintop(13), Acebeam(2) |
+| led | 76 | Coast(20), Nextorch(12), Olight(10), Modlite(5), Wuben(3) |
+| price_usd | 50 | Nightstick(32), Lumintop(12), Fenix(4) |
 | color | 44 | Striker(7), UST(3), ThruNite(3), Petzl(3), Coast(3) |
-| weight_g | 29 | Acebeam(8), Streamlight(4), Loop Gear(3) |
-| material | 29 | Wagan(7), Nite Ize(4), UST(3), Klarus(3) |
+| weight_g | 30 | Acebeam(8), Streamlight(4), Loop Gear(3) |
+| material | 30 | Wagan(7), Nite Ize(4), UST(3), Klarus(3), Loop Gear(3) |
 | switch | 27 | Sunrei(7), Olight(4), Knog(3), Fireflies(2) |
 | lumens | 14 | Tank007(4), ReyLight(3), FourSevens(3) |
 | battery | 8 | Coast(3), Imalent(1), Trustfire(1) |
