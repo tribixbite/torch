@@ -532,8 +532,8 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 			/(?:high\s+)?runtime\s*\(h\)[:\s]*(\d+(?:\.\d+)?)/i,
 			// Olight spec table: "Runtime (Hours) 85 5 1.5 3" — first value
 			/runtime\s*\(hours?\)\s*(\d+(?:\.\d+)?)\b/i,
-			// NitecoreStore/BJ table: "Runtime ... NNhours" — use [\s\S] not [^.] to cross decimals
-			/runtime[\s\S]{0,300}?(\d+(?:\.\d+)?)hours\b/i,
+			// NitecoreStore/BJ table: "Runtime ... NN hours" — use [\s\S] not [^.] to cross decimals
+			/runtime[\s\S]{0,300}?(\d+(?:\.\d+)?)\s*hours\b/i,
 			// "80-hour runtime" or "72 hours of runtime"
 			/(\d+(?:\.\d+)?)[\s-]*hours?\s+(?:of\s+)?runtime/i,
 			// "up to X hours" or "maximum X hours" (common description format)
@@ -559,9 +559,11 @@ function enrichFromRawSpecText(entry: FlashlightEntry): boolean {
 		// Minute-based patterns (converted to hours)
 		const runtimeMinPatterns = [
 			/(?:runtime|run\s*time)[:\s：]*~?\s*(\d+)\s*(?:minutes?|mins?)\b/i,
-			/~?\s*(\d+)\s*(?:minutes?|mins?)\s*(?:of\s+)?runtime/i,
-			// BJ mode table: "Runtime ... 65minutes" — use [\s\S] not [^.] to cross decimals
-			/runtime[\s\S]{0,300}?(\d+)minutes\b/i,
+			/~?\s*(\d+)\s*(?:minutes?|mins?)\s*(?:of\s+)?(?:run\s*time|runtime)/i,
+			// "X minutes of solid run time" — with intervening text
+			/(\d+)\s*(?:minutes?|mins?)\s+(?:of\s+)?(?:\w+\s+){0,3}(?:run\s*time|runtime)/i,
+			// BJ mode table: "Runtime ... 65 minutes" — use [\s\S] not [^.], allow space before unit
+			/runtime[\s\S]{0,300}?(\d+)\s*minutes\b/i,
 		];
 		let foundRuntime = false;
 		for (const re of runtimeHoursPatterns) {
