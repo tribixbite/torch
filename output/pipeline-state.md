@@ -1,6 +1,6 @@
 # Pipeline State — 2026-03-20
 
-## Current Status: Data cleanup converged — 60.1% valid
+## Current Status: "Show Unknown" filter toggle shipped — 60.1% valid
 
 ### Coverage (6,493 lights / 12,545 total DB / 9,254 in JSON / 1,298 near-valid)
 | Field | Coverage | Missing |
