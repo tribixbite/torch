@@ -1,36 +1,34 @@
 # Pipeline State — 2026-03-22
 
-## Current Status: Honesty audit complete — 60.2% valid (converged)
+## Current Status: Honesty audit complete — 59.7% valid (converged)
 
-### Coverage (6,660 flashlights / 12,568 total DB / 9,257 in JSON)
+### Coverage (6,691 flashlights / 12,624 total DB / 9,316 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
-| price_usd | 97.8% | 149 |
-| color | 97.7% | 152 |
-| features | 98.0% | 136 |
+| price_usd | 97.2% | 190 |
+| color | 97.7% | 153 |
 | battery | 97.6% | 160 |
-| weight_g | 97.0% | 202 |
-| lumens | 95.9% | 270 |
-| switch | 95.2% | 317 |
-| material | 94.6% | 360 |
-| throw_m | 89.4% | 704 |
-| length_mm | 87.7% | 820 |
-| runtime | 85.2% | 988 |
-| **led** | **77.4%** | **1,507** |
+| features | 97.4% | 173 |
+| weight_g | 96.7% | 218 |
+| lumens | 95.7% | 291 |
+| switch | 94.5% | 366 |
+| material | 94.2% | 387 |
+| throw_m | 89.0% | 735 |
+| length_mm | 87.6% | 830 |
+| runtime | 84.6% | 1,032 |
+| **led** | **77.9%** | **1,482** |
 
-Fully valid: **4,008 entries (60.2%)**
+Fully valid: **3,993 entries (59.7%)**
 
 ### Spec Completeness Distribution
 | Specs filled | Count | Cumulative | % of total |
 |-------------|-------|------------|------------|
-| 16/16 | 4,008 | 4,008 | 60.2% |
-| 15/16 | 1,333 | 5,341 | 80.2% |
-| 14/16 | 524 | 5,865 | 88.1% |
-| 13/16 | 295 | 6,160 | 92.5% |
-| 12/16 | 181 | 6,341 | 95.2% |
-| 11/16 | 151 | 6,492 | 97.5% |
-| <=10/16 | 168 | 6,660 | 100.0% |
+| 16/16 | 3,993 | 3,993 | 59.7% |
+| 15/16 | ~1,350 | ~5,343 | ~79.9% |
+| 14/16 | ~525 | ~5,868 | ~87.7% |
+| 13/16 | ~300 | ~6,168 | ~92.2% |
+| <=12/16 | ~523 | 6,691 | 100.0% |
 
 Note: Valid count dropped from 4,672 (70.8%) after multi-round data honesty audit.
 All generic placeholders cleared: `["LED"]`, `["CREE"]`, `["cree"]`, `["Cree"]`,
