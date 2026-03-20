@@ -106,25 +106,34 @@ function getEntriesNeedingRawText(opts: {
 
 /** Convert a DB row to a partial FlashlightEntry for hasRequiredAttributes check */
 function rowToPartialEntry(row: any): FlashlightEntry {
+	const lumens = row.lumens ? JSON.parse(row.lumens) : undefined;
+	const runtime_hours = row.runtime_hours ? JSON.parse(row.runtime_hours) : undefined;
 	return {
 		id: row.id,
 		brand: row.brand,
 		model: row.model,
-		type: 'handheld',
-		lumens: row.lumens ?? null,
-		throw_m: row.throw_m ?? null,
-		intensity_cd: row.intensity_cd ?? null,
-		runtime_hours: row.runtime_hours ?? null,
-		length_mm: row.length_mm ?? null,
-		weight_g: row.weight_g ?? null,
-		led: row.led ? JSON.parse(row.led) : null,
-		material: row.material ? JSON.parse(row.material) : null,
-		switch: row.switch ? JSON.parse(row.switch) : null,
-		battery: row.battery ? JSON.parse(row.battery) : null,
-		color: row.color ? JSON.parse(row.color) : null,
-		features: row.features ? JSON.parse(row.features) : null,
-		price_usd: row.price_usd ?? null,
-		purchase_urls: row.url ? [row.url] : null,
+		type: row.type ? JSON.parse(row.type) : ['handheld'],
+		led: row.led ? JSON.parse(row.led) : [],
+		led_color: [],
+		led_options: [],
+		performance: {
+			claimed: {
+				lumens: lumens?.length ? lumens : undefined,
+				throw_m: row.throw_m ?? undefined,
+				intensity_cd: row.intensity_cd ?? undefined,
+				runtime_hours: runtime_hours?.length ? runtime_hours : undefined,
+			},
+			measured: {},
+		},
+		length_mm: row.length_mm ?? undefined,
+		weight_g: row.weight_g ?? undefined,
+		material: row.material ? JSON.parse(row.material) : [],
+		switch: row.switch ? JSON.parse(row.switch) : [],
+		battery: row.battery ? JSON.parse(row.battery) : [],
+		color: row.color ? JSON.parse(row.color) : [],
+		features: row.features ? JSON.parse(row.features) : [],
+		price_usd: row.price_usd ?? undefined,
+		purchase_urls: row.url ? [row.url] : [],
 	} as FlashlightEntry;
 }
 
