@@ -1,30 +1,32 @@
 # Pipeline State — 2026-03-22
 
-## Current Status: Schema refinement + cleanup — 70.8% valid
+## Current Status: Data honesty audit — 56.2% valid (honest)
 
-### Coverage (6,597 flashlights / 12,488 total DB / 9,164 in JSON)
+### Coverage (6,688 flashlights / 12,568 total DB / 9,252 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
-| price_usd | 98.2% | 118 |
-| color | 97.7% | 150 |
-| features | 97.8% | 148 |
-| battery | 97.4% | 172 |
-| weight_g | 97.3% | 175 |
-| switch | 96.4% | 240 |
-| lumens | 96.3% | 242 |
-| material | 95.2% | 317 |
-| led | 95.7% | 286 |
-| throw_m | 89.8% | 675 |
-| length_mm | 88.5% | 756 |
-| runtime | 86.1% | 916 |
+| price_usd | 97.3% | 181 |
+| color | 97.7% | 156 |
+| features | 96.9% | 206 |
+| battery | 96.7% | 223 |
+| weight_g | 96.6% | 227 |
+| lumens | 95.8% | 281 |
+| switch | 94.1% | 393 |
+| material | 93.8% | 415 |
+| throw_m | 88.9% | 744 |
+| length_mm | 86.4% | 910 |
+| runtime | 85.2% | 992 |
+| **led** | **74.3%** | **1,719** |
 
-Fully valid: **4,672 entries (70.8%)**
+Fully valid: **3,758 entries (56.2%)**
 
-Note: Previous sessions inflated valid counts by including duplicate entries (same
-product listed by multiple retailers) in the flashlight total. Deep dedup removed
-~3,200 duplicate entries. Valid % dropped from 71% because merged entries were
-disproportionately valid (from major retailers with complete data).
+Note: Valid count dropped from 4,672 (70.8%) after data honesty audit. 1,435 entries
+had generic LED placeholders (`["LED"]`, `["CREE"]`, `["unknown"]`) that passed the
+"not empty" check but contained zero useful information. Additionally cleared: 121
+impossible length values (<20mm), 14 impossible weights (<5g), 248 FL1 throw/cd
+mismatches, 51 generic battery values, 84 generic switch values, 52 generic material
+values. The previous 70.8% was dishonest — real coverage was always 56.2%.
 
 ### Session Gains (3/22)
 - **Data quality fixes**: Cleared 9999 lumens placeholders (4 Fenix entries), impossible throw values (Skylumen B01vn 6000m, Olight RN 800 4000m, Olight Seeker 2 5000m), Acebeam E75 155000lm placeholder
@@ -34,7 +36,16 @@ disproportionately valid (from major retailers with complete data).
 - **Schema: throw_m optional for headlamps/lanterns/floods**: Flood lights and area lights don't have meaningful throw specs. Consistent with parametrek.com showing N/A. +47 newly valid entries.
 - **Adapter/junk reclassification**: 67 AC/DC power adapters from generic Amazon brands (KONKIN BOO, PKPOWER, SLLEA, etc.) reclassified as accessories
 - **Near-duplicate merging**: 6 more near-duplicates merged (Acebeam E70 MINI/E70mini, EagleTac M30LC2-C/M30LC2C, etc.)
-- **Net result**: 4,561→4,672 valid (+111), 68.9%→70.8%
+- **Data honesty audit** (100-entry random sanity check):
+  - Cleared 1,435 generic LED placeholders (`["LED"]`, `["CREE"]`, `["unknown"]`, `["N/A"]`)
+  - Cleared 121 impossible length_mm values (<20mm — stored in wrong units or garbage)
+  - Cleared 14 impossible weight_g values (<5g)
+  - Cleared 248 FL1 throw/cd mismatches (intensity_cd wildly inconsistent with throw_m, ratio >10x)
+  - Cleared 130+ entries with intensity_cd=1 (garbage)
+  - Cleared 51 generic battery values (`["built-in"]`, `["rechargeable"]`, `["lithium"]`)
+  - Cleared 84 generic switch values (`["mechanical"]`, `["electronic"]`, `["button"]`)
+  - Cleared 52 generic material values (`["plastic"]`, `["metal"]`, `["other"]`)
+- **Net result**: 4,561→3,758 valid, 68.9%→56.2% (honest)
 
 ### Session Gains (3/21)
 - **Cross-retailer smart dedup**: 601 entries merged across all brands — same model from different retailers (goinggear, batteryjunction, nealsgadgets, flashlightgo, torchdirect, flashlightworld) consolidated into single entries with best-quality data from each source. 822 fields recovered/upgraded during merge.
@@ -94,29 +105,36 @@ disproportionately valid (from major retailers with complete data).
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
 
-### Single-Field Blocker Analysis (with throw_m exemption for headlamps/lanterns/floods)
+### Single-Field Blocker Analysis (post-honesty audit)
+LED is now the dominant blocker — most entries previously had generic `["LED"]` placeholders.
+
 | Field | Count | Top brands |
 |-------|-------|------------|
-| runtime_hours | 294 | Lumintop(44), Mateminco(25), Amutorch(14), Emisar(14), BLF(12) |
-| length_mm | 181 | Rayovac(16), Petzl(12), Coast(12), Acebeam(12), Olight(9) |
-| throw_m | 165 | Nightstick(36), Zebralight(14), Convoy(12), ARCHON(11), Malkoff(9) |
-| led | 73 | Coast(20), Nextorch(12), Olight(9), Modlite(5), Wuben(3) |
-| price_usd | 49 | Nightstick(33), Lumintop(13), Armytek(2) |
-| color | 44 | Striker(7), UST(3), ThruNite(3), Petzl(3), Coast(3) |
-| material | 31 | Wagan(7), UST(3), Nite Ize(3), Klarus(3), Loop Gear(3) |
-| switch | 28 | Sunrei(7), Olight(4), Knog(3), Fireflies(2) |
-| weight_g | 22 | Acebeam(8), Loop Gear(3), ReyLight(2) |
-| lumens | 14 | Tank007(4), ReyLight(3), FourSevens(3) |
-| battery | 7 | Coast(3), Imalent(1), Trustfire(1) |
+| led | 819 | Nightstick(198), Ledlenser(75), Pelican(60), Coast(47), SureFire(41) |
+| runtime_hours | 219 | Lumintop(34), Mateminco(25), Amutorch(13), BLF(12), NightWatch(11) |
+| length_mm | 163 | Acebeam(19), Lumintop(13), Rayovac(13), Skilhunt(12), Coast(9) |
+| throw_m | 103 | Zebralight(14), Convoy(12), ARCHON(11), Malkoff(9), FourSevens(9) |
+| switch | 57 | Nitecore(7), Imalent(6), Sunrei(5), Emisar(4), Olight(4) |
+| material | 37 | Wagan(6), Petzl(4), Ledlenser(4), Klarus(4), Lightstar(4) |
+| battery | 28 | Fenix(13), Nitecore(8), Rovyvon(3), Olight(2) |
+| color | 23 | Petzl(3), Coast(3), ThruNite(2), Princeton Tec(2) |
+| weight_g | 17 | Loop Gear(3), Manker(2), ReyLight(2), Imalent(1) |
+| price_usd | 16 | Lumintop(14), EagleTac(1), Armytek(1) |
+| lumens | 13 | Tank007(4), ReyLight(3), FourSevens(2) |
 | features | 2 | Haikelite(1), ARCHON(1) |
 
+### Biggest Gap: LED (1,719 missing = 25.7%)
+Top brands missing LED data:
+Nightstick(418), Ledlenser(107), Pelican(73), Lumintop(70), SureFire(56), Coast(52), Olight(50), Acebeam(44)
+
+Most of these previously had `["LED"]` or `["CREE"]` placeholders. The real LED model (e.g., "Luminus SFT-40", "Cree XHP70.3") is not on the product pages for many brands. Nightstick and Pelican rarely publish LED specs. Ledlenser uses proprietary naming.
+
 ### Diminishing Returns
-The remaining gaps are genuinely missing data — product pages don't contain the information.
 All cascade scripts (parametrek, model-crossref, extract-missing-fields) yield near-zero.
 Major remaining strategies:
-1. **Nightstick prices**: 60 single-field blockers, all retailers tried (OpticsPlanet, Amazon, Grainger) — diminishing
-2. **Cloudflare-blocked sites**: Pelican, Convoy, Sofirn, Wurkkos need headless browser
-3. **Runtime gap**: 1,314 entries — mostly Chinese brands without ANSI runtime data
-4. **Length/throw gaps**: headlamps, floody lights that genuinely don't spec these
-5. **Raw text fetch**: ~108 entries without raw_spec_text
-6. **Configurable products plan**: intl-outdoor D4V2 Mule fix, LED options schema (approved plan exists)
+1. **LED recovery**: Re-run model-crossref now that generic LED values are cleared — some entries may have real LED data from other sources
+2. **Nightstick prices**: 46 single-field blockers, all retailers tried (OpticsPlanet, Amazon, Grainger) — diminishing
+3. **Cloudflare-blocked sites**: Pelican, Convoy, Sofirn, Wurkkos need headless browser
+4. **Runtime gap**: 992 entries — mostly Chinese brands without ANSI runtime data
+5. **LED from review sites**: BLF, Reddit, 1lumen.com may have LED identifications
+6. **Configurable products**: intl-outdoor D4V2 Mule fix implemented, LED options schema done
