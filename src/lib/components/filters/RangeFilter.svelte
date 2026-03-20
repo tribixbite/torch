@@ -19,6 +19,7 @@
 
 	let currentMin = $derived(filter?.min ?? boundsMin);
 	let currentMax = $derived(filter?.max ?? boundsMax);
+	let showUnknown = $derived(filter?.showUnknown ?? false);
 
 	// Slider percentages
 	let lowerPerc = $state(0);
@@ -107,7 +108,15 @@
 		const maxVal = percToValue(upperPerc);
 		const minActive = lowerPerc > 0.001;
 		const maxActive = upperPerc < 0.999;
-		urlState.setRangeFilter(column.index, minVal, maxVal, minActive, maxActive);
+		urlState.setRangeFilter(column.index, minVal, maxVal, minActive, maxActive, showUnknown);
+	}
+
+	function toggleShowUnknown() {
+		const minVal = percToValue(lowerPerc);
+		const maxVal = percToValue(upperPerc);
+		const minActive = lowerPerc > 0.001;
+		const maxActive = upperPerc < 0.999;
+		urlState.setRangeFilter(column.index, minVal, maxVal, minActive, maxActive, !showUnknown);
 	}
 
 	function setSort(direction: 'inc' | 'dec') {
@@ -164,21 +173,33 @@
 		></div>
 	</div>
 
-	<!-- Sort arrows -->
-	{#if column.sortable}
-		<div class="flex gap-2 justify-end">
-			<button
-				class="text-xs cursor-pointer select-none px-1"
-				style="color: {urlState.sort.column === column.index && urlState.sort.direction === 'inc' ? 'var(--accent)' : 'var(--text-muted)'};"
-				onclick={() => setSort('inc')}
-				title="Sort ascending"
-			>&#9650;</button>
-			<button
-				class="text-xs cursor-pointer select-none px-1"
-				style="color: {urlState.sort.column === column.index && urlState.sort.direction === 'dec' ? 'var(--accent)' : 'var(--text-muted)'};"
-				onclick={() => setSort('dec')}
-				title="Sort descending"
-			>&#9660;</button>
-		</div>
-	{/if}
+	<!-- Sort arrows + show unknown toggle -->
+	<div class="flex gap-2 justify-between items-center">
+		<button
+			class="px-2 py-0.5 text-xs rounded border cursor-pointer select-none transition-colors"
+			style="background: {showUnknown ? 'var(--accent-muted)' : 'var(--bg-elevated)'};
+						 color: {showUnknown ? 'var(--accent)' : 'var(--text-secondary)'};
+						 border-color: {showUnknown ? 'var(--accent)' : 'var(--border)'};"
+			onclick={toggleShowUnknown}
+			title="Include entries with unknown/missing values for this field"
+		>
+			? unknown
+		</button>
+		{#if column.sortable}
+			<div class="flex gap-2">
+				<button
+					class="text-xs cursor-pointer select-none px-1"
+					style="color: {urlState.sort.column === column.index && urlState.sort.direction === 'inc' ? 'var(--accent)' : 'var(--text-muted)'};"
+					onclick={() => setSort('inc')}
+					title="Sort ascending"
+				>&#9650;</button>
+				<button
+					class="text-xs cursor-pointer select-none px-1"
+					style="color: {urlState.sort.column === column.index && urlState.sort.direction === 'dec' ? 'var(--accent)' : 'var(--text-muted)'};"
+					onclick={() => setSort('dec')}
+					title="Sort descending"
+				>&#9660;</button>
+			</div>
+		{/if}
+	</div>
 </div>

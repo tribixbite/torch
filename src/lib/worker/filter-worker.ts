@@ -84,6 +84,13 @@ const logicTable: Record<string, (selected: string[], data: unknown) => boolean>
 	none: arrayOpposite
 };
 
+/** Check if data cell is null/empty — entries with no data for a field */
+function isEmpty(data: unknown): boolean {
+	if (data === null || data === undefined || data === '') return true;
+	if (Array.isArray(data) && data.length === 0) return true;
+	return false;
+}
+
 /** Test a single flashlight item against all active filters */
 function testItem(
 	itemIndex: number,
@@ -102,10 +109,14 @@ function testItem(
 		switch (filter.type) {
 			case 'multi': {
 				const fn = logicTable[filter.mode];
-				if (!fn(filter.selected, data)) return false;
+				if (!fn(filter.selected, data)) {
+					if (filter.showUnknown && isEmpty(data)) break;
+					return false;
+				}
 				break;
 			}
 			case 'boolean': {
+				if (filter.showUnknown && isEmpty(data)) break;
 				const field = normalizeToStringArray(data);
 				if (filter.mode === 'all') {
 					// ALL yes-checked must be present in data
@@ -133,7 +144,10 @@ function testItem(
 				break;
 			}
 			case 'range': {
-				if (!arrayWindow(data, filter.min, filter.max)) return false;
+				if (!arrayWindow(data, filter.min, filter.max)) {
+					if (filter.showUnknown && isEmpty(data)) break;
+					return false;
+				}
 				break;
 			}
 		}

@@ -45,33 +45,33 @@ class UrlState {
 	}
 
 	/** Set a multi/mega-multi filter */
-	setMultiFilter(colIndex: number, selected: Set<string>, mode: LogicMode) {
+	setMultiFilter(colIndex: number, selected: Set<string>, mode: LogicMode, showUnknown = false) {
 		if (selected.size === 0) {
 			this.filters.delete(colIndex);
 		} else {
-			this.filters.set(colIndex, { type: 'multi', selected, mode });
+			this.filters.set(colIndex, { type: 'multi', selected, mode, showUnknown });
 		}
 		this.filters = new Map(this.filters); // trigger reactivity
 		this.syncToUrl();
 	}
 
 	/** Set a boolean filter */
-	setBooleanFilter(colIndex: number, yes: Set<string>, no: Set<string>, mode: 'all' | 'any') {
+	setBooleanFilter(colIndex: number, yes: Set<string>, no: Set<string>, mode: 'all' | 'any', showUnknown = false) {
 		if (yes.size === 0 && no.size === 0) {
 			this.filters.delete(colIndex);
 		} else {
-			this.filters.set(colIndex, { type: 'boolean', yes, no, mode });
+			this.filters.set(colIndex, { type: 'boolean', yes, no, mode, showUnknown });
 		}
 		this.filters = new Map(this.filters);
 		this.syncToUrl();
 	}
 
 	/** Set a range filter */
-	setRangeFilter(colIndex: number, min: number, max: number, minActive: boolean, maxActive: boolean) {
+	setRangeFilter(colIndex: number, min: number, max: number, minActive: boolean, maxActive: boolean, showUnknown = false) {
 		if (!minActive && !maxActive) {
 			this.filters.delete(colIndex);
 		} else {
-			this.filters.set(colIndex, { type: 'range', min, max, minActive, maxActive });
+			this.filters.set(colIndex, { type: 'range', min, max, minActive, maxActive, showUnknown });
 		}
 		this.filters = new Map(this.filters);
 		this.syncToUrl();

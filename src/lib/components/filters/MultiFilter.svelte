@@ -15,6 +15,7 @@
 	let filter = $derived(urlState.filters.get(column.index) as MultiFilterType | undefined);
 	let selected = $derived(filter?.selected ?? new Set<string>());
 	let mode = $derived(filter?.mode ?? (column.modes[0] as LogicMode));
+	let showUnknown = $derived(filter?.showUnknown ?? false);
 
 	let filterSearch = $state('');
 
@@ -36,11 +37,11 @@
 		} else {
 			next.add(value);
 		}
-		urlState.setMultiFilter(column.index, next, mode);
+		urlState.setMultiFilter(column.index, next, mode, showUnknown);
 	}
 
 	function changeMode(newMode: LogicMode) {
-		urlState.setMultiFilter(column.index, selected, newMode);
+		urlState.setMultiFilter(column.index, selected, newMode, showUnknown);
 	}
 
 	function invertAll() {
@@ -51,7 +52,11 @@
 				next.add(opt.value);
 			}
 		}
-		urlState.setMultiFilter(column.index, next, mode);
+		urlState.setMultiFilter(column.index, next, mode, showUnknown);
+	}
+
+	function toggleShowUnknown() {
+		urlState.setMultiFilter(column.index, selected, mode, !showUnknown);
 	}
 
 	function clearAll() {
@@ -69,6 +74,16 @@
 			onclick={invertAll}
 		>
 			invert
+		</button>
+		<button
+			class="px-2 py-0.5 text-xs rounded border cursor-pointer select-none transition-colors"
+			style="background: {showUnknown ? 'var(--accent-muted)' : 'var(--bg-elevated)'};
+						 color: {showUnknown ? 'var(--accent)' : 'var(--text-secondary)'};
+						 border-color: {showUnknown ? 'var(--accent)' : 'var(--border)'};"
+			onclick={toggleShowUnknown}
+			title="Include entries with unknown/missing values for this field"
+		>
+			? unknown
 		</button>
 		{#if selected.size > 0}
 			<button

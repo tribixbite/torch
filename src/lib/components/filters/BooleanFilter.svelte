@@ -14,6 +14,7 @@
 	let yesSet = $derived(filter?.yes ?? new Set<string>());
 	let noSet = $derived(filter?.no ?? new Set<string>());
 	let mode = $derived(filter?.mode ?? (column.modes[0] as 'all' | 'any'));
+	let showUnknown = $derived(filter?.showUnknown ?? false);
 
 	// Get visible boolean options (exclude ~ prefixed ones)
 	let visibleOptions = $derived(
@@ -29,7 +30,7 @@
 			nextYes.add(value);
 			nextNo.delete(value); // NAND: can't be both yes and no
 		}
-		urlState.setBooleanFilter(column.index, nextYes, nextNo, mode);
+		urlState.setBooleanFilter(column.index, nextYes, nextNo, mode, showUnknown);
 	}
 
 	function toggleNo(value: string) {
@@ -41,17 +42,31 @@
 			nextNo.add(value);
 			nextYes.delete(value); // NAND
 		}
-		urlState.setBooleanFilter(column.index, nextYes, nextNo, mode);
+		urlState.setBooleanFilter(column.index, nextYes, nextNo, mode, showUnknown);
 	}
 
 	function changeMode(newMode: string) {
-		urlState.setBooleanFilter(column.index, yesSet, noSet, newMode as 'all' | 'any');
+		urlState.setBooleanFilter(column.index, yesSet, noSet, newMode as 'all' | 'any', showUnknown);
+	}
+
+	function toggleShowUnknown() {
+		urlState.setBooleanFilter(column.index, yesSet, noSet, mode, !showUnknown);
 	}
 </script>
 
 <div class="space-y-1">
 	<div class="flex items-center gap-2">
 		<LogicModeButton modes={column.modes} current={mode} onchange={changeMode} />
+		<button
+			class="px-2 py-0.5 text-xs rounded border cursor-pointer select-none transition-colors"
+			style="background: {showUnknown ? 'var(--accent-muted)' : 'var(--bg-elevated)'};
+						 color: {showUnknown ? 'var(--accent)' : 'var(--text-secondary)'};
+						 border-color: {showUnknown ? 'var(--accent)' : 'var(--border)'};"
+			onclick={toggleShowUnknown}
+			title="Include entries with unknown/missing values for this field"
+		>
+			? unknown
+		</button>
 	</div>
 
 	<div class="space-y-0.5">

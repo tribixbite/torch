@@ -24,10 +24,15 @@ export function deserializeUrl(
 
 		const parts = raw.split(',').map(decodeURIComponent);
 
+		// Detect and strip "?" show-unknown marker
+		const showUnknownIdx = parts.indexOf('?');
+		const showUnknown = showUnknownIdx !== -1;
+		if (showUnknown) parts.splice(showUnknownIdx, 1);
+
 		switch (col.filterType) {
 			case 'multi':
 			case 'mega-multi': {
-				const filter: MultiFilter = { type: 'multi', selected: new Set(), mode: col.modes[0] as LogicMode };
+				const filter: MultiFilter = { type: 'multi', selected: new Set(), mode: col.modes[0] as LogicMode, showUnknown };
 				// Check for embedded sort as last element
 				const lastPart = parts[parts.length - 1];
 				if (lastPart === 'inc' || lastPart === 'dec') {
@@ -51,7 +56,8 @@ export function deserializeUrl(
 					type: 'boolean',
 					yes: new Set(),
 					no: new Set(),
-					mode: col.modes[0] as 'all' | 'any'
+					mode: col.modes[0] as 'all' | 'any',
+					showUnknown
 				};
 				for (const part of parts) {
 					if (['any', 'all'].includes(part)) {
@@ -82,7 +88,8 @@ export function deserializeUrl(
 						min: lower,
 						max: upper,
 						minActive,
-						maxActive
+						maxActive,
+						showUnknown
 					};
 					filters.set(col.index, filter);
 				}
@@ -133,6 +140,7 @@ export function serializeUrl(
 				if (isSortCol && !defaultSort) {
 					encoded.push(sort.direction);
 				}
+				if (f.showUnknown) encoded.push('?');
 				parts.push(`${col.id}=${encoded.join(',')}`);
 				break;
 			}
@@ -154,6 +162,7 @@ export function serializeUrl(
 				if (f.no.size > 0) {
 					val += [...f.no].map((v) => '~' + encodeURIComponent(v)).join(',');
 				}
+				if (f.showUnknown) val += ',?';
 				parts.push(val);
 				break;
 			}
@@ -183,6 +192,7 @@ export function serializeUrl(
 				if (isSortCol && !defaultSort) {
 					val += ',' + sort.direction;
 				}
+				if (f?.showUnknown) val += ',?';
 				parts.push(val);
 				break;
 			}
