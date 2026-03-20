@@ -1,8 +1,8 @@
 # Pipeline State — 2026-03-20
 
-## Current Status: Data cleanup converged — 60.5% valid
+## Current Status: Data cleanup converged — 60.1% valid
 
-### Coverage (6,611 flashlights / 12,688 total DB / 9,363 in JSON)
+### Coverage (6,515 flashlights / 12,688 total DB / 9,274 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
@@ -19,16 +19,10 @@
 | runtime | 84.8% | 1,006 |
 | **led** | **79.0%** | **1,388** |
 
-Fully valid: **4,002 entries (60.5%)**
+Fully valid: **3,916 entries (60.1%)**
 
-### Spec Completeness Distribution
-| Specs filled | Count | Cumulative | % of total |
-|-------------|-------|------------|------------|
-| 16/16 | 4,002 | 4,002 | 60.5% |
-| 15/16 | 1,298 | 5,300 | 80.2% |
-| 14/16 | 527 | 5,827 | 88.1% |
-| 13/16 | 314 | 6,141 | 92.9% |
-| <=12/16 | 470 | 6,611 | 100.0% |
+Note: Valid count decreased from 4,002 to 3,916 due to duplicate deletion (not data loss).
+Duplicate entries that happened to be "valid" were removed during dedup passes.
 
 ### Single-Field Blocker Analysis
 | Field | Count | Top brands |
@@ -49,10 +43,15 @@ Fully valid: **4,002 entries (60.5%)**
 ### Session Gains (3/20 — current)
 - **Bug fix**: `rowToPartialEntry()` in raw-text-fetcher.ts — type was hardcoded 'handheld' string instead of parsed JSON array, lumens/runtime nested incorrectly
 - **Bug fix**: `hasRequiredAttributes()` defensive JSON parse for entry.type string
-- **Dedup Acebeam**: ~30 duplicate entries merged (L19 CAMO 6 color variants→1, L19 3 LED variants→1, G15 2 dupes, E10 2.0, H17 2.0, H40, Terminator M1 8 dupes→1, L16 2.0, Rider RX 2.0)
-- **Reclassification**: 13 combo packs/bundles → accessory, 4 filters/bezels → accessory
+- **Dedup Acebeam**: ~30 duplicate entries merged (L19 CAMO 6→1, L19 3→1, G15 2→1, E10 2.0, H17 2.0, H40, Terminator M1 9→1, L16 2.0, Rider RX 2.0 6→1, E75 7→1)
+- **Dedup Emisar**: 88→43 entries — cleaned all model names, merged D18/D1/KC1/DW3AA/DT8K duplicates, reclassified 9 junk entries
+- **Dedup Lumintop**: ~15 retailer-description duplicates, reclassified MCPCB/optics/lanyard as accessories
+- **Smart dedup all brands**: 52 short-model+retailer-description duplicates across all brands
+- **Reclassification**: 13 combo packs/bundles, 12 Streamlight battery/module accessories, 4 filters/bezels
 - **Parametrek cross-reference**: +72 fixes
 - **Switch extraction**: +3 from raw text (Manker ML02, UST PICO/30-Day)
+- **Generic LED cleanup**: 240 more generic elements cleared (LED light chip, white LED, etc.)
+- **Lumen contamination fixes**: Acebeam E75/M2-X/T35 had 155000 from cross-pollution
 - **Raw text cleanup**: Deleted 654 useless Keepa boilerplate entries
 - **AI parser confirmed exhausted**: 0 enrichments from 125 entries — all extractable data already captured
 
