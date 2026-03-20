@@ -1,32 +1,45 @@
 # Pipeline State — 2026-03-22
 
-## Current Status: Data honesty audit — 56.2% valid (honest)
+## Current Status: Honesty audit complete — 60.2% valid (converged)
 
-### Coverage (6,688 flashlights / 12,568 total DB / 9,252 in JSON)
+### Coverage (6,660 flashlights / 12,568 total DB / 9,257 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
-| price_usd | 97.3% | 181 |
-| color | 97.7% | 156 |
-| features | 96.9% | 206 |
-| battery | 96.7% | 223 |
-| weight_g | 96.6% | 227 |
-| lumens | 95.8% | 281 |
-| switch | 94.1% | 393 |
-| material | 93.8% | 415 |
-| throw_m | 88.9% | 744 |
-| length_mm | 86.4% | 910 |
-| runtime | 85.2% | 992 |
-| **led** | **74.3%** | **1,719** |
+| price_usd | 97.8% | 149 |
+| color | 97.7% | 152 |
+| features | 98.0% | 136 |
+| battery | 97.6% | 160 |
+| weight_g | 97.0% | 202 |
+| lumens | 95.9% | 270 |
+| switch | 95.2% | 317 |
+| material | 94.6% | 360 |
+| throw_m | 89.4% | 704 |
+| length_mm | 87.7% | 820 |
+| runtime | 85.2% | 988 |
+| **led** | **77.4%** | **1,507** |
 
-Fully valid: **3,758 entries (56.2%)**
+Fully valid: **4,008 entries (60.2%)**
 
-Note: Valid count dropped from 4,672 (70.8%) after data honesty audit. 1,435 entries
-had generic LED placeholders (`["LED"]`, `["CREE"]`, `["unknown"]`) that passed the
-"not empty" check but contained zero useful information. Additionally cleared: 121
-impossible length values (<20mm), 14 impossible weights (<5g), 248 FL1 throw/cd
-mismatches, 51 generic battery values, 84 generic switch values, 52 generic material
-values. The previous 70.8% was dishonest — real coverage was always 56.2%.
+### Spec Completeness Distribution
+| Specs filled | Count | Cumulative | % of total |
+|-------------|-------|------------|------------|
+| 16/16 | 4,008 | 4,008 | 60.2% |
+| 15/16 | 1,333 | 5,341 | 80.2% |
+| 14/16 | 524 | 5,865 | 88.1% |
+| 13/16 | 295 | 6,160 | 92.5% |
+| 12/16 | 181 | 6,341 | 95.2% |
+| 11/16 | 151 | 6,492 | 97.5% |
+| <=10/16 | 168 | 6,660 | 100.0% |
+
+Note: Valid count dropped from 4,672 (70.8%) after multi-round data honesty audit.
+All generic placeholders cleared: `["LED"]`, `["CREE"]`, `["cree"]`, `["Cree"]`,
+`["unknown"]`, `["SMD"]`, `["COB"]`, `["mechanical"]`, `["electronic"]`, `["button"]`,
+`["plastic"]`, `["metal"]`, `["other"]`. Also cleared from MIXED arrays (e.g.,
+`["LED", "Cree XP-G3"]` → `["Cree XP-G3"]`). Impossible values: 129 lengths (<20mm),
+14 weights (<5g), 268 FL1 mismatches, 56 extreme runtimes (>2000h = LED lifespan).
+133 headlamps + 37 lanterns reclassified from flashlight type. Multiple cascade
+recoveries between each cleaning round. The previous 70.8% was inflated by placeholders.
 
 ### Session Gains (3/22)
 - **Data quality fixes**: Cleared 9999 lumens placeholders (4 Fenix entries), impossible throw values (Skylumen B01vn 6000m, Olight RN 800 4000m, Olight Seeker 2 5000m), Acebeam E75 155000lm placeholder
