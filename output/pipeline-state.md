@@ -2,7 +2,7 @@
 
 ## Current Status: Data cleanup converged — 60.1% valid
 
-### Coverage (6,493 flashlights / 12,545 total DB / 9,254 in JSON)
+### Coverage (6,493 lights / 12,545 total DB / 9,254 in JSON / 1,298 near-valid)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
@@ -19,26 +19,25 @@
 | runtime | 84.8% | 1,006 |
 | **led** | **79.0%** | **1,388** |
 
-Fully valid: **3,905 entries (60.1%)**
+Fully valid: **3,907 entries (60.2%)**
 
-Note: Valid count decreased from 4,002 to 3,905 due to duplicate deletion (not data loss).
+Note: Valid count decreased from 4,002 to 3,907 due to duplicate deletion (not data loss).
 Duplicate entries that happened to be "valid" were removed during dedup passes.
+Near-valid (missing 1 attribute): 1,298 — if all were filled: 5,205 valid (80.2%).
 
-### Single-Field Blocker Analysis
+### Single-Field Blocker Analysis (updated 3/22)
 | Field | Count | Top brands |
 |-------|-------|------------|
-| led | 657 | Nightstick, Coast, Ledlenser, Pelican, SureFire |
-| runtime_hours | 263 | Lumintop(75), Mateminco(50), Emisar(31), NightWatch(22) |
-| length_mm | 132 | Rayovac(39), Petzl(17), Ledlenser(14), Olight(12) |
-| throw_m | 106 | Zebralight(14), Convoy(12), ARCHON(11), Malkoff(9) |
-| switch | 40 | Nitecore, Imalent, Sunrei, Emisar |
-| color | 25 | various |
-| weight_g | 23 | various |
+| led | 691 | Nightstick, Coast, Ledlenser, Pelican, SureFire |
+| runtime | 249 | Lumintop, Mateminco, Emisar, Olight |
+| throw_m | 154 (105 non-exempt) | Zebralight(39), Streamlight(14), Convoy(13), ARCHON(12) |
+| length_mm | 121 (68 non-exempt) | Rayovac(12), Coast(9), Ledlenser(7), Malkoff(7) |
+| switch | 29 | Sunrei, Nitecore, Olight, Knog |
+| color | 27 | various |
+| weight_g | 17 | various |
 | material | 19 | various |
 | price_usd | 17 | Lumintop (discontinued) |
-| lumens | 13 | Tank007, ReyLight, FourSevens |
-| features | 2 | Haikelite, ARCHON |
-| battery | 1 | — |
+| lumens | 12 | Tank007, ReyLight, UV lights |
 
 ### Session Gains (3/20 — current)
 - **Bug fix**: `rowToPartialEntry()` in raw-text-fetcher.ts — type was hardcoded 'handheld' string instead of parsed JSON array, lumens/runtime nested incorrectly
@@ -55,6 +54,8 @@ Duplicate entries that happened to be "valid" were removed during dedup passes.
 - **Raw text cleanup**: Deleted 654 useless Keepa boilerplate entries
 - **AI parser confirmed exhausted**: 0 enrichments from 125 entries — all extractable data already captured
 - **Dedup Imalent**: 55→36 entries — merged BL50(8→1), LD35(5→1), MS12(→1), R90TS(3→1), cleaned 16 retailer-description names, deleted 3 dupes, reclassified junk/accessories
+- **Zebralight throw investigated**: 40 missing throw, but 27 are exempt (headlamps/lanterns). 13 flashlights need throw — not on product pages, no review data. Structural gap.
+- **Single-field blocker re-analysis**: 1,298 near-valid. All extractable data exhausted from raw text, model names, and cross-references.
 
 ### Diminishing Returns
 All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are structural:
