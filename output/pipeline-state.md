@@ -2,7 +2,7 @@
 
 ## Current Status: Data cleanup converged — 60.1% valid
 
-### Coverage (6,515 flashlights / 12,688 total DB / 9,274 in JSON)
+### Coverage (6,493 flashlights / 12,545 total DB / 9,254 in JSON)
 | Field | Coverage | Missing |
 |-------|----------|---------|
 | purchase_url | ~100% | ~1 |
@@ -19,9 +19,9 @@
 | runtime | 84.8% | 1,006 |
 | **led** | **79.0%** | **1,388** |
 
-Fully valid: **3,916 entries (60.1%)**
+Fully valid: **3,905 entries (60.1%)**
 
-Note: Valid count decreased from 4,002 to 3,916 due to duplicate deletion (not data loss).
+Note: Valid count decreased from 4,002 to 3,905 due to duplicate deletion (not data loss).
 Duplicate entries that happened to be "valid" were removed during dedup passes.
 
 ### Single-Field Blocker Analysis
@@ -54,6 +54,7 @@ Duplicate entries that happened to be "valid" were removed during dedup passes.
 - **Lumen contamination fixes**: Acebeam E75/M2-X/T35 had 155000 from cross-pollution
 - **Raw text cleanup**: Deleted 654 useless Keepa boilerplate entries
 - **AI parser confirmed exhausted**: 0 enrichments from 125 entries — all extractable data already captured
+- **Dedup Imalent**: 55→36 entries — merged BL50(8→1), LD35(5→1), MS12(→1), R90TS(3→1), cleaned 16 retailer-description names, deleted 3 dupes, reclassified junk/accessories
 
 ### Diminishing Returns
 All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are structural:
