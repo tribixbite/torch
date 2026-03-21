@@ -240,7 +240,8 @@ async function main() {
 	const modelName = args.includes('--model') ? args[args.indexOf('--model') + 1] : 'flash';
 
 	console.log(`=== Vision Classifier ===`);
-	console.log(`Model: gemini-2.0-${modelName}, Start: ${startIdx}, Count: ${count}`);
+	const modelMap: Record<string, string> = { 'flash': 'gemini-2.0-flash', 'pro': 'gemini-2.5-pro', '3.1-pro': 'gemini-3.1-pro-preview' };
+	console.log(`Model: ${modelMap[modelName] ?? modelName}, Start: ${startIdx}, Count: ${count}`);
 
 	const manifestPath = `${GRID_DIR}/manifest.json`;
 	if (!fs.existsSync(manifestPath)) {
