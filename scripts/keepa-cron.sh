@@ -32,3 +32,17 @@ cd "$PROJECT" || exit 1
 echo "$(date): Starting Keepa scrape (1 batch, 5 ASINs)" >> "$LOGFILE"
 "$BUN" run pipeline/cli.ts scrape 1 >> "$LOGFILE" 2>&1
 echo "$(date): Keepa scrape complete" >> "$LOGFILE"
+
+# --- Post-scrape enrichment (all idempotent, skip existing) ---
+echo "$(date): Running post-scrape enrichment..." >> "$LOGFILE"
+
+# Download thumbnails for new entries (no sprite rebuild)
+"$BUN" run pipeline/images/scrape-images.ts --download-only >> "$LOGFILE" 2>&1
+
+# Fill color/switch/specs from parametrek ground truth
+"$BUN" run scripts/parametrek-crossref.ts >> "$LOGFILE" 2>&1
+
+# Propagate within-brand fields (throw, length, etc.)
+"$BUN" run scripts/model-crossref.ts >> "$LOGFILE" 2>&1
+
+echo "$(date): Post-scrape enrichment complete" >> "$LOGFILE"

@@ -228,6 +228,8 @@ function keepaToCanonical(product: KeepaProduct, fallbackBrand: string): Flashli
 
 	// Physical dimensions from Keepa (mm, grams)
 	const length_mm = product.itemLength && product.itemLength > 0 ? product.itemLength / 10 : specs.length_mm;
+	// NOTE: Keepa itemWeight excludes battery weight (package weight minus packaging).
+	// This is documented behavior — do NOT add battery weight estimates (data integrity rules).
 	const weight_g = product.itemWeight && product.itemWeight > 0 ? product.itemWeight : specs.weight_g;
 
 	// Colors from product color field + features

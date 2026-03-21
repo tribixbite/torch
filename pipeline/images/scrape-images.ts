@@ -24,6 +24,7 @@ const MAX_RETRIES = 2;
 const args = new Set(process.argv.slice(2));
 const skipDownload = args.has('--skip-download');
 const spriteOnly = args.has('--sprite-only');
+const downloadOnly = args.has('--download-only');
 
 interface ImageJob {
 	/** Sprite position index (0-based, assigned sequentially to entries with images) */
@@ -280,6 +281,12 @@ async function main() {
 		const { ok, fail } = await downloadAll(jobs);
 		const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 		console.log(`\nDownload complete in ${elapsed}s — ${ok} ok, ${fail} failed`);
+	}
+
+	// --download-only: skip sprite rebuild (useful for cron incremental runs)
+	if (downloadOnly) {
+		console.log('\n--download-only: skipping sprite rebuild');
+		return;
 	}
 
 	// Build sprite and write id→position mapping
