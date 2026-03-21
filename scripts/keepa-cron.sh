@@ -15,8 +15,8 @@ fi
 
 # Lockfile guard for race conditions
 if [ -f "$LOCKFILE" ]; then
-    # Stale lock check (older than 120 minutes — batch of 100 needs ~100 min token wait)
-    if [ "$(find "$LOCKFILE" -mmin +120 2>/dev/null)" ]; then
+    # Stale lock check (older than 10 minutes — batch of 5 completes in seconds)
+    if [ "$(find "$LOCKFILE" -mmin +10 2>/dev/null)" ]; then
         echo "$(date): Removing stale lockfile" >> "$LOGFILE"
         rm -f "$LOCKFILE"
     else
@@ -29,6 +29,6 @@ trap 'rm -f "$LOCKFILE"' EXIT
 touch "$LOCKFILE"
 
 cd "$PROJECT" || exit 1
-echo "$(date): Starting Keepa scrape (1 batch, 100 ASINs)" >> "$LOGFILE"
+echo "$(date): Starting Keepa scrape (1 batch, 5 ASINs)" >> "$LOGFILE"
 "$BUN" run pipeline/cli.ts scrape 1 >> "$LOGFILE" 2>&1
 echo "$(date): Keepa scrape complete" >> "$LOGFILE"

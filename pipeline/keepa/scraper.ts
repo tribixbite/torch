@@ -18,7 +18,7 @@ import {
 import { BRANDS, getBrandSearchTerms, type BrandConfig } from '../config/brands.js';
 import { normalizeBrandName } from '../store/brand-aliases.js';
 
-const BATCH_SIZE = 100; // Max per API call — cron handles pacing at 60 tokens/hr
+const BATCH_SIZE = 5; // 5 ASINs every 5 min via cron = 60/hr, never waits for tokens
 const DETAIL_TOKEN_COST = 1; // per ASIN
 const FINDER_TOKEN_COST = 11; // per finder query
 
