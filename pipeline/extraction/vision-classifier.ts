@@ -53,10 +53,11 @@ async function classifyGrid(gridPath: string, modelName: string): Promise<Vision
 	const imageBytes = fs.readFileSync(gridPath);
 	const base64Image = imageBytes.toString('base64');
 
-	// Model shortcuts: flash (default), pro (2.5 Pro), or pass-through for direct model IDs
+	// Model shortcuts: flash (default), pro (2.5 Pro), 3.1-pro, or pass-through for direct model IDs
 	const modelMap: Record<string, string> = {
 		'flash': 'gemini-2.0-flash',
-		'pro': 'gemini-2.5-pro-preview-06-05',
+		'pro': 'gemini-2.5-pro',
+		'3.1-pro': 'gemini-3.1-pro-preview',
 	};
 	const apiModel = modelMap[modelName] ?? modelName;
 	const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${API_KEY}`;
