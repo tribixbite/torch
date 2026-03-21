@@ -13,11 +13,12 @@ import {
 	countDiscoveredAsins,
 	addPrice,
 	addSource,
+	addRawSpecText,
 } from '../store/db.js';
 import { BRANDS, getBrandSearchTerms, type BrandConfig } from '../config/brands.js';
 import { normalizeBrandName } from '../store/brand-aliases.js';
 
-const BATCH_SIZE = 20; // Smaller batches to start scraping sooner (20 tokens = 20 min wait vs 100 min)
+const BATCH_SIZE = 100; // Max per API call — cron handles pacing at 60 tokens/hr
 const DETAIL_TOKEN_COST = 1; // per ASIN
 const FINDER_TOKEN_COST = 11; // per finder query
 
@@ -98,25 +99,26 @@ export async function scrapeUnscrapedAsins(
 					if (entry) {
 						upsertFlashlight(entry);
 
-						// Add Amazon price if available
-						const price = KeepaClient.extractCurrentPrice(product);
-						if (price && price > 0) {
-							addPrice(entry.id, {
-								retailer: 'Amazon',
-								price,
-								currency: 'USD',
-								url: `https://www.amazon.com/dp/${product.asin}`,
-								affiliate: false,
-								last_checked: new Date().toISOString(),
-							});
-						}
+						// Store full Keepa JSON for future re-extraction
+						// Strip csv arrays to save space (price history stored separately)
+						const rawKeep = { ...product, csv: undefined };
+						addRawSpecText(
+							entry.id,
+							`https://keepa.com/#!product/1-${product.asin}`,
+							'keepa',
+							JSON.stringify(rawKeep),
+						);
+
+						// Store full price history from CSV (not just current price)
+						const amazonUrl = `https://www.amazon.com/dp/${product.asin}`;
+						storePriceHistory(entry.id, product, amazonUrl);
 
 						// Add Keepa as source
 						addSource(entry.id, {
 							source: 'keepa',
 							url: `https://keepa.com/#!product/1-${product.asin}`,
 							scraped_at: new Date().toISOString(),
-							confidence: 0.7, // Keepa data needs LLM enrichment
+							confidence: 0.7,
 						});
 
 						scraped++;
@@ -146,6 +148,71 @@ export async function scrapeUnscrapedAsins(
 }
 
 /**
+ * Store full price history from Keepa CSV arrays.
+ * CSV format: [keepaTime, price, keepaTime, price, ...] where price is in cents.
+ * Keepa timestamp: (keepaTime + 21564000) * 60000 = Unix ms.
+ * Stores Amazon (csv[0]), Buy Box (csv[18]), and 3P New (csv[1]) histories.
+ */
+function storePriceHistory(flashlightId: string, product: KeepaProduct, amazonUrl: string): void {
+	const csv = product.csv;
+	if (!csv) return;
+
+	// Price source labels for each CSV index we care about
+	const priceSources: [number, string][] = [
+		[0, 'Amazon'],
+		[18, 'Amazon Buy Box'],
+		[1, 'Amazon 3P New'],
+	];
+
+	for (const [idx, retailer] of priceSources) {
+		const series = csv[idx];
+		if (!series || series.length < 2) continue;
+
+		// Store just the most recent price point (avoid duplicating full history each run)
+		// Full history is preserved in raw_spec_text as JSON
+		const lastPrice = series[series.length - 1];
+		if (lastPrice > 0) {
+			const lastTime = series[series.length - 2];
+			const unixMs = (lastTime + 21564000) * 60000;
+			addPrice(flashlightId, {
+				retailer,
+				price: lastPrice / 100,
+				currency: 'USD',
+				url: amazonUrl,
+				affiliate: false,
+				last_checked: new Date(unixMs).toISOString(),
+			});
+		}
+	}
+
+	// Also store the full CSV price history as raw text for future analysis
+	// Only the price-relevant indices, compacted
+	const priceHistory: Record<string, [number, number][]> = {};
+	for (const [idx, label] of priceSources) {
+		const series = csv[idx];
+		if (!series || series.length < 2) continue;
+		const pairs: [number, number][] = [];
+		for (let i = 0; i < series.length - 1; i += 2) {
+			const price = series[i + 1];
+			if (price > 0) {
+				const unixMs = (series[i] + 21564000) * 60000;
+				pairs.push([unixMs, price / 100]);
+			}
+		}
+		if (pairs.length > 0) priceHistory[label] = pairs;
+	}
+
+	if (Object.keys(priceHistory).length > 0) {
+		addRawSpecText(
+			flashlightId,
+			`https://www.amazon.com/dp/${product.asin}`,
+			'price_history',
+			JSON.stringify(priceHistory),
+		);
+	}
+}
+
+/**
  * Convert a Keepa product to our canonical FlashlightEntry.
  * Extracts structured data from Keepa's fields + parses description for specs.
  */
@@ -168,9 +235,13 @@ function keepaToCanonical(product: KeepaProduct, fallbackBrand: string): Flashli
 	if (product.color) colors.push(product.color);
 	if (specs.colors.length > 0) colors.push(...specs.colors);
 
-	// Materials
+	// Materials — prefer materials[] array over deprecated material string
 	const materials: string[] = [];
-	if (product.material) materials.push(product.material);
+	if (product.materials?.length) {
+		materials.push(...product.materials);
+	} else if (product.material) {
+		materials.push(product.material);
+	}
 	if (specs.materials.length > 0) materials.push(...specs.materials);
 
 	// Image URLs
@@ -185,7 +256,12 @@ function keepaToCanonical(product: KeepaProduct, fallbackBrand: string): Flashli
 	// LED from features/description
 	const leds = specs.leds.length > 0 ? specs.leds : ['unknown'];
 
-	// Type classification
+	// Enrich features from Keepa-specific fields
+	if (product.batteriesIncluded && !specs.features.includes('battery included')) {
+		specs.features.push('battery included');
+	}
+
+	// Type classification — use specificUsesForProduct + itemTypeKeyword for better accuracy
 	const types = classifyType(product);
 
 	return {
@@ -279,10 +355,10 @@ function extractModel(product: KeepaProduct, brand: string): string | null {
 	return model || product.model || null;
 }
 
-/** Classify flashlight type from title/category */
+/** Classify flashlight type from title/category/uses */
 function classifyType(product: KeepaProduct): string[] {
 	const types: string[] = [];
-	const text = `${product.title ?? ''} ${product.description ?? ''} ${(product.features ?? []).join(' ')}`.toLowerCase();
+	const text = `${product.title ?? ''} ${product.description ?? ''} ${(product.features ?? []).join(' ')} ${(product.specificUsesForProduct ?? []).join(' ')} ${product.itemTypeKeyword ?? ''} ${product.binding ?? ''}`.toLowerCase();
 
 	if (text.includes('headlamp') || text.includes('head lamp') || text.includes('headlight')) types.push('headlamp');
 	if (text.includes('lantern') || text.includes('camping light')) types.push('lantern');
@@ -331,12 +407,14 @@ function parseSpecsFromText(product: KeepaProduct): ParsedSpecs {
 	const allText = [
 		product.title ?? '',
 		product.description ?? '',
+		product.shortDescription ?? '',
 		...(product.features ?? []),
 		...(product.specialFeatures ?? []),
+		...(product.specificUsesForProduct ?? []),
 		product.includedComponents ?? '',
 		product.recommendedUsesForProduct ?? '',
-		product.specificUsesForProduct ?? '',
 		product.productBenefit ?? '',
+		product.itemTypeKeyword ?? '',
 	].join('\n');
 
 	const textLower = allText.toLowerCase();

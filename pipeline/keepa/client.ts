@@ -14,6 +14,7 @@ interface TokenStatus {
 
 interface KeepaProduct {
 	asin: string;
+	parentAsin?: string;
 	title?: string;
 	brand?: string;
 	manufacturer?: string;
@@ -21,24 +22,47 @@ interface KeepaProduct {
 	partNumber?: string;
 	color?: string;
 	size?: string;
-	material?: string;
-	itemWeight?: number; // grams
+	style?: string;
+	material?: string; // deprecated — use materials[]
+	materials?: string[];
+	itemForm?: string;
+	itemWeight?: number; // grams (-1 = unavailable)
 	itemHeight?: number; // mm (-1 = unavailable)
 	itemLength?: number; // mm
 	itemWidth?: number; // mm
+	packageWeight?: number; // grams (box, not product)
+	packageLength?: number; // mm (box, not product)
 	features?: string[];
 	description?: string;
+	shortDescription?: string;
 	imagesCSV?: string;
 	eanList?: string[];
 	upcList?: string[];
 	categoryTree?: Array<{ catId: number; name: string }>;
 	specialFeatures?: string[];
-	includedComponents?: string;
+	specificUsesForProduct?: string[];
 	recommendedUsesForProduct?: string;
-	specificUsesForProduct?: string;
+	includedComponents?: string;
 	productBenefit?: string;
+	targetAudienceKeyword?: string;
+	itemTypeKeyword?: string;
+	type?: string; // Amazon product type
+	binding?: string; // Amazon category for non-books
+	productGroup?: string;
+	batteriesRequired?: boolean;
+	batteriesIncluded?: boolean;
 	monthlySold?: number;
 	csv?: (number[] | null)[];
+	// Stats object — free with stats=N param
+	stats?: {
+		current?: number[];
+		avg?: number[];
+		avg30?: number[];
+		avg90?: number[];
+		avg180?: number[];
+		min?: number[][];
+		max?: number[][];
+	};
 }
 
 export type { KeepaProduct };
@@ -122,6 +146,8 @@ export class KeepaClient {
 		const res = await this.request('/product', {
 			domain: this.domain,
 			asin: asins.join(','),
+			stats: 90, // free: adds current/avg/min/max prices for last 90 days
+			// history stays enabled — we store full price history
 		});
 
 		this.tokensLeft = res.tokensLeft ?? 0;
