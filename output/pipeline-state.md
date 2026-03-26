@@ -1,6 +1,6 @@
-# Pipeline State — 2026-03-21
+# Pipeline State — 2026-03-26
 
-## Current Status: Continuous enrichment pipeline active — vision + Keepa cron
+## Current Status: LED normalization shipped — continuous enrichment active
 
 ### Coverage (9,589 lights / ~12.7K total DB)
 | Field | Missing | % Coverage |
@@ -38,14 +38,21 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (3/21 — current)
+### Session Gains (3/26 — current)
+- **LED normalization**: 904 unique strings → 401 canonical filter options (56% reduction)
+  - 5,190+ generic entries cleared ("LED", "High Performance Cool White LED", etc.)
+  - 519A: 18 variants → 1 filter option
+  - All Cree/Luminus/Nichia/Osram families standardized with proper prefixes
+  - Module: `pipeline/normalization/led-normalizer.ts` (107 test cases)
+  - DB migration: `scripts/normalize-leds.ts`
+  - Build-time: normalizeLedArray() applied in build-torch-db.ts
+- **Show unknown toggle**: per-filter "? unknown" toggle for all filter types
+- **Keepa batch optimization**: 5 ASINs/5min cron with post-scrape enrichment
+
+### Previous Session Gains (3/21)
 - **Parametrek crossref**: +166 fixes (12 switches, 20 LEDs, 23 years, 20 beam angles, etc.)
 - **Vision classifier (Flash)**: +96 colors, +64 switches, 1262 reclassified as accessories
 - **Gap reduction**: color 186→50, switch 377→229
-- **New scripts**: `validate-vision-accuracy.ts`, `vision-cron.sh`
-- **Code changes**: `--download-only` flag for scrape-images, flexible model IDs in vision-classifier
-- **Keepa cron enhanced**: post-scrape enrichment chain (images + parametrek + model crossref)
-- **Keepa weight documented**: itemWeight excludes battery — comment-only, no logic change
 
 ### Diminishing Returns
 All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are structural:
@@ -62,6 +69,8 @@ All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are s
 | `scripts/dedup-models.ts` | Merge duplicate brand+model entries |
 | `scripts/parametrek-crossref.ts` | Cross-reference with parametrek.com data |
 | `scripts/fetch-asin-prices.ts` | Get prices from Amazon by ASIN |
+| `scripts/normalize-leds.ts` | One-shot DB migration for LED canonicalization |
+| `pipeline/normalization/led-normalizer.ts` | Canonical LED normalizer (107 test cases) |
 | `scripts/validate-vision-accuracy.ts` | Validate vision results vs parametrek |
 | `scripts/vision-cron.sh` | Hourly vision enrichment (grid → classify → sprite) |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
