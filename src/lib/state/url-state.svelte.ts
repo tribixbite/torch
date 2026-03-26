@@ -24,9 +24,15 @@ class UrlState {
 
 		// Parse current URL
 		const url = new URL(window.location.href);
+		const hasUrlParams = url.searchParams.toString().length > 0;
 		const { filters, sort } = deserializeUrl(url.searchParams, columns);
 		this.filters = filters;
 		this.sort = sort;
+
+		// Apply default quality filters on fresh visit (no URL params)
+		if (!hasUrlParams && filters.size === 0) {
+			this.applyDefaults(columns);
+		}
 
 		// Listen for popstate (back/forward navigation)
 		window.addEventListener('popstate', () => {
@@ -35,6 +41,40 @@ class UrlState {
 			this.filters = filters;
 			this.sort = sort;
 		});
+	}
+
+	/** Apply default quality filters — hides low-completeness entries, accessories, blogs, and no-name brands */
+	private applyDefaults(columns: ColumnDef[]) {
+		// Find column indices by id
+		const completenessCol = columns.find(c => c.id === 'completeness');
+		const typeCol = columns.find(c => c.id === 'type');
+		const mfgCol = columns.find(c => c.id === 'has_mfg_url');
+
+		// Completeness >= 8 (hide entries missing more than 8/16 core attributes)
+		if (completenessCol && completenessCol.filterType === 'range') {
+			this.filters.set(completenessCol.index, {
+				type: 'range',
+				min: 8,
+				max: completenessCol.max!,
+				minActive: true,
+				maxActive: false,
+			});
+		}
+
+		// Exclude accessories and blogs by default
+		if (typeCol) {
+			this.filters.set(typeCol.index, {
+				type: 'multi',
+				selected: new Set(['accessory', 'blog']),
+				mode: 'none' as LogicMode,
+			});
+		}
+
+		// Note: has_mfg_url filter available but not default — completeness >= 8 already filters most junk
+		// Users can enable the mfg site filter manually to further narrow results
+
+		this.filters = new Map(this.filters); // trigger reactivity
+		this.syncToUrl();
 	}
 
 	/** Push filter state to URL (replaceState, no navigation) */

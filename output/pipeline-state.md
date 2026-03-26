@@ -1,6 +1,6 @@
 # Pipeline State — 2026-03-26
 
-## Current Status: LED normalization shipped — continuous enrichment active
+## Current Status: Data quality filters + audit shipped
 
 ### Coverage (9,589 lights / ~12.7K total DB)
 | Field | Missing | % Coverage |
@@ -39,6 +39,19 @@ Known issues:
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
 ### Session Gains (3/26 — current)
+- **Default quality filters**: Fresh visits auto-apply completeness ≥ 8/16 + no accessories/blogs
+  - 12,871 total → ~9,215 shown by default (28% filtered)
+  - `completeness` range column: counts non-empty required attributes per entry (0–16)
+  - `has_mfg_url` multi column: brand-level manufacturer URL detection (96 brands = "yes")
+  - Users can disable/adjust defaults via sidebar — filters visible in URL bar
+- **Duplicate cleanup**: 32 duplicate groups merged (33 entries removed)
+  - Case-insensitive dedup for EagTac/EagleTac, Fenix PD40R v2.0/V2.0, etc.
+- **Data cleanup**: 892 invalid lengths (<10mm) cleared, 32 erroneous weights (>5kg on accessories) cleared, 4 lengths >1m cleared
+- **Data audit**: full quality report at `output/data-audit.md`
+  - 574 no-name brands (no manufacturer URL, 2,657 entries)
+  - 269/12,493 entries missing images
+  - 18 entries with lumens > 100k, 48 with weight > 5kg
+- **Spec verification**: 1,300 flags across bounds checks + ANSI FL1 consistency
 - **LED normalization**: 904 unique strings → 401 canonical filter options (56% reduction)
   - 5,190+ generic entries cleared ("LED", "High Performance Cool White LED", etc.)
   - 519A: 18 variants → 1 filter option
@@ -75,3 +88,5 @@ All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are s
 | `scripts/vision-cron.sh` | Hourly vision enrichment (grid → classify → sprite) |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
+| `scripts/audit-data-quality.ts` | Comprehensive data quality audit → output/data-audit.md |
+| `scripts/verify-specs.ts` | Spec bounds verification → output/data-audit.md |

@@ -8,6 +8,42 @@ import { normalizeLedArray } from '../normalization/led-normalizer.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
+/** Retailer domains — URLs from these are NOT manufacturer websites */
+const RETAILER_DOMAINS = /amazon\.|ebay\.|walmart\.|bestbuy\.|bhphoto\.|batteryjunction\.|goinggear\.|nealsgadgets\.|illumn\.|killzoneflashlights\.|knifecenter\.|bladehq\.|opticsplanet\.|cabelas\.|basspro\.|rei\.com|homedepot\.|lowes\.|target\.com|aliexpress\.|banggood\.|gearbest\./i;
+
+/** Compute completeness score: count of non-empty fields from the 16 required attributes */
+function computeCompleteness(e: FlashlightEntry): number {
+	let score = 0;
+	if (e.model) score++;
+	if (e.brand) score++;
+	if (e.type?.length) score++;
+	if (e.led?.length) score++;
+	if (e.battery?.length) score++;
+	if (e.performance?.claimed?.lumens?.length) score++;
+	// throw_m is N/A for headlamps/lanterns — count it if present OR if flood type
+	const isFloodType = e.type?.some((t: string) => ['headlamp', 'lantern'].includes(t)) ||
+		/\bflood\b/i.test(e.model ?? '');
+	if (isFloodType || (e.performance?.claimed?.throw_m && e.performance.claimed.throw_m > 0)) score++;
+	if (e.performance?.claimed?.runtime_hours?.length) score++;
+	if (e.switch?.length) score++;
+	if (e.features?.length) score++;
+	if (e.color?.length) score++;
+	if (e.material?.length) score++;
+	if (e.length_mm != null && e.length_mm > 0) score++;
+	if (e.weight_g != null && e.weight_g > 0) score++;
+	if (e.price_usd != null && e.price_usd > 0) score++;
+	if (e.purchase_urls?.length) score++;
+	return score;
+}
+
+/** Check if entry has a manufacturer (non-retailer) URL */
+function hasMfgUrl(e: FlashlightEntry): boolean {
+	for (const url of e.info_urls ?? []) {
+		if (url && !RETAILER_DOMAINS.test(url)) return true;
+	}
+	return false;
+}
+
 /**
  * Color normalization — maps raw variant strings to 20 canonical colors.
  * Strips LED color temps, model numbers, finishes, and junk values.
@@ -188,6 +224,10 @@ const COLUMNS: ColumnMeta[] = [
 		extract: (e) => e.performance.claimed.beam_angle ?? '' },
 	{ id: 'year', display: 'year', unit: '', cvis: 'never', link: 'year', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.year ?? '' },
+	{ id: 'completeness', display: 'data&nbsp;quality', unit: '{}/16', cvis: 'never', link: 'completeness', srch: false, mode: ['any'], sortable: true,
+		extract: (e) => computeCompleteness(e) },
+	{ id: 'has_mfg_url', display: 'mfg&nbsp;site', unit: '', cvis: 'never', link: 'has_mfg_url', srch: false, mode: ['any'], sortable: false,
+		extract: (_e) => ['no'] }, // Placeholder — overridden at build time with brand-level lookup
 	{ id: '_reviews', display: '_reviews', unit: '', cvis: 'never', link: '_reviews', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => 0 },
 	{ id: 'purchase', display: 'purchase', unit: '{link}', cvis: 'always', link: 'purchase', srch: false, mode: ['any'], sortable: false,
@@ -270,7 +310,7 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 
 /** Build opts[] — filter definitions for each column */
 function buildOpts(data: unknown[][]): (unknown[] | null)[] {
-	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material']);
+	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'has_mfg_url']);
 	// Mega-multi: columns with many options that benefit from grouped display
 	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'led_options', 'battery', 'environment']);
 	const BOOLEAN_COLS = new Set(['features']);
@@ -291,6 +331,7 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		efficacy: { type: 'range' },
 		beam_angle: { type: 'range' },
 		year: { type: 'range' },
+		completeness: { type: 'range' },
 	};
 
 	// Composite filters group sub-columns under one header
@@ -422,6 +463,15 @@ export async function buildTorchDb(): Promise<{
 	// Keep accessories/blogs — they're filterable via type column
 	const entries = allEntries.filter(e => !e.type.includes('removed'));
 
+	// Build brand-level manufacturer URL lookup — if ANY entry for a brand has a mfg URL, all entries inherit it
+	const brandHasMfgUrl = new Set<string>();
+	for (const entry of entries) {
+		if (hasMfgUrl(entry)) brandHasMfgUrl.add(entry.brand);
+	}
+	console.log(`  ${brandHasMfgUrl.size} brands have manufacturer URLs (${entries.length - [...entries].filter(e => brandHasMfgUrl.has(e.brand)).length} entries from brands without)`);
+	// Patch hasMfgUrl to use brand-level lookup
+	const brandMfgLookup = (e: FlashlightEntry): boolean => brandHasMfgUrl.has(e.brand);
+
 	// Load sprite metadata if available (written by scrape-images.ts)
 	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');
 	let spriteMeta: SpriteMetadata | null = null;
@@ -434,9 +484,10 @@ export async function buildTorchDb(): Promise<{
 		console.log('  No sprite metadata found — using image URLs for _pic');
 	}
 
-	// Build data array — each row is 36 elements in column order
+	// Build data array — each row is column-count elements in column order
 	const data: unknown[][] = [];
 	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
+	const mfgColIdx = COLUMNS.findIndex((c) => c.id === 'has_mfg_url');
 
 	let spriteHits = 0;
 	for (let rowIdx = 0; rowIdx < entries.length; rowIdx++) {
@@ -463,6 +514,10 @@ export async function buildTorchDb(): Promise<{
 				spriteHits++;
 			}
 			// else: no sprite for this entry, keep the image URL from extract
+		}
+		// Override has_mfg_url with brand-level lookup
+		if (mfgColIdx >= 0) {
+			row[mfgColIdx] = brandMfgLookup(entry) ? ['yes'] : ['no'];
 		}
 		data.push(row);
 	}
