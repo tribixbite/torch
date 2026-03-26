@@ -4,6 +4,7 @@
  */
 import { getAllFlashlights, updateEntryType } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
+import { normalizeLedArray } from '../normalization/led-normalizer.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
@@ -93,11 +94,11 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'type', display: 'type', unit: '', cvis: '', link: 'type', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.type },
 	{ id: 'led', display: 'LED', unit: '', cvis: '', link: 'led', srch: true, mode: ['any', 'all', 'only'], sortable: false,
-		extract: (e) => e.led },
+		extract: (e) => normalizeLedArray(e.led) },
 	{ id: 'trueled', display: 'LED', unit: '', cvis: 'never', link: 'led', srch: false, mode: ['any', 'all', 'only'], sortable: false,
-		extract: (e) => e.led },
+		extract: (e) => normalizeLedArray(e.led) },
 	{ id: 'led_options', display: 'LED&nbsp;options', unit: '', cvis: 'never', link: 'led', srch: true, mode: ['any'], sortable: false,
-		extract: (e) => e.led_options ?? [] },
+		extract: (e) => normalizeLedArray(e.led_options ?? []) },
 	{ id: 'battery', display: 'battery', unit: '', cvis: 'always', link: 'battery', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.battery },
 	{ id: 'wh', display: 'capacity', unit: '{si}Wh', cvis: 'never', link: 'battery', srch: false, mode: ['any'], sortable: true,
