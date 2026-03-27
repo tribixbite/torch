@@ -38,7 +38,18 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (3/26 — current)
+### Session Gains (3/27 — current)
+- **Sprite rendering fix**: `Array.isArray()` fails on Svelte 5 proxied arrays — all thumbnails were rendering tile 0,0
+  - Fixed `picIsSprite` detection in `FlashlightCard.svelte` to use `typeof + length` check
+  - All 15,696 sprite tiles now render correctly per entry
+- **Emisar/Noctigon image URL reorder**: 44 entries had intl-outdoor Magento cache URLs first
+  - 6 entries with Shopify CDN alternatives reordered (Shopify first)
+  - Thumbnails re-downloaded from higher-quality Shopify CDN source
+  - Script: `scripts/fix-intl-images.ts`
+- **Sprite rebuild**: 15,696 tiles mapped (12,573/13,021 entries = 96.6% sprite coverage)
+- **Junk image cleanup**: 42 entries cleaned of ajax-loader.gif, 120x120 thumbs, placeholders
+
+### Previous Session Gains (3/26)
 - **Default quality filters**: Fresh visits auto-apply completeness ≥ 8/16 + no accessories/blogs
   - 12,871 total → ~9,215 shown by default (28% filtered)
   - `completeness` range column: counts non-empty required attributes per entry (0–16)
