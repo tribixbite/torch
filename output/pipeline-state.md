@@ -1,6 +1,6 @@
-# Pipeline State — 2026-03-26
+# Pipeline State — 2026-03-27
 
-## Current Status: Data quality filters + audit shipped
+## Current Status: Battery normalization + filter ordering shipped
 
 ### Coverage (9,589 lights / ~12.7K total DB)
 | Field | Missing | % Coverage |
@@ -39,6 +39,23 @@ Known issues:
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
 ### Session Gains (3/27 — current)
+- **Battery normalization**: 647 unique battery values → 85 canonical (87% reduction)
+  - Cell types: strip qty-1 prefix, normalize IEC names (123A → CR123A)
+  - Chemistry: Li-ion/Li-Ion/lithium-ion → Li-ion, Li-polymer/Li-Pol → Li-poly
+  - Built-in: integrated/ZITHION/capacity-only/Wh strings → built-in
+  - Multi-cell expansion: 2x18650 → both 18650 AND 2x18650 in filter
+  - 166 test cases, module: `pipeline/normalization/battery-normalizer.ts`
+  - DB migration: `scripts/normalize-batteries.ts`
+- **Battery filter ordering**: popularity-weighted (18650, 21700, 14500 at top) instead of alphabetical
+- **Known manufacturer brands**: 29 r/flashlight-approved brands whitelisted for has_mfg_url=yes
+  - Includes Lumintop, Convoy, Sofirn, Wurkkos, Emisar, Noctigon, etc.
+- **Image URL reorder**: generalized to all brands (was Emisar/Noctigon only)
+  - 41 entries: Amazon/retailer → Shopify/manufacturer first
+  - 26 entries: GIF-first URLs demoted
+  - Script: `scripts/fix-image-ordering.ts`
+- **Retailer domains**: added jlhawaii808
+
+### Previous Session Gains (3/27 — earlier)
 - **Sprite rendering fix**: `Array.isArray()` fails on Svelte 5 proxied arrays — all thumbnails were rendering tile 0,0
   - Fixed `picIsSprite` detection in `FlashlightCard.svelte` to use `typeof + length` check
   - All 15,696 sprite tiles now render correctly per entry
