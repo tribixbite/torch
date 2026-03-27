@@ -5,11 +5,12 @@
 import { getAllFlashlights, updateEntryType } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { normalizeLedArray } from '../normalization/led-normalizer.js';
+import { normalizeBatteryArray } from '../normalization/battery-normalizer.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
 /** Retailer domains — URLs from these are NOT manufacturer websites */
-const RETAILER_DOMAINS = /amazon\.|ebay\.|walmart\.|bestbuy\.|bhphoto\.|batteryjunction\.|goinggear\.|nealsgadgets\.|illumn\.|killzoneflashlights\.|knifecenter\.|bladehq\.|opticsplanet\.|cabelas\.|basspro\.|rei\.com|homedepot\.|lowes\.|target\.com|aliexpress\.|banggood\.|gearbest\./i;
+const RETAILER_DOMAINS = /amazon\.|ebay\.|walmart\.|bestbuy\.|bhphoto\.|batteryjunction\.|goinggear\.|nealsgadgets\.|illumn\.|killzoneflashlights\.|knifecenter\.|bladehq\.|opticsplanet\.|cabelas\.|basspro\.|rei\.com|homedepot\.|lowes\.|target\.com|aliexpress\.|banggood\.|gearbest\.|jlhawaii808\.|jlhawaii\./i;
 
 /** Compute completeness score: count of non-empty fields from the 16 required attributes */
 function computeCompleteness(e: FlashlightEntry): number {
@@ -136,7 +137,7 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'led_options', display: 'LED&nbsp;options', unit: '', cvis: 'never', link: 'led', srch: true, mode: ['any'], sortable: false,
 		extract: (e) => normalizeLedArray(e.led_options ?? []) },
 	{ id: 'battery', display: 'battery', unit: '', cvis: 'always', link: 'battery', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
-		extract: (e) => e.battery },
+		extract: (e) => normalizeBatteryArray(e.battery) },
 	{ id: 'wh', display: 'capacity', unit: '{si}Wh', cvis: 'never', link: 'battery', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.wh ?? '' },
 	{ id: '_bat', display: 'battery', unit: '', cvis: 'never', link: 'battery', srch: false, mode: ['any'], sortable: false,
@@ -341,9 +342,37 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		diam: [22, 23],  // bezel_size (index 22), body_size (index 23)
 	};
 
+	/** Custom battery sort: popularity-weighted, common cells first */
+	const BATTERY_PRIORITY: string[] = [
+		// Li-ion cells (most popular first)
+		'18650', '21700', '14500', '18350', '16340', 'CR123A',
+		'26650', '26800', '10440', '10180',
+		// Standard cells
+		'AA', 'AAA', 'C', 'D',
+		// Less common Li-ion
+		'18500', '32650', '33140', '46950', '10280',
+		// Multi-cell
+		'2x18650', '3x18650', '4x18650', '2xCR123A', '2x16340', '3xAAA', '4xAA',
+		// Chemistry
+		'Li-ion', 'Li-poly', 'Li-ion pack', 'NiMH', 'NiCd', 'LiFePO4', 'alkaline',
+		// Integrated
+		'built-in',
+		// Button cells
+		'CR2032', 'CR2016', 'LR44', 'LR41',
+		// Special
+		'6V lantern', '12V lantern', 'Sub-C',
+	];
+
 	return COLUMNS.map((col, i) => {
 		if (MEGA_MULTI_COLS.has(col.id)) {
-			const options = collectOptions(data, i);
+			let options = collectOptions(data, i);
+			// Custom sort for battery: priority list first, then alphabetical remainder
+			if (col.id === 'battery') {
+				const prioritySet = new Set(BATTERY_PRIORITY);
+				const prioritized = BATTERY_PRIORITY.filter(b => options.includes(b));
+				const remaining = options.filter(b => !prioritySet.has(b)).sort((a, b) => a.localeCompare(b));
+				options = [...prioritized, ...remaining];
+			}
 			return ['mega-multi', options];
 		}
 		if (MULTI_COLS.has(col.id)) {
@@ -468,6 +497,17 @@ export async function buildTorchDb(): Promise<{
 	for (const entry of entries) {
 		if (hasMfgUrl(entry)) brandHasMfgUrl.add(entry.brand);
 	}
+	// Known manufacturer brands — sold at enthusiast retailers (jlhawaii808, nealsgadgets, illumn)
+	// These all have manufacturer websites with spec sheets
+	const KNOWN_MFG_BRANDS = new Set([
+		'Acebeam', 'Armytek', 'Convoy', 'Cyansky', 'Emisar', 'Fenix',
+		'Fireflies', 'Imalent', 'JETBeam', 'Klarus', 'Loop Gear',
+		'Lumintop', 'Manker', 'Mateminco', 'Nextorch', 'Nitecore',
+		'Noctigon', 'Olight', 'ReyLight', 'Rovyvon', 'Skilhunt',
+		'Sofirn', 'Speras', 'Sunwayman', 'ThruNite', 'Weltool',
+		'Wuben', 'Wurkkos', 'Zebralight',
+	]);
+	for (const b of KNOWN_MFG_BRANDS) brandHasMfgUrl.add(b);
 	console.log(`  ${brandHasMfgUrl.size} brands have manufacturer URLs (${entries.length - [...entries].filter(e => brandHasMfgUrl.has(e.brand)).length} entries from brands without)`);
 	// Patch hasMfgUrl to use brand-level lookup
 	const brandMfgLookup = (e: FlashlightEntry): boolean => brandHasMfgUrl.has(e.brand);
