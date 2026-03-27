@@ -28,9 +28,10 @@
 	let model = $derived(modelCol >= 0 ? String(data[modelCol] ?? '') : '');
 	let brand = $derived(brandCol >= 0 ? String(data[brandCol] ?? '') : '');
 	// _pic can be [col, row] sprite coords OR a direct image URL string
+	// Note: Array.isArray() returns false for Svelte 5 proxied arrays, so check typeof + length
 	let picRaw = $derived(picCol >= 0 ? data[picCol] : null);
-	let picIsSprite = $derived(Array.isArray(picRaw));
-	let picCoords = $derived(picIsSprite ? picRaw as [number, number] : [0, 0] as [number, number]);
+	let picIsSprite = $derived(picRaw != null && typeof picRaw === 'object' && (picRaw as any).length === 2);
+	let picCoords = $derived(picIsSprite ? [Number((picRaw as any)[0]), Number((picRaw as any)[1])] as [number, number] : [0, 0] as [number, number]);
 	let picUrl = $derived(!picIsSprite && typeof picRaw === 'string' && picRaw ? picRaw : '');
 	let isStarred = $derived(starredState.isStarred(index));
 
