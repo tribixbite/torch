@@ -1,0 +1,40 @@
+name: Deploy React to GitHub Pages
+
+on:
+  push:
+    branches: [react]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-react
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bunx --bun vite build
+
+      - name: Add CNAME
+        run: echo "react.torch.directory" > build/CNAME
+
+      - name: Deploy to torch-react repo
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.REACT_DEPLOY_KEY }}
+          external_repository: tribixbite/torch-react
+          publish_branch: gh-pages
+          publish_dir: ./build
