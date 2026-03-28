@@ -35,6 +35,8 @@ export default defineConfig({
 			'$lib': resolve(__dirname, 'src/lib')
 		}
 	},
+	// static/ holds flashlights.now.json, favicons, manifest, OG images, CNAME
+	publicDir: 'static',
 	build: {
 		outDir: 'build',
 		target: 'esnext'
