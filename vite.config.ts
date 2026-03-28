@@ -25,7 +25,7 @@ export default defineConfig({
 				// Pre-cache app shell + static assets
 				globPatterns: ['**/*.{js,css,html,svg,png,webp,json}'],
 				// Skip the large JSON from precache (handled by runtime caching above)
-				globIgnores: ['**/flashlights.now.json'],
+				globIgnores: ['**/flashlights.now.json', '**/*.sprites.*'],
 			},
 			manifest: false, // Use existing static/manifest.json
 		}),
