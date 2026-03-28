@@ -12,8 +12,8 @@
  * Matches by brand+model, fills in missing fields from parametrek.
  */
 console.error('ERROR: This script is deprecated. Parametrek data cannot be used for production enrichment.');
-console.error('Use revert-parametrek-data.ts to audit/revert any parametrek-sourced data.');
-console.error('For validation only, remove this guard and run with --validate flag.');
+console.error('Use this script ONLY for validation/reality-checking.');
+console.error('Remove the guard below to run intentionally.');
 process.exit(1);
 import { Database } from 'bun:sqlite';
 

@@ -1,24 +1,26 @@
 # Pipeline State — 2026-03-27
 
-## Current Status: Parametrek data reverted — honest coverage
+## Current Status: All normalizations shipped, parametrek crossref deprecated
 
-### Coverage (11,061 lights after parametrek reversion)
-| Field | Count | % Coverage |
-|-------|-------|------------|
-| features | 9,222 | 83% |
-| lumens | 8,705 | 79% |
-| weight_g | 8,735 | 79% |
-| material | 8,640 | 78% |
-| price_usd | 8,237 | 74% |
-| battery | 8,078 | 73% |
-| length_mm | 7,906 | 71% |
-| switch | 7,754 | 70% |
-| throw_m | 7,239 | 65% |
-| runtime | 7,185 | 65% |
-| **led** | **7,012** | **63%** |
+### Coverage (~9,500 lights / ~12.7K total DB)
+| Field | Missing | % Coverage |
+|-------|---------|------------|
+| purchase_url | ~1 | ~100% |
+| color | 50 | 99.5% |
+| battery | ~158 | 98.4% |
+| features | ~162 | 98.3% |
+| price_usd | ~194 | 98.0% |
+| weight_g | ~194 | 98.0% |
+| lumens | ~275 | 97.1% |
+| material | ~347 | 96.4% |
+| switch | 229 | 97.6% |
+| throw_m | ~701 | 92.7% |
+| length_mm | ~797 | 91.7% |
+| runtime | ~1,006 | 89.5% |
+| **led** | **~1,388** | **85.5%** |
 
-Note: 1,065 entries had parametrek-sourced data reverted (8,471 field values cleared).
-Brands with own scrapers unaffected. Amazon-sourced entries lost parametrek backfill.
+Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
+Existing data kept as-is (indistinguishable from scraped data).
 
 ### Continuous Enrichment Pipeline
 1. **Keepa cron** (`scripts/keepa-cron.sh`): every 5min, 5 ASINs, post-scrape enrichment:
@@ -72,11 +74,9 @@ Known issues:
   - 60 test cases, module: `pipeline/normalization/features-normalizer.ts`
 - **Material/switch filter ordering**: popularity-weighted (aluminum, stainless steel, polymer first; tail, side, rotary first)
 - **Unified migration**: `scripts/normalize-all.ts` — runs all 3 normalizer self-tests then applies DB migrations
-- **Parametrek data reversion**: 1,065 entries cleared of parametrek-sourced data (8,471 field values)
-  - Criteria: no info_urls (Amazon-sourced) + 2+ scalar fields matching parametrek exactly
-  - Script: `scripts/revert-parametrek-data.ts`
-  - `scripts/parametrek-crossref.ts` deprecated — removed from keepa-cron.sh
-  - Parametrek data only for validation, not production enrichment
+- **Parametrek crossref deprecated**: removed from keepa-cron.sh, guard added to script
+  - Existing data kept — can't distinguish parametrek-sourced from scraped data
+  - Future enrichment: manufacturer scraping only, no parametrek backfill
 
 ### Previous Session Gains (3/27 — earlier)
 - **Sprite rendering fix**: `Array.isArray()` fails on Svelte 5 proxied arrays — all thumbnails were rendering tile 0,0
