@@ -1,6 +1,6 @@
 # Pipeline State — 2026-03-27
 
-## Current Status: Battery normalization + filter ordering shipped
+## Current Status: Material/switch/features normalization shipped
 
 ### Coverage (9,589 lights / ~12.7K total DB)
 | Field | Missing | % Coverage |
@@ -54,6 +54,23 @@ Known issues:
   - 26 entries: GIF-first URLs demoted
   - Script: `scripts/fix-image-ordering.ts`
 - **Retailer domains**: added jlhawaii808
+- **Material normalization**: 220 unique material values → 24 canonical (89% reduction)
+  - Aluminum variants: Anodized/Aircraft-grade/6061-T6/etc. → aluminum
+  - Polymer: Plastic/ABS/Nylon/Polycarbonate/GFRN/Lexan → polymer
+  - Rubber: Silicone/Neoprene/EVA → rubber
+  - Regex fallbacks for remaining long alloy descriptions
+  - 79 test cases, module: `pipeline/normalization/material-normalizer.ts`
+- **Switch normalization**: 132 unique switch values → 22 canonical (83% reduction)
+  - Push button/click/reverse clicky/forward clicky → clicky
+  - Twist/progressive twist → twisty, front → side, rear/bottom/back → tail
+  - Motion/gesture/touch/noncontact → sensor
+  - 70 test cases, module: `pipeline/normalization/switch-normalizer.ts`
+- **Features normalization**: 259 unique feature values → 182 canonical (30% reduction)
+  - Pocket clip → clip, lanyard hole → lanyard, battery check → battery indicator
+  - IP68 → IPX8, IP67 → IPX7, zoomable → focusable, powerbank → power bank
+  - 60 test cases, module: `pipeline/normalization/features-normalizer.ts`
+- **Material/switch filter ordering**: popularity-weighted (aluminum, stainless steel, polymer first; tail, side, rotary first)
+- **Unified migration**: `scripts/normalize-all.ts` — runs all 3 normalizer self-tests then applies DB migrations
 
 ### Previous Session Gains (3/27 — earlier)
 - **Sprite rendering fix**: `Array.isArray()` fails on Svelte 5 proxied arrays — all thumbnails were rendering tile 0,0
@@ -111,7 +128,13 @@ All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are s
 | `scripts/parametrek-crossref.ts` | Cross-reference with parametrek.com data |
 | `scripts/fetch-asin-prices.ts` | Get prices from Amazon by ASIN |
 | `scripts/normalize-leds.ts` | One-shot DB migration for LED canonicalization |
+| `scripts/normalize-batteries.ts` | One-shot DB migration for battery canonicalization |
+| `scripts/normalize-all.ts` | Unified DB migration for material/switch/features |
 | `pipeline/normalization/led-normalizer.ts` | Canonical LED normalizer (107 test cases) |
+| `pipeline/normalization/battery-normalizer.ts` | Canonical battery normalizer (166 test cases) |
+| `pipeline/normalization/material-normalizer.ts` | Canonical material normalizer (79 test cases) |
+| `pipeline/normalization/switch-normalizer.ts` | Canonical switch normalizer (70 test cases) |
+| `pipeline/normalization/features-normalizer.ts` | Canonical features normalizer (60 test cases) |
 | `scripts/validate-vision-accuracy.ts` | Validate vision results vs parametrek |
 | `scripts/vision-cron.sh` | Hourly vision enrichment (grid → classify → sprite) |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |

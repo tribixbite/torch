@@ -6,6 +6,9 @@ import { getAllFlashlights, updateEntryType } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { normalizeLedArray } from '../normalization/led-normalizer.js';
 import { normalizeBatteryArray } from '../normalization/battery-normalizer.js';
+import { normalizeMaterialArray } from '../normalization/material-normalizer.js';
+import { normalizeSwitchArray } from '../normalization/switch-normalizer.js';
+import { normalizeFeatureArray } from '../normalization/features-normalizer.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
@@ -168,7 +171,7 @@ const COLUMNS: ColumnMeta[] = [
 		},
 	},
 	{ id: 'features', display: 'features', unit: '', cvis: '', link: 'features', srch: true, mode: ['any', 'all'], sortable: false,
-		extract: (e) => e.features },
+		extract: (e) => normalizeFeatureArray(e.features) },
 	{ id: 'intensity', display: 'intensity', unit: '{si}cd', cvis: 'never', link: 'throw', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.performance.claimed.intensity_cd ?? '' },
 	{ id: 'throw', display: 'throw', unit: '{} m', cvis: '', link: 'throw', srch: false, mode: ['any'], sortable: true,
@@ -176,7 +179,7 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'led_color', display: 'LED&nbsp;color', unit: '', cvis: '', link: 'led_color', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.led_color },
 	{ id: 'switch', display: 'switch', unit: '', cvis: 'always', link: 'switch', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
-		extract: (e) => e.switch },
+		extract: (e) => normalizeSwitchArray(e.switch) },
 	{ id: 'color', display: 'color', unit: '', cvis: '', link: 'color', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => normalizeColors(e.color) },
 	{ id: 'length', display: 'length', unit: '{} mm', cvis: 'never', link: 'length', srch: false, mode: ['any'], sortable: true,
@@ -205,7 +208,7 @@ const COLUMNS: ColumnMeta[] = [
 			return w;
 		} },
 	{ id: 'material', display: 'material', unit: '', cvis: '', link: 'material', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
-		extract: (e) => e.material },
+		extract: (e) => normalizeMaterialArray(e.material) },
 	{ id: 'impact', display: 'impact', unit: '{} m', cvis: '', link: 'impact', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => {
 			// Parse "2m", "1.5m" → numeric meters
@@ -376,7 +379,31 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 			return ['mega-multi', options];
 		}
 		if (MULTI_COLS.has(col.id)) {
-			const options = collectOptions(data, i);
+			let options = collectOptions(data, i);
+			// Custom sort for switch: common types first
+			if (col.id === 'switch') {
+				const SWITCH_PRIORITY = [
+					'tail', 'side', 'rotary', 'twisty', 'electronic', 'clicky', 'momentary',
+					'dual', 'dual side', 'dual tail', 'dual top', 'magnetic ring', 'selector',
+					'toggle', 'body', 'top', 'mechanical', 'sensor', 'remote', 'slide',
+				];
+				const prioritySet = new Set(SWITCH_PRIORITY);
+				const prioritized = SWITCH_PRIORITY.filter(s => options.includes(s));
+				const remaining = options.filter(s => !prioritySet.has(s)).sort((a, b) => a.localeCompare(b));
+				options = [...prioritized, ...remaining];
+			}
+			// Custom sort for material: common materials first
+			if (col.id === 'material') {
+				const MAT_PRIORITY = [
+					'aluminum', 'stainless steel', 'polymer', 'titanium', 'copper', 'brass',
+					'rubber', 'magnesium', 'carbon fiber', 'steel', 'glass', 'zirconium',
+					'damascus steel', 'tungsten', 'leather', 'fabric',
+				];
+				const prioritySet = new Set(MAT_PRIORITY);
+				const prioritized = MAT_PRIORITY.filter(m => options.includes(m));
+				const remaining = options.filter(m => !prioritySet.has(m)).sort((a, b) => a.localeCompare(b));
+				options = [...prioritized, ...remaining];
+			}
 			return ['multi', options];
 		}
 		if (BOOLEAN_COLS.has(col.id)) {
