@@ -1,9 +1,20 @@
 #!/usr/bin/env bun
 /**
- * Cross-reference our flashlight database with parametrek.com data.
+ * DEPRECATED — DO NOT USE for production data enrichment.
+ *
+ * Parametrek data cannot be copied directly into our database.
+ * Use this script ONLY for reality-checking / validating our own data.
+ *
+ * All data was reverted on 2026-03-27 via revert-parametrek-data.ts.
+ * See: scripts/revert-parametrek-data.ts
+ *
+ * Original purpose: Cross-reference our flashlight database with parametrek.com data.
  * Matches by brand+model, fills in missing fields from parametrek.
- * Only fills EMPTY fields — never overwrites existing data.
  */
+console.error('ERROR: This script is deprecated. Parametrek data cannot be used for production enrichment.');
+console.error('Use revert-parametrek-data.ts to audit/revert any parametrek-sourced data.');
+console.error('For validation only, remove this guard and run with --validate flag.');
+process.exit(1);
 import { Database } from 'bun:sqlite';
 
 const dbPath = `${import.meta.dir}/../pipeline-data/db/torch.sqlite`;

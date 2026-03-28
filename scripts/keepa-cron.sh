@@ -62,8 +62,8 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 # Download thumbnails for new entries (no sprite rebuild)
 "$BUN" run pipeline/images/scrape-images.ts --download-only >> "$LOGFILE" 2>&1 || true
 
-# Fill color/switch/specs from parametrek ground truth
-"$BUN" run scripts/parametrek-crossref.ts >> "$LOGFILE" 2>&1 || true
+# parametrek-crossref.ts REMOVED — cannot use parametrek data directly
+# See: scripts/revert-parametrek-data.ts
 
 # Propagate within-brand fields (throw, length, etc.)
 "$BUN" run scripts/model-crossref.ts >> "$LOGFILE" 2>&1 || true
