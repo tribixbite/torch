@@ -13,7 +13,9 @@ interface Props {
 const HIDDEN_FILTER_IDS = new Set(['trueled', '_pic', '_bat', '_reviews', 'wh', 'efficacy', 'beam_angle', 'year']);
 
 export default memo(function FilterSidebar({ columns }: Props) {
-	const filters = useUrlState((s) => s.filters);
+	// Granular selector — stable string of active filter column indices for button highlighting
+	const activeFilterKeys = useUrlState((s) => [...s.filters.keys()].join(','));
+	const activeFilterSet = useMemo(() => new Set(activeFilterKeys ? activeFilterKeys.split(',').map(Number) : []), [activeFilterKeys]);
 	const sidebarOpen = usePreferences((s) => s.sidebarOpen);
 	const setSidebarOpen = usePreferences((s) => s.setSidebarOpen);
 
@@ -74,7 +76,7 @@ export default memo(function FilterSidebar({ columns }: Props) {
 					<div className="flex flex-wrap gap-1 py-2">
 						{filterableColumns.map((col) => {
 							const isOpen = openSections.has(col.index);
-							const isModified = filters.has(col.index);
+							const isModified = activeFilterSet.has(col.index);
 							return (
 								<button
 									key={col.index}

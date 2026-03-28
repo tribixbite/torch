@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, memo, useCallback } from 'react';
+import { useRef, useEffect, useMemo, memo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { ColumnDef, FlashlightDB } from '$lib/schema/columns';
 import { usePreferences } from '$lib/state/preferences';
@@ -23,6 +23,7 @@ export default memo(function ResultList({ indices, db, columns }: Props) {
 	);
 
 	const parentRef = useRef<HTMLDivElement>(null);
+	const prevIndicesRef = useRef(indices);
 
 	const virtualizer = useVirtualizer({
 		count: displayIndices.length,
@@ -30,13 +31,16 @@ export default memo(function ResultList({ indices, db, columns }: Props) {
 		// Estimated sizes: card ~90px, table ~36px
 		estimateSize: () => (viewMode === 'card' ? 90 : 36),
 		overscan: 10,
-		measureElement: (element) => element.getBoundingClientRect().height,
 	});
 
-	// Reset scroll to top when filter results change
+	// Reset scroll to top when the filter result indices array reference changes
 	useEffect(() => {
-		virtualizer.scrollToOffset(0);
-	}, [displayIndices.length, virtualizer]);
+		if (prevIndicesRef.current !== indices) {
+			prevIndicesRef.current = indices;
+			virtualizer.scrollToOffset(0);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [indices]);
 
 	if (displayIndices.length === 0) {
 		return (
@@ -48,10 +52,11 @@ export default memo(function ResultList({ indices, db, columns }: Props) {
 	}
 
 	return (
-		<div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 130px)' }}>
+		<div>
+			{/* Table header — outside scroll container to avoid overlap with virtual items */}
 			{viewMode === 'table' && (
 				<div
-					className="flex items-center gap-2 px-2 py-1 text-xs font-medium sticky top-0 z-10"
+					className="flex items-center gap-2 px-4 py-1 text-xs font-medium"
 					style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)' }}
 				>
 					<span className="w-[40px]" />
@@ -65,30 +70,30 @@ export default memo(function ResultList({ indices, db, columns }: Props) {
 				</div>
 			)}
 
-			<div
-				className="relative w-full p-2"
-				style={{ height: virtualizer.getTotalSize() }}
-			>
-				{virtualizer.getVirtualItems().map((virtualRow) => {
-					const idx = displayIndices[virtualRow.index];
-					return (
-						<div
-							key={idx}
-							data-index={virtualRow.index}
-							ref={(el) => {
-								if (el) virtualizer.measureElement(el);
-							}}
-							className="absolute left-0 right-0 px-2"
-							style={{ transform: `translateY(${virtualRow.start}px)` }}
-						>
-							{viewMode === 'card' ? (
-								<FlashlightCard index={idx} db={db} columns={columns} />
-							) : (
-								<FlashlightTable index={idx} db={db} columns={columns} />
-							)}
-						</div>
-					);
-				})}
+			<div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 130px)' }}>
+				<div
+					className="relative w-full p-2"
+					style={{ height: virtualizer.getTotalSize() }}
+				>
+					{virtualizer.getVirtualItems().map((virtualRow) => {
+						const idx = displayIndices[virtualRow.index];
+						return (
+							<div
+								key={idx}
+								data-index={virtualRow.index}
+								ref={virtualizer.measureElement}
+								className="absolute left-0 right-0 px-2"
+								style={{ transform: `translateY(${virtualRow.start}px)` }}
+							>
+								{viewMode === 'card' ? (
+									<FlashlightCard index={idx} db={db} columns={columns} />
+								) : (
+									<FlashlightTable index={idx} db={db} columns={columns} />
+								)}
+							</div>
+						);
+					})}
+				</div>
 			</div>
 		</div>
 	);

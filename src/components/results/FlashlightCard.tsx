@@ -3,7 +3,6 @@ import type { ColumnDef, FlashlightDB } from '$lib/schema/columns';
 import { useUrlState } from '$lib/state/url-state';
 import { useStarred } from '$lib/state/starred';
 import SpriteImage from './SpriteImage';
-import { smartFixed } from '$lib/schema/si-prefix';
 
 interface Props {
 	index: number;
@@ -34,7 +33,10 @@ function extractDomain(url: string): string {
 }
 
 export default memo(function FlashlightCard({ index, db, columns }: Props) {
-	const filters = useUrlState((s) => s.filters);
+	// Granular selector: stable string of active filter column indices
+	// Only re-renders when the set of active filter columns changes (not on value changes)
+	const activeFilterKeys = useUrlState((s) => [...s.filters.keys()].join(','));
+	const activeFilterSet = useMemo(() => new Set(activeFilterKeys ? activeFilterKeys.split(',').map(Number) : []), [activeFilterKeys]);
 	const toggle = useStarred((s) => s.toggle);
 	const isStarred = useStarred((s) => s.starred.has(index));
 	const [expanded, setExpanded] = useState(false);
@@ -67,11 +69,11 @@ export default memo(function FlashlightCard({ index, db, columns }: Props) {
 		if (avoidIds.has(col.id)) return false;
 		if (col.cvis === 'always') return true;
 		if (expanded) return true;
-		if (filters.has(col.index)) return true;
+		if (activeFilterSet.has(col.index)) return true;
 		const linkCol = columns.find((c) => c.id === col.link);
-		if (linkCol && filters.has(linkCol.index)) return true;
+		if (linkCol && activeFilterSet.has(linkCol.index)) return true;
 		return false;
-	}, [expanded, filters, columns]);
+	}, [expanded, activeFilterSet, columns]);
 
 	/** Format a data value for display */
 	const formatValue = useCallback((col: ColumnDef, value: unknown): string => {

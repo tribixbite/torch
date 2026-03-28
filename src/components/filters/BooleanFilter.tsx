@@ -9,10 +9,9 @@ interface Props {
 }
 
 export default memo(function BooleanFilter({ column }: Props) {
-	const filters = useUrlState((s) => s.filters);
+	// Granular selector — only re-render when this column's filter changes
+	const filter = useUrlState((s) => s.filters.get(column.index)) as BooleanFilterType | undefined;
 	const setBooleanFilter = useUrlState((s) => s.setBooleanFilter);
-
-	const filter = filters.get(column.index) as BooleanFilterType | undefined;
 	const yesSet = filter?.yes ?? new Set<string>();
 	const noSet = filter?.no ?? new Set<string>();
 	const mode = filter?.mode ?? (column.modes[0] as 'all' | 'any');

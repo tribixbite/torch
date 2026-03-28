@@ -10,11 +10,10 @@ interface Props {
 }
 
 export default memo(function MultiFilter({ column }: Props) {
-	const filters = useUrlState((s) => s.filters);
+	// Granular selector — only re-render when this column's filter changes
+	const filter = useUrlState((s) => s.filters.get(column.index)) as MultiFilterType | undefined;
 	const setMultiFilter = useUrlState((s) => s.setMultiFilter);
 	const clearFilter = useUrlState((s) => s.clearFilter);
-
-	const filter = filters.get(column.index) as MultiFilterType | undefined;
 	const selected = filter?.selected ?? new Set<string>();
 	const mode = filter?.mode ?? (column.modes[0] as LogicMode);
 	const showUnknown = filter?.showUnknown ?? false;

@@ -2,7 +2,7 @@
  * App shell — fetches JSON data, initializes worker, orchestrates filter/sort/search.
  * Debounces filter calls at ~100ms and search at ~150ms to avoid flooding the worker.
  */
-import { useState, useEffect, useRef, useCallback, useDeferredValue } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { FlashlightDB, ColumnDef } from '$lib/schema/columns';
 import { buildColumns } from '$lib/schema/columns';
 import { serializeFilters } from '$lib/schema/filter-schema';
@@ -26,17 +26,11 @@ export default function App() {
 	const workerRef = useRef<FilterWorkerClient | null>(null);
 	const filterTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const readyRef = useRef(false);
 
-	// Zustand selectors — subscribe to specific slices
-	const filters = useUrlState((s) => s.filters);
-	const sort = useUrlState((s) => s.sort);
-	const searchQuery = useUrlState((s) => s.searchQuery);
 	const initUrlState = useUrlState((s) => s.init);
 
-	// Deferred search value for responsive input display
-	const deferredSearch = useDeferredValue(searchQuery);
-
-	/** Run filter/sort/search on the worker */
+	/** Run filter/sort/search on the worker — reads from store directly, no stale closures */
 	const runFilter = useCallback(async () => {
 		const worker = workerRef.current;
 		if (!worker) return;
@@ -71,8 +65,20 @@ export default function App() {
 				const client = new FilterWorkerClient();
 				await client.init(rawDb);
 				workerRef.current = client;
+				readyRef.current = true;
 
 				setLoading(false);
+
+				// Run initial filter immediately (once)
+				const state = useUrlState.getState();
+				const serialized = serializeFilters(state.filters);
+				const sortPlain = { column: state.sort.column, direction: state.sort.direction };
+				const result = await client.filter(serialized, sortPlain, state.searchQuery || undefined);
+				if (!cancelled) {
+					setResultIndices(result.indices);
+					setResultCount(result.count);
+					setResultTiming(result.timing);
+				}
 			} catch (err) {
 				if (cancelled) return;
 				console.error('Failed to load flashlight data:', err);
@@ -87,28 +93,38 @@ export default function App() {
 		};
 	}, [initUrlState]);
 
-	// Run initial filter after worker is ready
+	// Subscribe to store changes directly to trigger debounced worker calls.
+	// Tracks previous state to distinguish filter/sort vs search changes.
 	useEffect(() => {
-		if (!loading && workerRef.current) {
-			runFilter();
-		}
-	}, [loading, runFilter]);
+		let prevFilters = useUrlState.getState().filters;
+		let prevSort = useUrlState.getState().sort;
+		let prevSearch = useUrlState.getState().searchQuery;
 
-	// React to filter/sort changes (debounced 100ms)
-	useEffect(() => {
-		if (loading || !workerRef.current) return;
-		clearTimeout(filterTimeoutRef.current);
-		filterTimeoutRef.current = setTimeout(runFilter, 100);
-		return () => clearTimeout(filterTimeoutRef.current);
-	}, [filters, sort, loading, runFilter]);
+		const unsub = useUrlState.subscribe((state) => {
+			if (!readyRef.current) return;
 
-	// React to search query changes (debounced 150ms)
-	useEffect(() => {
-		if (loading || !workerRef.current) return;
-		clearTimeout(searchTimeoutRef.current);
-		searchTimeoutRef.current = setTimeout(runFilter, 150);
-		return () => clearTimeout(searchTimeoutRef.current);
-	}, [deferredSearch, loading, runFilter]);
+			// Filter/sort changed — debounce 100ms
+			if (state.filters !== prevFilters || state.sort !== prevSort) {
+				prevFilters = state.filters;
+				prevSort = state.sort;
+				clearTimeout(filterTimeoutRef.current);
+				filterTimeoutRef.current = setTimeout(runFilter, 100);
+			}
+
+			// Search changed — debounce 150ms
+			if (state.searchQuery !== prevSearch) {
+				prevSearch = state.searchQuery;
+				clearTimeout(searchTimeoutRef.current);
+				searchTimeoutRef.current = setTimeout(runFilter, 150);
+			}
+		});
+
+		return () => {
+			unsub();
+			clearTimeout(filterTimeoutRef.current);
+			clearTimeout(searchTimeoutRef.current);
+		};
+	}, [runFilter]);
 
 	if (loading) {
 		return (

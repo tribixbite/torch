@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, memo } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import type { ColumnDef } from '$lib/schema/columns';
 import type { RangeFilter as RangeFilterType } from '$lib/schema/filter-schema';
 import { useUrlState } from '$lib/state/url-state';
@@ -9,13 +9,19 @@ interface Props {
 	isLog?: boolean;
 }
 
+interface Thumbs {
+	lower: number;
+	upper: number;
+}
+
 export default memo(function RangeFilter({ column, isLog = false }: Props) {
-	const filters = useUrlState((s) => s.filters);
+	// Granular selectors — only re-render when this column's filter or sort changes
+	const filter = useUrlState((s) => s.filters.get(column.index)) as RangeFilterType | undefined;
 	const setRangeFilter = useUrlState((s) => s.setRangeFilter);
-	const sort = useUrlState((s) => s.sort);
+	const isSortedInc = useUrlState((s) => s.sort.column === column.index && s.sort.direction === 'inc');
+	const isSortedDec = useUrlState((s) => s.sort.column === column.index && s.sort.direction === 'dec');
 	const setSort = useUrlState((s) => s.setSort);
 
-	const filter = filters.get(column.index) as RangeFilterType | undefined;
 	const boundsMin = column.min ?? 0;
 	const boundsMax = column.max ?? 100;
 	const decimals = column.decimals ?? 0;
@@ -23,11 +29,11 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 	const currentMax = filter?.max ?? boundsMax;
 	const showUnknown = filter?.showUnknown ?? false;
 
-	// Use refs for drag state to avoid render thrashing during pointer moves
+	// Drag state in ref to avoid render thrashing at 60Hz pointer events
 	const draggingRef = useRef<'lower' | 'upper' | null>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
-	const [lowerPerc, setLowerPerc] = useState(0);
-	const [upperPerc, setUpperPerc] = useState(1);
+	// Thumb percentages — updated atomically to avoid stale closure issues
+	const [thumbs, setThumbs] = useState<Thumbs>({ lower: 0, upper: 1 });
 
 	// Log slider math (exact from parametrek.js)
 	const percToValue = useCallback((perc: number): number => {
@@ -54,8 +60,7 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 	// Sync state from filter changes (when not dragging)
 	useEffect(() => {
 		if (!draggingRef.current) {
-			setLowerPerc(valueToPerc(currentMin));
-			setUpperPerc(valueToPerc(currentMax));
+			setThumbs({ lower: valueToPerc(currentMin), upper: valueToPerc(currentMax) });
 		}
 	}, [currentMin, currentMax, valueToPerc]);
 
@@ -78,77 +83,58 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
 	}, []);
 
+	// Single atomic state update per pointer move — no nested setState
 	const handlePointerMove = useCallback((e: React.PointerEvent) => {
 		if (!draggingRef.current || !trackRef.current) return;
 		const rect = trackRef.current.getBoundingClientRect();
-		let perc = (e.clientX - rect.left) / rect.width;
-		perc = Math.max(0, Math.min(1, perc));
+		const perc = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
 
-		if (draggingRef.current === 'lower') {
-			setLowerPerc((prev) => {
-				const clamped = Math.min(perc, upperPerc);
-				return clamped;
-			});
-			// Direct update to avoid stale closure
-			setUpperPerc((up) => {
-				setLowerPerc(Math.min(perc, up));
-				return up;
-			});
-		} else {
-			setLowerPerc((lo) => {
-				setUpperPerc(Math.max(perc, lo));
-				return lo;
-			});
-		}
+		setThumbs((prev) => {
+			if (draggingRef.current === 'lower') {
+				return { lower: Math.min(perc, prev.upper), upper: prev.upper };
+			}
+			return { lower: prev.lower, upper: Math.max(perc, prev.lower) };
+		});
 	}, []);
 
 	const handlePointerUp = useCallback(() => {
 		if (!draggingRef.current) return;
 		draggingRef.current = null;
-		// Read current values and commit
-		setLowerPerc((lp) => {
-			setUpperPerc((up) => {
-				commitValues(lp, up);
-				return up;
-			});
-			return lp;
+		// Read current thumb values atomically and commit
+		setThumbs((prev) => {
+			commitValues(prev.lower, prev.upper);
+			return prev;
 		});
 	}, [commitValues]);
 
 	const handleTrackClick = useCallback((e: React.MouseEvent) => {
 		if (!trackRef.current) return;
 		const rect = trackRef.current.getBoundingClientRect();
-		const perc = (e.clientX - rect.left) / rect.width;
-		// Move whichever thumb is closer
-		setLowerPerc((lp) => {
-			setUpperPerc((up) => {
-				let newLp = lp;
-				let newUp = up;
-				if (Math.abs(perc - lp) < Math.abs(perc - up)) {
-					newLp = perc;
-				} else {
-					newUp = perc;
-				}
-				commitValues(newLp, newUp);
-				return newUp;
-			});
-			if (Math.abs(perc - lp) < Math.abs(perc - upperPerc)) {
-				return perc;
-			}
-			return lp;
+		const perc = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+		setThumbs((prev) => {
+			// Move whichever thumb is closer
+			const newThumbs = Math.abs(perc - prev.lower) < Math.abs(perc - prev.upper)
+				? { lower: perc, upper: prev.upper }
+				: { lower: prev.lower, upper: perc };
+			commitValues(newThumbs.lower, newThumbs.upper);
+			return newThumbs;
 		});
-	}, [commitValues, upperPerc]);
+	}, [commitValues]);
 
 	const toggleShowUnknown = useCallback(() => {
-		const minVal = percToValue(lowerPerc);
-		const maxVal = percToValue(upperPerc);
-		const minActive = lowerPerc > 0.001;
-		const maxActive = upperPerc < 0.999;
-		setRangeFilter(column.index, minVal, maxVal, minActive, maxActive, !showUnknown);
-	}, [percToValue, lowerPerc, upperPerc, showUnknown, column.index, setRangeFilter]);
+		setThumbs((prev) => {
+			const minVal = percToValue(prev.lower);
+			const maxVal = percToValue(prev.upper);
+			const minActive = prev.lower > 0.001;
+			const maxActive = prev.upper < 0.999;
+			setRangeFilter(column.index, minVal, maxVal, minActive, maxActive, !showUnknown);
+			return prev;
+		});
+	}, [percToValue, showUnknown, column.index, setRangeFilter]);
 
-	const displayMin = formatValue(percToValue(lowerPerc));
-	const displayMax = formatValue(percToValue(upperPerc));
+	const displayMin = useMemo(() => formatValue(percToValue(thumbs.lower)), [formatValue, percToValue, thumbs.lower]);
+	const displayMax = useMemo(() => formatValue(percToValue(thumbs.upper)), [formatValue, percToValue, thumbs.upper]);
 
 	return (
 		<div className="space-y-2">
@@ -168,7 +154,7 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 			>
 				<div
 					className="range-fill"
-					style={{ left: `${lowerPerc * 100}%`, width: `${(upperPerc - lowerPerc) * 100}%` }}
+					style={{ left: `${thumbs.lower * 100}%`, width: `${(thumbs.upper - thumbs.lower) * 100}%` }}
 				/>
 				<div
 					className="range-thumb"
@@ -177,8 +163,8 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 					aria-label={`${column.display} minimum`}
 					aria-valuemin={boundsMin}
 					aria-valuemax={boundsMax}
-					aria-valuenow={percToValue(lowerPerc)}
-					style={{ left: `${lowerPerc * 100}%` }}
+					aria-valuenow={percToValue(thumbs.lower)}
+					style={{ left: `${thumbs.lower * 100}%` }}
 					onPointerDown={(e) => handlePointerDown(e, 'lower')}
 				/>
 				<div
@@ -188,8 +174,8 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 					aria-label={`${column.display} maximum`}
 					aria-valuemin={boundsMin}
 					aria-valuemax={boundsMax}
-					aria-valuenow={percToValue(upperPerc)}
-					style={{ left: `${upperPerc * 100}%` }}
+					aria-valuenow={percToValue(thumbs.upper)}
+					style={{ left: `${thumbs.upper * 100}%` }}
 					onPointerDown={(e) => handlePointerDown(e, 'upper')}
 				/>
 			</div>
@@ -212,7 +198,7 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 					<div className="flex gap-2">
 						<button
 							className="text-xs cursor-pointer select-none px-1"
-							style={{ color: sort.column === column.index && sort.direction === 'inc' ? 'var(--accent)' : 'var(--text-muted)' }}
+							style={{ color: isSortedInc ? 'var(--accent)' : 'var(--text-muted)' }}
 							onClick={() => setSort(column.index, 'inc')}
 							title="Sort ascending"
 						>
@@ -220,7 +206,7 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 						</button>
 						<button
 							className="text-xs cursor-pointer select-none px-1"
-							style={{ color: sort.column === column.index && sort.direction === 'dec' ? 'var(--accent)' : 'var(--text-muted)' }}
+							style={{ color: isSortedDec ? 'var(--accent)' : 'var(--text-muted)' }}
 							onClick={() => setSort(column.index, 'dec')}
 							title="Sort descending"
 						>
