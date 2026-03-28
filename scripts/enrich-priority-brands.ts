@@ -163,14 +163,14 @@ while (true) {
 		console.log(`  ${noGain.length} brands with no change: ${noGain.map(s => s.brand).join(', ')}`);
 	}
 
-	// Check if any brand had new scrapes (not yet-scraped URLs remaining)
-	// If passScraped == 0, all URLs have been scraped — nothing left to do
-	if (passScraped === 0 || noLoop) {
-		console.log(`\n>>> ${passScraped === 0 ? 'All URLs scraped — converged.' : 'Single pass mode (--no-loop).'}`);
+	// Converge when no new enrichments found (not just scraped — Pelican/Cloudflare
+	// pages get "scraped" but never enrich, causing infinite loops)
+	if (passEnriched === 0 || noLoop) {
+		console.log(`\n>>> ${passEnriched === 0 ? 'No new enrichments — converged.' : 'Single pass mode (--no-loop).'}`);
 		break;
 	}
 
-	console.log(`\n>>> ${passScraped} URLs scraped this pass — continuing to next pass...`);
+	console.log(`\n>>> ${passScraped} scraped, ${passEnriched} enriched this pass — continuing...`);
 }
 
 // --- Grand total ---

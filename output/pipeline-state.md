@@ -1,29 +1,26 @@
-# Pipeline State — 2026-03-27
+# Pipeline State — 2026-03-28
 
-## Current Status: Priority brand enrichment sweep complete
+## Current Status: Full 48-brand enrichment sweep converged
 
-### Coverage (11,137 lights / ~17K total DB)
+### Coverage (11,322 lights / ~17K total DB)
 | Field | Missing | % Coverage |
 |-------|---------|------------|
 | purchase_url | 0 | 100% |
-| color | 514 | 95.4% |
-| material | 1,589 | 85.7% |
-| features | 1,783 | 84.0% |
-| weight_g | 1,950 | 82.5% |
-| lumens | 2,116 | 81.0% |
-| price_usd | 2,064 | 81.5% |
-| battery | 2,389 | 78.5% |
-| switch | 2,693 | 75.8% |
-| length_mm | 2,684 | 75.9% |
-| throw_m | 3,178 | 71.5% |
-| runtime | 3,359 | 69.8% |
-| **led** | **3,887** | **65.1%** |
+| color | 538 | 95.2% |
+| material | 1,627 | 85.6% |
+| features | 1,820 | 83.9% |
+| weight_g | 2,015 | 82.2% |
+| price_usd | 2,032 | 82.1% |
+| lumens | 2,160 | 80.9% |
+| battery | 2,398 | 78.8% |
+| switch | 2,744 | 75.8% |
+| length_mm | 2,747 | 75.7% |
+| throw_m | 3,260 | 71.2% |
+| runtime | 3,397 | 70.0% |
+| **led** | **3,879** | **65.7%** |
 
-Note: Coverage computed against ALL 11,137 non-accessory lights (previously ~9,500 quality-filtered subset).
-Previous ~97% figures were relative to smaller completeness-filtered set.
-
+Note: Coverage computed against ALL 11,322 non-accessory lights.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
-Existing data kept as-is (indistinguishable from scraped data).
 
 ### Continuous Enrichment Pipeline
 1. **Keepa cron** (`scripts/keepa-cron.sh`): every 5min, 5 ASINs, post-scrape enrichment:
@@ -44,15 +41,29 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (3/27 — current)
+### Session Gains (3/28 — current)
+- **Full 48-brand enrichment sweep**: 3 passes, ~1,900 scraped, ~489 enriched, ~255 FL1 derivations
+  - Expanded from 19 → 48 brands (all zakreviews.com + zeroair.org review brands)
+  - Script: `scripts/enrich-priority-brands.ts` — loops until enrichment converges
+  - Fixed convergence: `passEnriched === 0` (not passScraped — Pelican Cloudflare pages never stop)
+  - Fenix: 105 enriched — +46 price, +27 runtime, +25 switch, +23 led, +17 features, +13 throw, +9 lumens, +9 material, +10 battery, +6 length
+  - Nextorch: 72 enriched — +12 runtime, +11 switch, +10 price, +3 led
+  - Coast: 68 enriched — +6 lumens, +6 length, +5 runtime, +5 led, +6 price
+  - Olight: 52 enriched — +2 runtime, +2 led, +1 battery, +1 length
+  - Lumintop: 41 enriched — +11 led, +4 runtime, +3 switch
+  - Klarus: 37 enriched — +3 led, +2 runtime, +2 price
+  - JETBeam: 21 enriched — +2 led, +2 features, +2 price
+  - Nitecore: 19 enriched — +5 lumens, +5 throw, +6 runtime, +5 led, +14 price
+  - SureFire: 18 enriched — +2 throw, +2 length, +1 runtime
+  - 27 brands fully scraped (no remaining URLs)
+
+### Previous Session Gains (3/27)
 - **Priority brand enrichment sweep**: 19 brands, 430 scraped, 258 enriched, 127 FL1 derivations
-  - Script: `scripts/enrich-priority-brands.ts` — loops all priority brands automatically
   - Imalent: +18 switch, +15 runtime, +9 led, +6 lumens, +6 price, +5 throw
   - Nitecore: +5 lumens, +5 throw, +5 led, +5 features, +5 battery, +4 runtime, +4 switch
   - Acebeam: +5 runtime, +5 led, +5 length, +1 features, +1 battery
   - Armytek: +8 price, +7 runtime, +7 led, +2 features, +2 material
   - Streamlight: 50 enriched (+1 led, +1 switch)
-  - 5 brands fully scraped (no new URLs): Wuben, Sofirn, Noctigon, Wurkkos, Zebralight
 
 ### Previous Session Gains (3/27)
 - **Battery normalization**: 647 unique battery values → 85 canonical (87% reduction)
@@ -157,7 +168,7 @@ All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are s
 | `pipeline/normalization/features-normalizer.ts` | Canonical features normalizer (60 test cases) |
 | `scripts/validate-vision-accuracy.ts` | Validate vision results vs parametrek |
 | `scripts/vision-cron.sh` | Hourly vision enrichment (grid → classify → sprite) |
-| `scripts/enrich-priority-brands.ts` | Auto-sweep 19 priority brands: scrape + crossref + FL1 |
+| `scripts/enrich-priority-brands.ts` | Auto-sweep 48 brands: scrape + FL1, loop until converged |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
 | `scripts/audit-data-quality.ts` | Comprehensive data quality audit → output/data-audit.md |
