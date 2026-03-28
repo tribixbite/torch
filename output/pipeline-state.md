@@ -1,23 +1,26 @@
 # Pipeline State — 2026-03-27
 
-## Current Status: All normalizations shipped, parametrek crossref deprecated
+## Current Status: Priority brand enrichment sweep complete
 
-### Coverage (~9,500 lights / ~12.7K total DB)
+### Coverage (11,137 lights / ~17K total DB)
 | Field | Missing | % Coverage |
 |-------|---------|------------|
-| purchase_url | ~1 | ~100% |
-| color | 50 | 99.5% |
-| battery | ~158 | 98.4% |
-| features | ~162 | 98.3% |
-| price_usd | ~194 | 98.0% |
-| weight_g | ~194 | 98.0% |
-| lumens | ~275 | 97.1% |
-| material | ~347 | 96.4% |
-| switch | 229 | 97.6% |
-| throw_m | ~701 | 92.7% |
-| length_mm | ~797 | 91.7% |
-| runtime | ~1,006 | 89.5% |
-| **led** | **~1,388** | **85.5%** |
+| purchase_url | 0 | 100% |
+| color | 514 | 95.4% |
+| material | 1,589 | 85.7% |
+| features | 1,783 | 84.0% |
+| weight_g | 1,950 | 82.5% |
+| lumens | 2,116 | 81.0% |
+| price_usd | 2,064 | 81.5% |
+| battery | 2,389 | 78.5% |
+| switch | 2,693 | 75.8% |
+| length_mm | 2,684 | 75.9% |
+| throw_m | 3,178 | 71.5% |
+| runtime | 3,359 | 69.8% |
+| **led** | **3,887** | **65.1%** |
+
+Note: Coverage computed against ALL 11,137 non-accessory lights (previously ~9,500 quality-filtered subset).
+Previous ~97% figures were relative to smaller completeness-filtered set.
 
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 Existing data kept as-is (indistinguishable from scraped data).
@@ -42,6 +45,16 @@ Known issues:
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
 ### Session Gains (3/27 — current)
+- **Priority brand enrichment sweep**: 19 brands, 430 scraped, 258 enriched, 127 FL1 derivations
+  - Script: `scripts/enrich-priority-brands.ts` — loops all priority brands automatically
+  - Imalent: +18 switch, +15 runtime, +9 led, +6 lumens, +6 price, +5 throw
+  - Nitecore: +5 lumens, +5 throw, +5 led, +5 features, +5 battery, +4 runtime, +4 switch
+  - Acebeam: +5 runtime, +5 led, +5 length, +1 features, +1 battery
+  - Armytek: +8 price, +7 runtime, +7 led, +2 features, +2 material
+  - Streamlight: 50 enriched (+1 led, +1 switch)
+  - 5 brands fully scraped (no new URLs): Wuben, Sofirn, Noctigon, Wurkkos, Zebralight
+
+### Previous Session Gains (3/27)
 - **Battery normalization**: 647 unique battery values → 85 canonical (87% reduction)
   - Cell types: strip qty-1 prefix, normalize IEC names (123A → CR123A)
   - Chemistry: Li-ion/Li-Ion/lithium-ion → Li-ion, Li-polymer/Li-Pol → Li-poly
@@ -144,6 +157,7 @@ All cascade scripts converged to zero. AI parser exhausted. Remaining gaps are s
 | `pipeline/normalization/features-normalizer.ts` | Canonical features normalizer (60 test cases) |
 | `scripts/validate-vision-accuracy.ts` | Validate vision results vs parametrek |
 | `scripts/vision-cron.sh` | Hourly vision enrichment (grid → classify → sprite) |
+| `scripts/enrich-priority-brands.ts` | Auto-sweep 19 priority brands: scrape + crossref + FL1 |
 | `pipeline/cli.ts raw-fetch` | Fetch raw text for entries without it |
 | `pipeline/cli.ts build` | Rebuild flashlights.now.json |
 | `scripts/audit-data-quality.ts` | Comprehensive data quality audit → output/data-audit.md |
