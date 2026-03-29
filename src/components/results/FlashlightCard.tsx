@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, memo } from 'react';
 import type { ColumnDef, FlashlightDB } from '$lib/schema/columns';
+import { smartFixed } from '$lib/schema/si-prefix';
 import { useUrlState } from '$lib/state/url-state';
 import { useStarred } from '$lib/state/starred';
 import SpriteImage from './SpriteImage';
@@ -110,7 +111,24 @@ export default memo(function FlashlightCard({ index, db, columns }: Props) {
 			return `<a href="${url}" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">${domain}</a>`;
 		}
 
-		return col.unit.replace('{}', display);
+		// Handle {si} prefix units — apply SI notation to each numeric value
+		if (col.unit.startsWith('{si}')) {
+			const suffix = col.unit.slice(4); // e.g. 'lm', 'h', 'cd', 'Wh'
+			if (Array.isArray(value)) {
+				return (value as (string | number)[])
+					.filter((x) => typeof x !== 'string' || !x.startsWith('//'))
+					.map((x) => typeof x === 'number' ? smartFixed(x, '{si}') + suffix : String(x))
+					.join('  ');
+			}
+			if (typeof value === 'number') return smartFixed(value, '{si}') + suffix;
+			return display + suffix;
+		}
+
+		// Normal unit template: "{} m", "${}", etc.
+		if (col.unit.includes('{}')) return col.unit.replace('{}', display);
+
+		// No unit or unrecognized template — return raw display value
+		return display;
 	}, [formatValue]);
 
 	const price = useMemo(() => {

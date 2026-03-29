@@ -10,6 +10,8 @@ import type { FilterMessage, FilterResult, SerializedFilter, SerializedFilters, 
 let db: FlashlightDB;
 let searchIndex: string[]; // lowercase model+brand for text search
 let lastFilterId = 0; // skip stale requests
+// Cache reversed sort arrays to avoid recomputing on every ascending sort
+const reversedSortCache = new Map<number, number[]>();
 
 // --- Set operations (exact ports from parametrek.js) ---
 
@@ -27,24 +29,26 @@ function arrayIntersect(selected: string[], data: unknown): boolean {
 	return false;
 }
 
-/** Returns true if selected is perfect superset of data (all) */
+/** Returns true if selected is perfect superset of data (all) — O(1) Set lookup */
 function arraySuperset(selected: string[], data: unknown): boolean {
 	const ar2 = normalizeToStringArray(data);
 	if (selected.length === 0 || ar2.length === 0) return false;
 	if (selected.length > ar2.length) return false;
+	const ar2Set = new Set(ar2);
 	for (const item of selected) {
-		if (ar2.indexOf(item) === -1) return false;
+		if (!ar2Set.has(item)) return false;
 	}
 	return true;
 }
 
-/** Returns true if data is perfect subset of selected (only) */
+/** Returns true if data is perfect subset of selected (only) — O(1) Set lookup */
 function arraySubset(selected: string[], data: unknown): boolean {
 	const ar2 = normalizeToStringArray(data);
 	if (selected.length === 0 || ar2.length === 0) return false;
 	if (selected.length < ar2.length) return false;
+	const selectedSet = new Set(selected);
 	for (const item of ar2) {
-		if (selected.indexOf(item) === -1) return false;
+		if (!selectedSet.has(item)) return false;
 	}
 	return true;
 }
@@ -118,25 +122,26 @@ function testItem(
 			case 'boolean': {
 				if (filter.showUnknown && isEmpty(data)) break;
 				const field = normalizeToStringArray(data);
+				const fieldSet = new Set(field);
 				if (filter.mode === 'all') {
 					// ALL yes-checked must be present in data
 					for (const yesItem of filter.yes) {
-						if (field.indexOf(yesItem) === -1) return false;
+						if (!fieldSet.has(yesItem)) return false;
 					}
 					// ALL no-checked must be absent from data
 					for (const noItem of filter.no) {
-						if (field.indexOf(noItem) !== -1) return false;
+						if (fieldSet.has(noItem)) return false;
 					}
 				} else {
 					// any mode: at least one yes found OR at least one no absent
 					if (filter.yes.length === 0 && filter.no.length === 0) continue;
 					let match = false;
 					for (const yesItem of filter.yes) {
-						if (field.indexOf(yesItem) !== -1) { match = true; break; }
+						if (fieldSet.has(yesItem)) { match = true; break; }
 					}
 					if (!match) {
 						for (const noItem of filter.no) {
-							if (field.indexOf(noItem) === -1) { match = true; break; }
+							if (!fieldSet.has(noItem)) { match = true; break; }
 						}
 					}
 					if (!match) return false;
@@ -199,8 +204,11 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 	}
 
 	if (msg.type === 'filter') {
-		// Skip stale requests — a newer one is already queued
-		if (msg.id < lastFilterId) return;
+		// Respond to stale requests with empty result to avoid hanging promises
+		if (msg.id < lastFilterId) {
+			self.postMessage({ id: msg.id, indices: [], count: 0, timing: 0 } as FilterResult);
+			return;
+		}
 		lastFilterId = msg.id;
 
 		const start = performance.now();
@@ -208,21 +216,31 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 		const sort = msg.sort;
 		const hasFilters = Object.keys(filters).length > 0;
 
-		// Determine iteration order from sort
+		// Determine iteration order from sort (cached reverse to avoid recomputing)
 		let iterationOrder: number[];
 		if (sort && db.sort[sort.column] && db.sort[sort.column] !== false) {
 			const sortData = db.sort[sort.column] as { dec: number[]; inc?: number[] };
 			if (sort.direction === 'dec') {
 				iterationOrder = sortData.dec;
 			} else {
-				iterationOrder = sortData.inc ?? [...sortData.dec].reverse();
+				if (sortData.inc) {
+					iterationOrder = sortData.inc;
+				} else {
+					// Cache the reversed array so we don't recompute each time
+					let cached = reversedSortCache.get(sort.column);
+					if (!cached) {
+						cached = [...sortData.dec].reverse();
+						reversedSortCache.set(sort.column, cached);
+					}
+					iterationOrder = cached;
+				}
 			}
 		} else {
-			// Default: iterate in data order
+			// Default: iterate in data order — use natural index range
 			iterationOrder = Array.from({ length: db.data.length }, (_, i) => i);
 		}
 
-		// Filter
+		// Filter — reference directly when no filters to avoid unnecessary copy
 		let matchedIndices: number[];
 		if (hasFilters) {
 			matchedIndices = [];
@@ -232,7 +250,7 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 				}
 			}
 		} else {
-			matchedIndices = [...iterationOrder];
+			matchedIndices = iterationOrder;
 		}
 
 		// Text search

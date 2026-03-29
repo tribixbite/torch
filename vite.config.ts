@@ -3,6 +3,10 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { execSync } from 'child_process';
+
+// Inject git short hash as build version for cache busting
+const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
 
 export default defineConfig({
 	plugins: [
@@ -30,6 +34,9 @@ export default defineConfig({
 			manifest: false, // Use existing static/manifest.json
 		}),
 	],
+	define: {
+		__APP_VERSION__: JSON.stringify(commitHash),
+	},
 	resolve: {
 		alias: {
 			'$lib': resolve(__dirname, 'src/lib')

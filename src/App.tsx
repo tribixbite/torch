@@ -49,7 +49,7 @@ export default function App() {
 
 		(async () => {
 			try {
-				const res = await fetch('/flashlights.now.json');
+				const res = await fetch(`/flashlights.now.json?v=${__APP_VERSION__}`);
 				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 				const rawDb: FlashlightDB = await res.json();
 				if (cancelled) return;
@@ -190,6 +190,8 @@ export default function App() {
 						<a href="https://github.com/tribixbite/torch" target="_blank" rel="noopener" className="underline" style={{ color: 'var(--text-secondary)' }}>
 							Source
 						</a>
+						{' · '}
+						<span className="opacity-50">v{__APP_VERSION__}</span>
 					</footer>
 				</main>
 			</div>
