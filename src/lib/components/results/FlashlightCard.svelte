@@ -96,6 +96,16 @@
 			return `<a href="${url}" target="_blank" rel="noopener" class="underline" style="color: var(--accent);">${domain}</a>`;
 		}
 
+		// Handle {si} prefix units like "{si}lm", "{si}h", "{si}Wh"
+		if (col.unit.startsWith('{si}')) {
+			const suffix = col.unit.slice(4); // e.g. "lm", "h", "Wh"
+			const num = typeof value === 'number' ? value : parseFloat(String(value));
+			if (isNaN(num)) return display + suffix;
+			return smartFixed(num, '{si}') + suffix;
+		}
+
+		// If unit template is empty or has no {} placeholder, return raw display value
+		if (!col.unit || !col.unit.includes('{}')) return display;
 		return col.unit.replace('{}', display);
 	}
 
