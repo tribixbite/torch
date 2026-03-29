@@ -5,6 +5,11 @@
 	import SpriteImage from './SpriteImage.svelte';
 	import { smartFixed } from '$lib/schema/si-prefix.js';
 
+	/** Proxy-safe array check — Svelte 5 $state proxied arrays fail Array.isArray() */
+	function isArrayLike(v: unknown): v is unknown[] {
+		return Array.isArray(v) || (v !== null && typeof v === 'object' && 'length' in v && typeof (v as any).length === 'number' && !(v instanceof String));
+	}
+
 	interface Props {
 		index: number;
 		db: FlashlightDB;
@@ -56,7 +61,7 @@
 	function formatValue(col: ColumnDef, value: unknown): string {
 		if (value === '' || value === null || value === undefined) return '?';
 
-		if (Array.isArray(value)) {
+		if (isArrayLike(value)) {
 			if (col.filterType === 'boolean') {
 				const filtered = value.filter(
 					(x) => typeof x !== 'string' || (!x.startsWith('~') && !x.startsWith('//'))
@@ -76,7 +81,7 @@
 		if (display === '?') return '?';
 
 		if (col.unit === '{link}') {
-			if (Array.isArray(value)) {
+			if (isArrayLike(value)) {
 				return (value as string[])
 					.filter((u) => u && isSafeUrl(u))
 					.map((u) => {
@@ -124,7 +129,7 @@
 
 	function getPurchaseLinks(): string {
 		if (purchaseCol < 0 || !data[purchaseCol]) return '';
-		const urls = Array.isArray(data[purchaseCol]) ? data[purchaseCol] as string[] : [String(data[purchaseCol])];
+		const urls = isArrayLike(data[purchaseCol]) ? data[purchaseCol] as string[] : [String(data[purchaseCol])];
 		return urls
 			.filter((u) => u && isSafeUrl(u))
 			.map((u) => {
@@ -136,7 +141,7 @@
 
 	function getInfoLinks(): string {
 		if (infoCol < 0 || !data[infoCol]) return '';
-		const urls = Array.isArray(data[infoCol]) ? data[infoCol] as string[] : [String(data[infoCol])];
+		const urls = isArrayLike(data[infoCol]) ? data[infoCol] as string[] : [String(data[infoCol])];
 		return urls
 			.filter((u) => u && isSafeUrl(u))
 			.map((u) => {
