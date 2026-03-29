@@ -80,12 +80,13 @@ export default memo(function FlashlightCard({ index, db, columns }: Props) {
 	const formatValue = useCallback((col: ColumnDef, value: unknown): string => {
 		if (value === '' || value === null || value === undefined) return '?';
 		if (Array.isArray(value)) {
+			if (value.length === 0) return '?';
 			if (col.filterType === 'boolean') {
 				const filtered = value.filter((x) => typeof x !== 'string' || (!x.startsWith('~') && !x.startsWith('//')));
 				return filtered.length > 0 ? filtered.join('  ') : 'none';
 			}
 			const filtered = value.filter((x) => typeof x !== 'string' || !x.startsWith('//'));
-			return filtered.join('  ');
+			return filtered.length > 0 ? filtered.join('  ') : '?';
 		}
 		return String(value);
 	}, []);
