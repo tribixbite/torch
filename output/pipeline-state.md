@@ -1,6 +1,6 @@
-# Pipeline State — 2026-03-28
+# Pipeline State — 2026-03-29
 
-## Current Status: Full 48-brand enrichment sweep converged
+## Current Status: Card display fix deployed + data cleanup
 
 ### Coverage (11,322 lights / ~17K total DB)
 | Field | Missing | % Coverage |
@@ -41,7 +41,19 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (3/28 — current)
+### Session Gains (3/29 — current)
+- **Card display fix**: Array fields (battery, modes, switch, features, color, material) were blank
+  - Root cause 1: `Array.isArray()` returns false for Svelte 5 `$state` proxied arrays
+  - Root cause 2: `formatWithUnit()` discarded display value when `col.unit` was empty string
+  - Fix: `isArrayLike()` helper + empty-unit fallback in FlashlightCard.svelte
+- **SI prefix formatting**: Added `{si}` unit handling using `smartFixed()` for lumens, runtime, etc.
+- **Data cleanup**: Cleared 572 bogus spec values parsed from model numbers/capacities
+  - 14 throw values >5km (Maglite model #s like P32112M → 32112m)
+  - 17 weight values >5kg (model #s, part #s parsed as grams)
+  - 541 length values <10mm or >1m (accessory dimensions, USB cables)
+  - Script: `scripts/clear-bogus-specs.ts`
+
+### Session Gains (3/28)
 - **Full 48-brand enrichment sweep**: 3 passes, ~1,900 scraped, ~489 enriched, ~255 FL1 derivations
   - Expanded from 19 → 48 brands (all zakreviews.com + zeroair.org review brands)
   - Script: `scripts/enrich-priority-brands.ts` — loops until enrichment converges
