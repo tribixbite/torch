@@ -1,6 +1,6 @@
-# Pipeline State — 2026-03-29
+# Pipeline State — 2026-04-01
 
-## Current Status: Card display fix deployed + data cleanup
+## Current Status: Battery filter verified on production
 
 ### Coverage (11,322 lights / ~17K total DB)
 | Field | Missing | % Coverage |
@@ -41,7 +41,20 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (3/29 — current)
+### Session Gains (4/1 — current)
+- **Battery filter QA verified on production** (torch.directory):
+  - First 6 filter options correctly ordered: 18650, 21700, 14500, 18350, 16340, CR123A
+  - 91 total battery options, popularity-weighted ordering works
+  - Search box filters options correctly (typing "18650" shows 18650, 2x18650, 3x18650, 4x18650, 8x18650)
+  - 18650 filter returns 2309 matches — includes multi-cell entries via normalization expansion
+  - Multi-cell expansion confirmed in code: `normalizeBatteryArray(["2x18650"])` → `["18650", "2x18650"]`
+- **Playwright MCP Termux/Android fix** (node_modules patches):
+  - Root cause: `os.platform() === "android"` on Termux, not `"linux"`, so headless default was `false`
+  - Combined with `DISPLAY=:1` env var (stale Termux X11), Chromium tried headed mode and crashed
+  - Fix 1: `config.js` — always force headless on Android platform
+  - Fix 2: `browserContextFactory.js` — clean stale SingletonLock files between retry attempts
+
+### Session Gains (3/29)
 - **Card display fix**: Array fields (battery, modes, switch, features, color, material) were blank
   - Root cause 1: `Array.isArray()` returns false for Svelte 5 `$state` proxied arrays
   - Root cause 2: `formatWithUnit()` discarded display value when `col.unit` was empty string
