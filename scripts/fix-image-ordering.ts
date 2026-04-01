@@ -42,6 +42,7 @@ console.log(`Scanning ${entries.length} entries for image URL reordering...`);
 const update = db.prepare('UPDATE flashlights SET image_urls = ? WHERE id = ?');
 let fixed = 0;
 let gifFixed = 0;
+const changedFirstUrl: string[] = []; // IDs where first URL changed (need thumbnail re-download)
 
 /** Classify URL into priority tier (lower = better) */
 function urlPriority(url: string): number {
@@ -76,10 +77,15 @@ for (const e of entries) {
 				update.run(newJson, e.id);
 			}
 			fixed++;
-			const oldFirst = urls[0].replace(/.*\/\/[^/]+/, '').slice(0, 60);
-			const newFirst = sorted[0].replace(/.*\/\/[^/]+/, '').slice(0, 60);
+			// Track if first URL changed (thumbnail needs re-download)
+			if (sorted[0] !== urls[0]) {
+				changedFirstUrl.push(e.id);
+			}
+			// Log entries where priority improved
 			if (urlPriority(urls[0]) > urlPriority(sorted[0])) {
-				console.log(`  ${e.brand} ${e.model}: ${oldFirst} → ${newFirst}`);
+				const oldDomain = urls[0].replace(/^https?:\/\/([^/]+).*/, '$1').slice(0, 40);
+				const newDomain = sorted[0].replace(/^https?:\/\/([^/]+).*/, '$1').slice(0, 40);
+				console.log(`  ${e.brand} ${e.model}: ${oldDomain} → ${newDomain}`);
 			}
 		}
 	} catch (err) {
@@ -90,32 +96,18 @@ for (const e of entries) {
 console.log(`\n=== Summary${DRY_RUN ? ' (DRY RUN)' : ''} ===`);
 console.log(`Reordered: ${fixed} entries`);
 console.log(`GIF demoted: ${gifFixed} entries`);
+console.log(`First URL changed: ${changedFirstUrl.length} entries`);
 
-// Remove stale thumbnails for reordered entries so they get re-downloaded
-if (!DRY_RUN && fixed > 0) {
-	const thumbDir = resolve(import.meta.dir, '../pipeline-data/thumbnails');
-	const reordered = db.prepare(`
-		SELECT id FROM flashlights
-		WHERE image_urls IS NOT NULL AND image_urls != '[]'
-		AND updated_at >= ?
-	`).all(now()) as { id: string }[];
-
+// Remove stale thumbnails for entries where first URL changed
+if (!DRY_RUN && changedFirstUrl.length > 0) {
+	const thumbDir = resolve(import.meta.dir, '../pipeline-data/images/thumbs');
 	let thumbsRemoved = 0;
-	for (const { id } of reordered) {
-		// Thumbnail files are named by entry ID with various extensions
-		for (const ext of ['.webp', '.jpg', '.png']) {
-			const thumbPath = resolve(thumbDir, `${id}${ext}`);
-			if (existsSync(thumbPath)) {
-				unlinkSync(thumbPath);
-				thumbsRemoved++;
-			}
+	for (const id of changedFirstUrl) {
+		const thumbPath = resolve(thumbDir, `${id}.webp`);
+		if (existsSync(thumbPath)) {
+			unlinkSync(thumbPath);
+			thumbsRemoved++;
 		}
 	}
-	if (thumbsRemoved > 0) {
-		console.log(`Removed ${thumbsRemoved} stale thumbnails (will re-download)`);
-	}
-}
-
-function now(): string {
-	return new Date().toISOString().slice(0, 10);
+	console.log(`Removed ${thumbsRemoved} stale thumbnails (will re-download from better URLs)`);
 }
