@@ -42,12 +42,29 @@ Known issues:
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
 ### Session Gains (4/1 — current)
+- **Battery normalization**: 647 → 94 unique values (DB migration: 1,099 entries updated, 614 dropped unknown-only)
+  - Module: `pipeline/normalization/battery-normalizer.ts` (166 test cases)
+  - DB migration: `scripts/normalize-batteries.ts`
+  - Build-time: `normalizeBatteryArray()` applied in build-torch-db.ts
+  - 1x prefix stripped: `1x18650` → `18650`, `1xCR123A` → `CR123A`
+  - Multi-cell expansion: `2x18650` → `["18650", "2x18650"]` (matches both filters)
+  - Chemistry merged: Li-ion/Li-Ion/lithium-ion → `Li-ion`, Li-polymer/Li-Pol → `Li-poly`
+  - Built-in merged: 6+ variants (ZITHION, Integrated, mAh-only, Wh strings) → `built-in`
+  - Drops: USB, rechargeable (not battery types)
+- **Battery filter ordering**: common cells first (18650, 21700, 14500, 18350, 16340, CR123A)
+  - `BATTERY_PRIORITY` array in build-torch-db.ts, remaining sorted alphabetically
+- **Known manufacturer brands**: 28 brands whitelisted (`KNOWN_MFG_BRANDS` in build-torch-db.ts)
+  - Acebeam, Armytek, Convoy, Emisar, Fenix, Lumintop, Olight, Rovyvon, Sofirn, Wurkkos, etc.
+  - jlhawaii808 added to RETAILER_DOMAINS
+- **Image URL reorder**: generalized `scripts/fix-image-ordering.ts` for all brands
+  - Priority: manufacturer > Shopify CDN > other > Amazon
+  - GIF demotion: animated GIFs moved to end of URL array
+- **Sprite rebuild**: 17,051 tiles, 13,932/14,404 entries mapped (96.7%)
 - **Battery filter QA verified on production** (torch.directory):
   - First 6 filter options correctly ordered: 18650, 21700, 14500, 18350, 16340, CR123A
   - 91 total battery options, popularity-weighted ordering works
   - Search box filters options correctly (typing "18650" shows 18650, 2x18650, 3x18650, 4x18650, 8x18650)
   - 18650 filter returns 2309 matches — includes multi-cell entries via normalization expansion
-  - Multi-cell expansion confirmed in code: `normalizeBatteryArray(["2x18650"])` → `["18650", "2x18650"]`
 - **Playwright MCP Termux/Android fix** (node_modules patches):
   - Root cause: `os.platform() === "android"` on Termux, not `"linux"`, so headless default was `false`
   - Combined with `DISPLAY=:1` env var (stale Termux X11), Chromium tried headed mode and crashed
