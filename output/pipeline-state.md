@@ -11,12 +11,12 @@
 | features | 2,866 | 83.8% |
 | material | 3,135 | 82.2% |
 | lumens | 3,846 | 78.2% |
+| battery | 4,397 | 75.1% |
 | switch | 4,425 | 74.9% |
-| battery | 4,462 | 74.7% |
-| length_mm | 5,319 | 69.9% |
+| length_mm | 5,240 | 70.3% |
 | runtime | 5,511 | 68.8% |
+| throw_m | 6,481 | 63.3% |
 | **led** | **6,600** | **62.6%** |
-| throw_m | 6,712 | 62.0% |
 
 Note: Coverage computed against ALL 17,654 lights in DB.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
@@ -55,6 +55,9 @@ Known issues:
   - Throw coverage: 60.7% → 62.0%
 - **Dedup**: 8 duplicate brand+model pairs merged, 2 non-flashlight entries removed (MINIWARE hot plate)
   - 14,404 → 14,396 entries in build output
+- **Model cross-reference**: 384 fixes (throw +244, FL1 intensity +311, battery +61, length +70)
+- **Frontend fixes**: isArrayLike() in FlashlightTable, null-safety in formatWithUnit, NaN guard on reviews
+- **Bogus TM12K fix**: nitecore-tm12k-black-rechargeable had 200k lumens → 12k via cross-reference
 
 ### Session Gains (4/1)
 - **Battery normalization**: 647 → 94 unique values (DB migration: 1,099 entries updated, 614 dropped unknown-only)
