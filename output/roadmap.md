@@ -8,12 +8,8 @@ Current state: 17,644 entries in DB, ~14,396 flashlights after build-time access
 
 ## Priority 1 — Bugs / Broken
 
-### Lumen slider displays `{si}lm` for min/max labels
-- **Where**: `src/lib/components/filters/RangeFilter.svelte` line 63-66
-- **Root cause**: `formatValue()` calls `column.unit.replace('{}', formatted)` but `{si}lm` units have no `{}` placeholder — the `{si}` prefix is a special formatting directive, not a substitution target
-- **Impact**: Range filter min/max labels for lumens (and potentially runtime `{si}h`, power `{si}Wh`) show raw template strings like `{si}lm` instead of formatted values like `1klm`
-- **Fix needed**: Detect `{si}` prefix in `column.unit`, run `smartFixed(value, '{si}')` for the number, then append the suffix (e.g., `lm`, `h`)
-- **Status**: Actively being fixed
+### ~~Lumen slider displays `{si}lm` for min/max labels~~ FIXED
+- Fixed in RangeFilter.svelte and FilterPills.svelte — detects `{si}` prefix, uses `smartFixed(value, '{si}')` + suffix
 
 ### 146 remaining spec verification issues
 - 85 FL1 throw/intensity mismatches — throw and intensity_cd are inconsistent per ANSI FL1 formula `cd = (throw / 2)^2`
