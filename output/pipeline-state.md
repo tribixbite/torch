@@ -1,25 +1,24 @@
-# Pipeline State — 2026-04-01
+# Pipeline State — 2026-04-02
 
-## Current Status: Battery filter verified on production
+## Current Status: 17,654 lights in DB — 327 spec issues (verify-specs)
 
-### Coverage (11,322 lights / ~17K total DB)
+### Coverage (17,654 lights)
 | Field | Missing | % Coverage |
 |-------|---------|------------|
-| purchase_url | 0 | 100% |
-| color | 538 | 95.2% |
-| material | 1,627 | 85.6% |
-| features | 1,820 | 83.9% |
-| weight_g | 2,015 | 82.2% |
-| price_usd | 2,032 | 82.1% |
-| lumens | 2,160 | 80.9% |
-| battery | 2,398 | 78.8% |
-| switch | 2,744 | 75.8% |
-| length_mm | 2,747 | 75.7% |
-| throw_m | 3,260 | 71.2% |
-| runtime | 3,397 | 70.0% |
-| **led** | **3,879** | **65.7%** |
+| color | 1,499 | 91.5% |
+| price_usd | 2,277 | 87.1% |
+| weight_g | 2,806 | 84.1% |
+| features | 2,871 | 83.7% |
+| material | 3,138 | 82.2% |
+| lumens | 3,850 | 78.2% |
+| switch | 4,431 | 74.9% |
+| battery | 4,467 | 74.7% |
+| throw_m | 5,292 | 70.0% |
+| length_mm | 5,324 | 69.8% |
+| runtime | 5,514 | 68.8% |
+| **led** | **6,603** | **62.6%** |
 
-Note: Coverage computed against ALL 11,322 non-accessory lights.
+Note: Coverage computed against ALL 17,654 lights in DB.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 
 ### Continuous Enrichment Pipeline
