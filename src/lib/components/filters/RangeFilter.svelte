@@ -61,7 +61,13 @@
 	}
 
 	function formatValue(value: number): string {
+		// Handle {si} prefix units like "{si}lm", "{si}h", "{si}Wh"
+		if (column.unit && column.unit.startsWith('{si}')) {
+			const suffix = column.unit.slice(4);
+			return smartFixed(value, '{si}') + suffix;
+		}
 		const formatted = smartFixed(value, decimals);
+		if (!column.unit || !column.unit.includes('{}')) return formatted;
 		return column.unit.replace('{}', formatted);
 	}
 

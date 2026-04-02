@@ -43,10 +43,15 @@
 				}
 				case 'range': {
 					const f = filter as RangeFilter;
+					const isSi = col.unit?.startsWith('{si}');
 					const decimals = col.decimals ?? 0;
-					const lo = smartFixed(f.min, decimals);
-					const hi = smartFixed(f.max, decimals);
-					result.push({ colIndex: colIdx, label, detail: `${lo} – ${hi}` });
+					const lo = smartFixed(f.min, isSi ? '{si}' : decimals);
+					const hi = smartFixed(f.max, isSi ? '{si}' : decimals);
+					const suffix = isSi ? col.unit!.slice(4) : '';
+					const unit = !isSi && col.unit?.includes('{}') ? col.unit : '';
+					const fmtLo = isSi ? lo + suffix : unit ? unit.replace('{}', lo) : lo;
+					const fmtHi = isSi ? hi + suffix : unit ? unit.replace('{}', hi) : hi;
+					result.push({ colIndex: colIdx, label, detail: `${fmtLo} – ${fmtHi}` });
 					break;
 				}
 			}
