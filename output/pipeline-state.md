@@ -1,22 +1,22 @@
 # Pipeline State — 2026-04-02
 
-## Current Status: 17,654 lights in DB — 146 spec issues (verify-specs)
+## Current Status: 17,644 lights in DB — 146 spec issues (verify-specs)
 
-### Coverage (17,654 lights)
+### Coverage (17,644 lights)
 | Field | Missing | % Coverage |
 |-------|---------|------------|
-| color | 1,499 | 91.5% |
-| price_usd | 2,277 | 87.1% |
+| color | 1,495 | 91.5% |
+| price_usd | 2,275 | 87.1% |
 | weight_g | 2,806 | 84.1% |
-| features | 2,871 | 83.7% |
-| material | 3,138 | 82.2% |
-| lumens | 3,850 | 78.2% |
-| switch | 4,431 | 74.9% |
-| battery | 4,467 | 74.7% |
-| length_mm | 5,324 | 69.8% |
-| runtime | 5,514 | 68.8% |
-| **led** | **6,603** | **62.6%** |
-| throw_m | 6,918 | 60.8% |
+| features | 2,866 | 83.8% |
+| material | 3,135 | 82.2% |
+| lumens | 3,846 | 78.2% |
+| switch | 4,425 | 74.9% |
+| battery | 4,462 | 74.7% |
+| length_mm | 5,319 | 69.9% |
+| runtime | 5,511 | 68.8% |
+| **led** | **6,600** | **62.6%** |
+| throw_m | 6,712 | 62.0% |
 
 Note: Coverage computed against ALL 17,654 lights in DB.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
@@ -50,6 +50,11 @@ Known issues:
   - Maglite model numbers (SP2P017M → 17m → 163m from 6613cd)
   - LEATHERMAN/Lumintop/Fenix parsing artifacts
 - **Spec verification improvement**: 327 → 146 issues (FL1 mismatches: 266 → 85)
+- **FL1 gap-fill**: 211 throw values derived from valid intensity_cd via FL1 formula
+  - Cleared 74 bogus intensity_cd values <25cd (parsing artifacts matching throw cleanup)
+  - Throw coverage: 60.7% → 62.0%
+- **Dedup**: 8 duplicate brand+model pairs merged, 2 non-flashlight entries removed (MINIWARE hot plate)
+  - 14,404 → 14,396 entries in build output
 
 ### Session Gains (4/1)
 - **Battery normalization**: 647 → 94 unique values (DB migration: 1,099 entries updated, 614 dropped unknown-only)
