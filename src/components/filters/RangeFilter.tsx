@@ -65,8 +65,16 @@ export default memo(function RangeFilter({ column, isLog = false }: Props) {
 	}, [currentMin, currentMax, valueToPerc]);
 
 	const formatValue = useCallback((value: number): string => {
+		// {si} prefix units: apply SI notation regardless of decimals field
+		if (column.unit.startsWith('{si}')) {
+			const suffix = column.unit.slice(4); // e.g. 'lm', 'h', 'cd'
+			return smartFixed(value, '{si}') + suffix;
+		}
 		const formatted = smartFixed(value, decimals);
-		return column.unit.replace('{}', formatted);
+		// Normal template: "{} m", "${}", etc.
+		if (column.unit.includes('{}')) return column.unit.replace('{}', formatted);
+		// No template — return raw formatted value
+		return formatted;
 	}, [decimals, column.unit]);
 
 	const commitValues = useCallback((lp: number, up: number) => {
