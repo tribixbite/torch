@@ -369,3 +369,106 @@
 
 ### runtime >10,000h
 - **Armytek Barracuda Pro / XHP35 HI White LED / 1500 lumens / 5Ã‚Â°:40Ã‚Â°** (armytek-barracuda-pro-xhp35-hi-white-led-1500-lumens-5-40): 12000h
+
+
+## 7. Spec Verification Flags
+
+327 issues found across 14024 entries.
+
+| Issue | Count |
+|-------|-------|
+| FL1 mismatch (throw vs intensity) | 266 |
+| weight too low for battery type | 49 |
+| throw >5km | 5 |
+| lumens >200k | 2 |
+| price >$5000 | 2 |
+| weight >5kg | 2 |
+| runtime >10,000h | 1 |
+
+### FL1 mismatch (throw vs intensity)
+- **814 LUMENS LIGHT HOUSE Manker Quinlan U11 CREE XPL V5 1050LM 18650 Waterproof EDC** (814-lumens-light-house-manker-quinlan-u11-cree-xpl-v5-1050lm-18650-waterproof-edc): throw=5m → expected 6cd, got 16000cd (ratio: 2560.00)
+- **909 LUMENS LIGHT HOUSE Fenix LD41 CREE XM-L2 U2 960LM 4Modes** (909-lumens-light-house-fenix-ld41-cree-xm-l2-u2-960lm-4modes): throw=1m → expected 0cd, got 22500cd (ratio: 90000.00)
+- **948 LUMENS LIGHT HOUSE Fenix E99 TI Titanium Cree XP-E2 100LM AAA Waterproof Mini** (948-lumens-light-house-fenix-e99-ti-titanium-cree-xp-e2-100lm-aaa-waterproof-mini): throw=1m → expected 0cd, got 420cd (ratio: 1680.00)
+- **Acebeam H17 2000 Lumen Lightweight Right Angle Headlamp 1 x 18350 Battery** (acebeam-h17-2000-lumen-lightweight-right-angle-headlamp-1-x-18350-battery-219b): throw=134m → expected 4489cd, got 79cd (ratio: 0.02)
+- **Acebeam D20 2.0 Dive** (acebeam-d20-2-0-dive-sst-40): throw=500m → expected 62500cd, got 14280cd (ratio: 0.23)
+- **Acebeam D20 V2** (acebeam-d20-v2-sst-40): throw=500m → expected 62500cd, got 14280cd (ratio: 0.23)
+- **Acebeam Nichia 519a** (acebeam-nichia-519a-519a): throw=270m → expected 18225cd, got 6358cd (ratio: 0.35)
+- **Acebeam Combo L19 Green** (acebeam-combo-l19-green): throw=1520m → expected 577600cd, got 26896cd (ratio: 0.05)
+- **Acebeam Combo L19 PM1 White** (acebeam-combo-l19-pm1-white): throw=1300m → expected 422500cd, got 13188cd (ratio: 0.03)
+- **Acebeam MANKER LAD 300 Lumen Micro Sized LED USB Rechargeable Keychain** (acebeam-manker-lad-300-lumen-micro-sized-led-usb-rechargeable-keychain): throw=6m → expected 9cd, got 860cd (ratio: 95.56)
+- **AE Light Dual Switch LED Police Flashlight - CREE XM-L T6 LED - 480 Lumens - Uses 2 x CR123A, 2 x 16340 or 1 x 18650** (ae-light-dual-switch-led-police-flashlight-cree-xm-l-t6-led-480-lumens-uses-2-x-cr123a-2-x-16340-or-1-x-18650-xm-l2): throw=300m → expected 22500cd, got 4860cd (ratio: 0.22)
+- **Armytek Keychain** (armytek-keychain): throw=15m → expected 56cd, got 1cd (ratio: 0.02)
+- **Armytek Combo: Armytek Predator Pro v3 XHP35 Hi** (armytek-combo-armytek-predator-pro-v3-xhp35-hi): throw=50m → expected 625cd, got 50750cd (ratio: 81.20)
+- **Armytek Viking v3 XP-L 1250 lm** (armytek-viking-v3-xp-l-1250-lm): throw=50m → expected 625cd, got 34200cd (ratio: 54.72)
+- **Coast XP6R Rechargeable** (coast-xp6r-rechargeable): throw=55m → expected 756cd, got 8100cd (ratio: 10.71)
+- **Convoy S6 Glossy Stainless Steel SFT40 519a SFT25R 18650** (convoy-s6-glossy-stainless-steel-sft40-519a-sft25r-18650-sft-40): throw=50m → expected 625cd, got 3066cd (ratio: 4.91)
+- **EagleTac Combo: Eagletac TX3G Pro Rechargeable XHP70.2** (eagletac-combo-eagletac-tx3g-pro-rechargeable-xhp70-2): throw=1m → expected 0cd, got 9350cd (ratio: 37400.00)
+- **EagleTac D3A Titanium** (eagletac-d3a-titanium): throw=1m → expected 0cd, got 2050cd (ratio: 8200.00)
+- **EagleTac EAGTAC T25V 3200 Lumen Compact Tactical Cool White LED USB-C** (eagletac-eagtac-t25v-3200-lumen-compact-tactical-cool-white-led-usb-c): throw=2m → expected 1cd, got 15200cd (ratio: 15200.00)
+- **Eco-Sensa Compatible for EDC Light NITECORE TINI 2 Dual OSRAM P8 LED USB Rechargeable Keychain Light -500 Lumen USB-C Rechargeable Keychain** (eco-sensa-compatible-for-edc-light-nitecore-tini-2-dual-osram-p8-led-usb-rechargeable-keychain-light-500-lumen-usb-c-rechargeable-keychain): throw=1m → expected 0cd, got 2000cd (ratio: 8000.00)
+- **EdisonBright Fenix HT32 high Powered Long Throw Beam 2500 Lumen White/red/Green** (edisonbright-fenix-ht32-high-powered-long-throw-beam-2500-lumen-white-red-green): throw=2m → expected 1cd, got 101000cd (ratio: 101000.00)
+- **EdisonBright Fenix 15th Anniversary Special Edition 85 Lumen** (edisonbright-fenix-15th-anniversary-special-edition-85-lumen): throw=1m → expected 0cd, got 505cd (ratio: 2020.00)
+- **EdisonBright Nitecore MT06MD 180 Lumen Pen-Type** (edisonbright-nitecore-mt06md-180-lumen-pen-type): throw=2m → expected 1cd, got 860cd (ratio: 860.00)
+- **EdisonBright Nitecore P10 V2 1100 Lumen LED** (edisonbright-nitecore-p10-v2-1100-lumen-led): throw=2m → expected 1cd, got 110150cd (ratio: 110150.00)
+- **EdisonBright Nitecore T4K CREE LED 4000 Lumen USB Rechargeable Compact** (edisonbright-nitecore-t4k-cree-led-4000-lumen-usb-rechargeable-compact): throw=1m → expected 0cd, got 10900cd (ratio: 43600.00)
+- **EdisonBright NITECORE MT20C 460 Lumens CREE XP-G2 LED** (edisonbright-nitecore-mt20c-460-lumens-cree-xp-g2-led): throw=2m → expected 1cd, got 8300cd (ratio: 8300.00)
+- **EdisonBright NITECORE i4000R 4400 Lumen USB-C Rechargeable Long-Throw** (edisonbright-nitecore-i4000r-4400-lumen-usb-c-rechargeable-long-throw): throw=30m → expected 225cd, got 13300cd (ratio: 59.11)
+- **EdisonBright Nitecore VCL10 QuickCharge 3.0 USB Vehicle Multitool White, Red** (edisonbright-nitecore-vcl10-quickcharge-3-0-usb-vehicle-multitool-white-red): throw=1m → expected 0cd, got 12cd (ratio: 48.00)
+- **EdisonBright Nitecore SRT6 Night Officer (Black) 930 Lumens XM-L2 T6 LED Variable brightness** (edisonbright-nitecore-srt6-night-officer-black-930-lumens-xm-l2-t6-led-variable-brightness): throw=5m → expected 6cd, got 17000cd (ratio: 2720.00)
+- **Fenix E06R PRO Flat** (fenix-e06r-pro-flat): throw=160m → expected 6400cd, got 6cd (ratio: 0.00)
+- ... and 236 more
+
+### weight too low for battery type
+- **Acebeam E70-TI** (acebeam-e70-ti-xhp70): 6g with 18650, 21700, CR123A
+- **Acebeam Led Keychain Flashlight** (acebeam-led-keychain-flashlight): 18.9945g with 18650, 21700
+- **Armytek Zippy Pink** (armytek-zippy-pink): 12g with 18350, 18650, 21700, CR123A
+- **Exell A28PX 28A 6V Alkaline Industrial Battery for Pet Collars, Headlamps, Cameras - Equivalent to 4LR44, PX28, 544 - Tear Strip** (exell-a28px-28a-6v-alkaline-industrial-battery-for-pet-collars-headlamps-cameras-equivalent-to-4lr44-px28-544-tear-strip): 14g with 21700
+- **Fenix Red Filter for TK Series LED Flashlights - Works with TK10, TK11, and TK20** (fenix-red-filter-for-tk-series-led-flashlights-works-with-tk10-tk11-and-tk20): 14g with 21700
+- **Fenix FX-WD Diffuser Wand for most L and P series flashlights (AD101-W)** (fenix-fx-wd-diffuser-wand-for-most-l-and-p-series-flashlights-ad101-w): 9g with 21700
+- **Fenix BTFL Blue Filter for TK Series LED Flashlights - Works with TK10, TK11, and TK20** (fenix-btfl-blue-filter-for-tk-series-led-flashlights-works-with-tk10-tk11-and-tk20): 14g with 21700
+- **Fenix ALL-01 Flashlight Lanyard** (fenix-all-01-flashlight-lanyard): 18g with 21700
+- **Fenix AD401 Diffuser Lens for LD/PD Series LED Flashlights - works with the LD10/20, PD20/30, and HP10** (fenix-ad401-diffuser-lens-for-ld-pd-series-led-flashlights-works-with-the-ld10-20-pd20-30-and-hp10): 9g with 21700
+- **Fitorch ET25 Extender Tube for the P25 - Available in Black, Red or Blue** (fitorch-et25-extender-tube-for-the-p25-available-in-black-red-or-blue): 18g with 26650
+- **Imalent MS03 rechargeable lithium battery** (imalent-ms03-rechargeable-lithium-battery): 8g with 21700
+- **Imalent SR32 Brightest** (imalent-sr32-brightest): 6g with 21700
+- **Imalent SR32 120000 Lumens** (imalent-sr32-120000-lumens): 6g with 21700
+- **Imalent SR32 Rechargeable Bright** (imalent-sr32-rechargeable-bright): 6g with 21700
+- **Inova LED Squeeze Light Keychain Flashlight with Black Body - White LED** (inova-led-squeeze-light-keychain-flashlight-with-black-body-white-led): 9g with 21700
+- **JETBeam Color Filter - 1.46 Inches - Fits 3M Pro Flashlight - Red, Blue or Green** (jetbeam-color-filter-1-46-inches-fits-3m-pro-flashlight-red-blue-or-green): 18g with 21700
+- **Klarus 16GT-70UR** (klarus-16gt-70ur): 18g with 18650, 21700, AAA
+- **Klarus 14GT-80UR** (klarus-14gt-80ur): 19g with 18650, 21700, AAA
+- **Klarus BZ-2 Flashlight Strike Bezel - Crenelated, 304 Stainless Steel - Fits 1.01-inch (25.6 mm) XT2CR** (klarus-bz-2-flashlight-strike-bezel-crenelated-304-stainless-steel-fits-1-01-inch-25-6-mm-xt2cr): 14g with 21700
+- **Lumintop Type-C Rechargeable 21700** (lumintop-type-c-rechargeable-21700): 9g with 21700, built-in
+- **Manchest TF DF008** (manchest-tf-df008): 18g with 18650, 26650
+- **March C8 SST40/XHP35 HI 2000lm** (nealsgadgets-march-c8-sst40-xhp35-hi-2000lm-21700-ss-bezel-sst-40): 6g with 18650, 21700
+- **MecArmy Replacement Belt Clip for the SGN3 Flashlight - Black or Polished** (mecarmy-replacement-belt-clip-for-the-sgn3-flashlight-black-or-polished): 5g with 21700
+- **Nitecore ML21 High CRI Magnetic Flashlight - 80 Lumens** (nitecore-ml21-high-cri-magnetic-flashlight-80-lumens): 11g with 21700
+- **Nitecore NF20 Filters for Flashlights with 19.7mm Head Diameters - Red, Blue, or Green** (nitecore-nf20-filters-for-flashlights-with-19-7mm-head-diameters-red-blue-or-green): 9g with 21700
+- **Nitecore Nitecore NU05 LE Rechargeable Mini Signal Headlamp - Red, Green, Blue and White LEDs - Uses Built-In 120mAh Li-Ion Battery** (sysmax-industry-nite-core-nitecore-nu05-le-rechargeable-mini-signal-headlamp-red-green-blue-and-white-leds-uses-built-in-120mah-li-ion-battery): 10.4g with 18650, 21700
+- **Nitecore NU05 Headband Accessory for the NU05 Headlamp Mate** (nitecore-nu05-headband-accessory-for-the-nu05-headlamp-mate): 10.4g with 21700
+- **Nitecore NU05 Bike Mount Accessory for the NU05 Headlamp Mate** (nitecore-nu05-bike-mount-accessory-for-the-nu05-headlamp-mate): 5g with 21700
+- **Nitecore Tactical Ring for** (nitecore-tactical-ring-for): 18g with 21700
+- **Nitecore Pocket Clip for EX11** (nitecore-pocket-clip-for-ex11): 9g with 21700
+- ... and 19 more
+
+### throw >5km
+- **Acebeam W10 Gen II Ultra-Throw LEP Flashlight - 450 Lumens - Includes 1 x 21700** (acebeam-w10-gen-ii-ultra-throw-lep-flashlight-450-lumens-includes-1-x-21700): 5100m
+- **Acebeam W50 20 Zoomable Lep Flashlight** (acebeam-w50-20-zoomable-lep-flashlight): 5062m
+- **NlightD X1 3000lm 5786m LEP** (nlightd-x1-3000lm-5786m-lep): 5786m
+- **Skylumen Lumintop B01vn Bicycle** (sky-lumen-lumintop-b01vn-bicycle): 6000m
+- **Skylumen ONE-OFF Abandoned Prototype** (sky-lumen-one-off-abandoned-prototype): 5600m
+
+### lumens >200k
+- **Haikelite AK24 230000lm High-Power** (haikelite-ak24-230000lm-high-power): 230000lm
+- **Skylumen HaikeLite HK24 230,000Lumen** (sky-lumen-haikelite-hk24-230-000lumen): 230000lm
+
+### price >$5000
+- **Pelican 9470** (pelican-9470-led): $5244.95
+- **Pelican 9470M** (pelican-9470m-led): $5455.95
+
+### weight >5kg
+- **Core Lighting WL-T006 LED Tripod** (core-lighting-wl-t006-led-tripod): 5816g
+- **NightSearcher TwinStar Connect LED Tripod** (nightsearcher-twinstar-connect-led-tripod): 6000g
+
+### runtime >10,000h
+- **Armytek Barracuda Pro / XHP35 HI White LED / 1500 lumens / 5Ã‚Â°:40Ã‚Â°** (armytek-barracuda-pro-xhp35-hi-white-led-1500-lumens-5-40): 12000h
