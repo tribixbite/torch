@@ -163,8 +163,16 @@
 </script>
 
 <div class="result-item-wrap">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="card-row"
+	onclick={(e) => {
+		// Don't toggle if user clicked a link, button (star), or interactive element
+		const t = e.target as HTMLElement;
+		if (t.closest('a') || t.closest('.card-star') || t.closest('.card-purchase')) return;
+		expanded = !expanded;
+	}}
 >
 	<!-- Sprite thumbnail -->
 	<div class="card-thumb">
@@ -177,9 +185,9 @@
 		<div class="card-header">
 			<button
 				class="card-expand"
-				onclick={() => (expanded = !expanded)}
+				onclick={(e) => { e.stopPropagation(); expanded = !expanded; }}
 				title="Toggle details"
-			>±</button>
+			>{expanded ? '−' : '+'}</button>
 			<span class="card-model">{model}</span>
 			<span class="card-brand">by {brand}</span>
 			{#if getInfoLinks()}
@@ -235,6 +243,7 @@
 		border: 1px solid var(--border);
 		background: var(--bg-secondary);
 		transition: border-color 0.15s;
+		cursor: pointer;
 	}
 	.card-row:hover {
 		border-color: var(--border-hover);
@@ -257,13 +266,24 @@
 	}
 
 	.card-expand {
-		font-size: 0.8rem;
+		font-size: 0.875rem;
+		font-weight: 600;
 		cursor: pointer;
 		color: var(--text-muted);
 		background: none;
 		border: none;
-		padding: 0;
+		padding: 0.25rem;
+		min-width: 1.5rem;
+		min-height: 1.5rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		user-select: none;
+		border-radius: 0.25rem;
+	}
+	.card-expand:hover {
+		color: var(--text-primary);
+		background: var(--bg-tertiary, rgba(255,255,255,0.05));
 	}
 
 	.card-model {
