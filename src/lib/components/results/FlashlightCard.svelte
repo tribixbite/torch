@@ -97,7 +97,7 @@
 		}
 
 		// Handle {si} prefix units like "{si}lm", "{si}h", "{si}Wh"
-		if (col.unit.startsWith('{si}')) {
+		if (col.unit && col.unit.startsWith('{si}')) {
 			const suffix = col.unit.slice(4); // e.g. "lm", "h", "Wh"
 			const num = typeof value === 'number' ? value : parseFloat(String(value));
 			if (isNaN(num)) return display + suffix;
@@ -212,12 +212,12 @@
 		</div>
 
 		<!-- Purchase links -->
-		{#if getPurchaseLinks() || (reviewsCol >= 0 && data[reviewsCol] && Number(data[reviewsCol]) > 0)}
+		{#if getPurchaseLinks() || (reviewsCol >= 0 && data[reviewsCol] && !isNaN(Number(data[reviewsCol])) && Number(data[reviewsCol]) > 0)}
 			<div class="card-purchase">
 				{#if getPurchaseLinks()}
 					<span>{@html getPurchaseLinks()}</span>
 				{/if}
-				{#if reviewsCol >= 0 && data[reviewsCol] && Number(data[reviewsCol]) > 0}
+				{#if reviewsCol >= 0 && data[reviewsCol] && !isNaN(Number(data[reviewsCol])) && Number(data[reviewsCol]) > 0}
 					<span class="card-reviews">({data[reviewsCol]} review{Number(data[reviewsCol]) > 1 ? 's' : ''})</span>
 				{/if}
 			</div>

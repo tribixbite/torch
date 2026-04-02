@@ -23,8 +23,13 @@
 	let pic = $derived(picCol >= 0 ? data[picCol] as [number, number] : [0, 0]);
 	let isStarred = $derived(starredState.isStarred(index));
 
+	/** Proxy-safe array check — Svelte 5 $state proxied arrays fail Array.isArray() */
+	function isArrayLike(v: unknown): v is unknown[] {
+		return Array.isArray(v) || (v !== null && typeof v === 'object' && 'length' in v && typeof (v as any).length === 'number' && !(v instanceof String));
+	}
+
 	function formatArray(val: unknown): string {
-		if (Array.isArray(val)) return val.filter((x) => typeof x !== 'string' || !x.startsWith('//')).join(', ');
+		if (isArrayLike(val)) return (val as unknown[]).filter((x) => typeof x !== 'string' || !x.startsWith('//')).join(', ');
 		return val != null && val !== '' ? String(val) : '?';
 	}
 </script>
