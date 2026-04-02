@@ -1,6 +1,6 @@
 # Pipeline State — 2026-04-02
 
-## Current Status: 17,654 lights in DB — 327 spec issues (verify-specs)
+## Current Status: 17,654 lights in DB — 146 spec issues (verify-specs)
 
 ### Coverage (17,654 lights)
 | Field | Missing | % Coverage |
@@ -13,10 +13,10 @@
 | lumens | 3,850 | 78.2% |
 | switch | 4,431 | 74.9% |
 | battery | 4,467 | 74.7% |
-| throw_m | 5,292 | 70.0% |
 | length_mm | 5,324 | 69.8% |
 | runtime | 5,514 | 68.8% |
 | **led** | **6,603** | **62.6%** |
+| throw_m | 6,918 | 60.8% |
 
 Note: Coverage computed against ALL 17,654 lights in DB.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
@@ -40,7 +40,18 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (4/1 — current)
+### Session Gains (4/2 — current)
+- **Bogus throw cleanup**: 1,638 throw values ≤10m cleared (star ratings, model numbers, page positions)
+  - No real flashlight has ANSI FL1 throw ≤10m
+  - Distribution: throw=2 (424), throw=5 (380), throw=1 (190) — parsing artifacts
+  - Also clears co-derived intensity_cd when FL1-consistent with bogus throw
+  - Throw coverage: 70.0% → 60.8% (honest)
+- **FL1 throw derivation**: 12 entries fixed using FL1 formula from known intensity_cd
+  - Maglite model numbers (SP2P017M → 17m → 163m from 6613cd)
+  - LEATHERMAN/Lumintop/Fenix parsing artifacts
+- **Spec verification improvement**: 327 → 146 issues (FL1 mismatches: 266 → 85)
+
+### Session Gains (4/1)
 - **Battery normalization**: 647 → 94 unique values (DB migration: 1,099 entries updated, 614 dropped unknown-only)
   - Module: `pipeline/normalization/battery-normalizer.ts` (166 test cases)
   - DB migration: `scripts/normalize-batteries.ts`
