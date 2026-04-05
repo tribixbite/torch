@@ -1,6 +1,6 @@
 # Torch Project Roadmap
 
-Last updated: 2026-04-02
+Last updated: 2026-04-05
 
 Current state: 17,644 entries in DB, ~14,396 flashlights after build-time accessory filter and dedup. 4,172 entries (29.7%) at full 16/16 completeness. 5 normalizers complete. AI parser and vision pipeline fully converged.
 
@@ -81,6 +81,9 @@ These gaps are structural — the data does not exist on scraped product pages. 
 ### Image lazy loading
 - Sprite sheet is loaded eagerly — consider intersection observer for off-screen cards
 - 314 entries missing images entirely — show a proper placeholder, not a broken image
+
+### ~~Empty labels rendering with no values~~ FIXED
+- Fixed in FlashlightCard.svelte — three-layer fix: `shouldShowDetail()` redundant empty array check for Svelte 5 proxied arrays, `formatValue()` returns '?' for empty/filtered arrays, template-level guard prevents rendering labels when formatted value is empty
 
 ### Table view
 - Verify array fields display correctly after `isArrayLike()` fix (Svelte 5 proxy issue)

@@ -48,8 +48,12 @@
 		if (col.cvis === 'never') return false;
 		if (avoidIds.has(col.id)) return false;
 		const val = data[col.index];
-		const hasValue = val !== null && val !== undefined && val !== '' &&
-			!(isArrayLike(val) && (val as unknown[]).length === 0);
+		// Check for empty values — also handles Svelte 5 proxied arrays that may
+		// fail Array.isArray(). Use both isArrayLike and direct length check.
+		const isEmpty = val === null || val === undefined || val === '' ||
+			(isArrayLike(val) && (val as unknown[]).length === 0) ||
+			(typeof val === 'object' && val !== null && 'length' in val && (val as any).length === 0);
+		const hasValue = !isEmpty;
 		if (col.cvis === 'always') return hasValue;
 		// Show if filter is active for this column (even if value is empty — shows '?')
 		if (urlState.filters.has(col.index)) return true;
@@ -65,6 +69,7 @@
 		if (value === '' || value === null || value === undefined) return '?';
 
 		if (isArrayLike(value)) {
+			if ((value as unknown[]).length === 0) return '?';
 			if (col.filterType === 'boolean') {
 				const filtered = value.filter(
 					(x) => typeof x !== 'string' || (!x.startsWith('~') && !x.startsWith('//'))
@@ -72,7 +77,8 @@
 				return filtered.length > 0 ? filtered.join('  ') : 'none';
 			}
 			const filtered = value.filter((x) => typeof x !== 'string' || !x.startsWith('//'));
-			return filtered.join('  ');
+			// Return '?' if all elements were filtered out (e.g. all //comments)
+			return filtered.length > 0 ? filtered.join('  ') : '?';
 		}
 
 		return String(value);
@@ -210,14 +216,17 @@
 			{/if}
 		</div>
 
-		<!-- Detail rows -->
+		<!-- Detail rows — skip labels with empty formatted values -->
 		<div class="card-details">
 			{#each columns as col}
 				{#if shouldShowDetail(col)}
-					<span class="card-detail">
-						<span class="detail-label">{@html col.display}:</span>
-						{@html formatWithUnit(col, data[col.index])}
-					</span>
+					{@const formatted = formatWithUnit(col, data[col.index])}
+					{#if formatted.trim()}
+						<span class="card-detail">
+							<span class="detail-label">{@html col.display}:</span>
+							{@html formatted}
+						</span>
+					{/if}
 				{/if}
 			{/each}
 		</div>
