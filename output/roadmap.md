@@ -11,6 +11,10 @@ Current state: 17,644 entries in DB, ~14,396 flashlights after build-time access
 ### ~~Lumen slider displays `{si}lm` for min/max labels~~ FIXED
 - Fixed in RangeFilter.svelte and FilterPills.svelte — detects `{si}` prefix, uses `smartFixed(value, '{si}')` + suffix
 
+### ~~Empty field labels in expanded cards~~ FIXED
+- "LED color:", "switch:" etc rendered with no value when data was null/empty array
+- 3-layer fix: shouldShowDetail() hasValue check, formatValue() empty-array guard, template `{#if formatted.trim()}` guard
+
 ### 146 remaining spec verification issues
 - 85 FL1 throw/intensity mismatches — throw and intensity_cd are inconsistent per ANSI FL1 formula `cd = (throw / 2)^2`
 - 49 entries with suspiciously low weight for battery type (e.g., 18650-powered light weighing <50g)
