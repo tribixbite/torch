@@ -47,13 +47,16 @@
 	function shouldShowDetail(col: ColumnDef): boolean {
 		if (col.cvis === 'never') return false;
 		if (avoidIds.has(col.id)) return false;
-		if (col.cvis === 'always') return true;
-		if (expanded) return true;
-		// Show if filter is active for this column
+		const val = data[col.index];
+		const hasValue = val !== null && val !== undefined && val !== '' &&
+			!(isArrayLike(val) && (val as unknown[]).length === 0);
+		if (col.cvis === 'always') return hasValue;
+		// Show if filter is active for this column (even if value is empty — shows '?')
 		if (urlState.filters.has(col.index)) return true;
-		// Show if linked column has active filter
 		const linkCol = columns.find((c) => c.id === col.link);
 		if (linkCol && urlState.filters.has(linkCol.index)) return true;
+		// When expanded, only show fields that have data
+		if (expanded) return hasValue;
 		return false;
 	}
 
