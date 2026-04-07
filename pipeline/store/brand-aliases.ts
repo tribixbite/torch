@@ -16,6 +16,8 @@ const BRAND_MAP: Record<string, string> = {
 	'emisar noctigon': 'Emisar',
 	'fenix': 'Fenix',
 	'fenix store': 'Fenix',
+	'fenix flashlights': 'Fenix',
+	'fenix lighting': 'Fenix',
 	'fireflies': 'Fireflies',
 	'haikelite': 'Haikelite',
 	'imalent': 'Imalent',
@@ -26,7 +28,12 @@ const BRAND_MAP: Record<string, string> = {
 	'led lenser': 'Ledlenser',
 	'lumintop': 'Lumintop',
 	'maglite': 'Maglite',
+	'mag instrument': 'Maglite',
+	'mag-lite': 'Maglite',
+	'mag lite': 'Maglite',
+	'mag': 'Maglite',
 	'manker': 'Manker',
+	'mankerlight': 'Manker',
 	'nitecore': 'Nitecore',
 	'nightcore': 'Nitecore',
 	'noctigon': 'Noctigon',
@@ -44,6 +51,14 @@ const BRAND_MAP: Record<string, string> = {
 	'wuben': 'Wuben',
 	'zebralight': 'Zebralight',
 	'coast': 'Coast',
+	'coast cutlery': 'Coast',
+	'coast cutlery co': 'Coast',
+	'coast cutlery company': 'Coast',
+	'coast lights': 'Coast',
+	'coast products': 'Coast',
+	'coastproducts': 'Coast',
+	'coast slayer': 'Coast',
+	'cost products': 'Coast',
 	'nebo': 'Nebo',
 	'astrolux': 'Astrolux',
 	'cyansky': 'Cyansky',
@@ -75,6 +90,8 @@ const BRAND_MAP: Record<string, string> = {
 	'dorcy': 'Dorcy',
 	'nightstick': 'Nightstick',
 	'bayco': 'Nightstick',
+	'nighstick': 'Nightstick',
+	'nightstick (nigiy)': 'Nightstick',
 	'powertac': 'PowerTac',
 	'malkoff': 'Malkoff',
 	'malkoff devices': 'Malkoff',
@@ -88,6 +105,14 @@ const BRAND_MAP: Record<string, string> = {
 	'nextorch': 'Nextorch',
 	'rayovac': 'Rayovac',
 	'fitorch': 'Fitorch',
+	'terralux': 'TerraLUX',
+	'garrity': 'Garrity',
+	'garrity industries': 'Garrity',
+	'duracell': 'Duracell',
+	'kodak': 'Kodak',
+	'loop gear': 'Loop Gear',
+	'bluetech': 'Bluetech',
+	'onerbl': 'Onerbl',
 };
 
 /** Fuzzy/typo normalization: lowercase key → canonical brand */
@@ -160,6 +185,14 @@ export const RETAILER_DOMAINS = new Set([
 	'jlhawaii808.com',
 	'fenix-store.com',
 ]);
+
+/**
+ * Check if a brand name has an explicit mapping (not just title-case fallback).
+ */
+export function isMappedBrand(vendor: string): boolean {
+	const lower = vendor.toLowerCase().trim();
+	return lower in BRAND_MAP || lower in TYPO_MAP;
+}
 
 /**
  * Normalize a vendor/brand name to its canonical form.

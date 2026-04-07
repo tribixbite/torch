@@ -9,6 +9,7 @@ import type { FilterMessage, FilterResult, SerializedFilter, SerializedFilters, 
 
 let db: FlashlightDB;
 let searchIndex: string[]; // lowercase model+brand for text search
+let defaultOrder: number[]; // cached [0, 1, 2, ...n] for unsorted iteration
 let lastFilterId = 0; // skip stale requests
 
 // --- Set operations (exact ports from parametrek.js) ---
@@ -193,6 +194,7 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 
 	if (msg.type === 'init') {
 		db = msg.db as FlashlightDB;
+		defaultOrder = Array.from({ length: db.data.length }, (_, i) => i);
 		buildSearchIndex();
 		self.postMessage({ id: msg.id, indices: [], count: db.data.length, timing: 0 } as FilterResult);
 		return;
@@ -218,8 +220,8 @@ self.onmessage = (e: MessageEvent<FilterMessage>) => {
 				iterationOrder = sortData.inc ?? [...sortData.dec].reverse();
 			}
 		} else {
-			// Default: iterate in data order
-			iterationOrder = Array.from({ length: db.data.length }, (_, i) => i);
+			// Default: iterate in data order (pre-built on init)
+			iterationOrder = defaultOrder;
 		}
 
 		// Filter

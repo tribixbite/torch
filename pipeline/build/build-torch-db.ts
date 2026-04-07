@@ -9,8 +9,40 @@ import { normalizeBatteryArray } from '../normalization/battery-normalizer.js';
 import { normalizeMaterialArray } from '../normalization/material-normalizer.js';
 import { normalizeSwitchArray } from '../normalization/switch-normalizer.js';
 import { normalizeFeatureArray } from '../normalization/features-normalizer.js';
+import { normalizeBrandName, isMappedBrand } from '../store/brand-aliases.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
+
+/** Garbage brand pattern — Amazon listing artifacts with lumen values parsed as brand */
+const GARBAGE_BRAND_RE = /lumens?\s*light\s*house/i;
+
+/**
+ * Normalize brand at build time. Applies BRAND_MAP + known-brand prefix stripping.
+ * If the full brand doesn't match but the first word does, use the first word's canonical form.
+ * This catches "Fenix UC45" → "Fenix", "Maglite Mini, Custom..." → "Maglite", etc.
+ */
+function normalizeBrandAtBuild(brand: string): string {
+	const trimmed = brand.trim();
+	if (!trimmed) return trimmed;
+
+	// Direct match in BRAND_MAP or TYPO_MAP — return canonical form
+	if (isMappedBrand(trimmed)) {
+		return normalizeBrandName(trimmed);
+	}
+
+	// Known-brand prefix stripping: if the first word is a mapped brand,
+	// the rest is model info leaking into the brand field
+	const firstWord = trimmed.split(/[\s,]+/)[0];
+	if (firstWord && firstWord.toLowerCase() !== trimmed.toLowerCase() && isMappedBrand(firstWord)) {
+		return normalizeBrandName(firstWord);
+	}
+
+	// Fallback: normalize casing for case-insensitive dedup
+	// normalizeBrandName's title-case fallback doesn't lowercase existing uppercase
+	// (e.g., "MOLICEL" stays "MOLICEL" instead of "Molicel"), so we lowercase first
+	const lower = trimmed.toLowerCase();
+	return lower.replace(/\b\w/g, c => c.toUpperCase());
+}
 
 /** Retailer domains — URLs from these are NOT manufacturer websites */
 const RETAILER_DOMAINS = /amazon\.|ebay\.|walmart\.|bestbuy\.|bhphoto\.|batteryjunction\.|goinggear\.|nealsgadgets\.|illumn\.|killzoneflashlights\.|knifecenter\.|bladehq\.|opticsplanet\.|cabelas\.|basspro\.|rei\.com|homedepot\.|lowes\.|target\.com|aliexpress\.|banggood\.|gearbest\.|jlhawaii808\.|jlhawaii\./i;
@@ -130,7 +162,7 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'info', display: 'info', unit: '{link}', cvis: 'always', link: 'info', srch: false, mode: ['any'], sortable: false,
 		extract: (e) => e.info_urls.length > 0 ? e.info_urls : [] },
 	{ id: 'brand', display: 'brand', unit: '', cvis: 'always', link: 'brand', srch: true, mode: ['any'], sortable: true,
-		extract: (e) => e.brand },
+		extract: (e) => normalizeBrandAtBuild(e.brand) },
 	{ id: 'type', display: 'type', unit: '', cvis: '', link: 'type', srch: true, mode: ['any', 'all', 'only', 'none'], sortable: false,
 		extract: (e) => e.type },
 	{ id: 'led', display: 'LED', unit: '', cvis: '', link: 'led', srch: true, mode: ['any', 'all', 'only'], sortable: false,
@@ -256,8 +288,8 @@ function collectOptions(data: unknown[][], colIdx: number): string[] {
 	return [...optSet].sort((a, b) => a.localeCompare(b));
 }
 
-/** Compute sort indices for a numeric sortable column */
-function computeSortIndices(data: unknown[][], colIdx: number): { dec: number[]; inc: number[] } {
+/** Compute sort indices for a numeric sortable column (dec only — inc derived at runtime) */
+function computeSortIndices(data: unknown[][], colIdx: number): { dec: number[] } {
 	type IndexedValue = { idx: number; val: number };
 	const indexed: IndexedValue[] = [];
 
@@ -284,12 +316,11 @@ function computeSortIndices(data: unknown[][], colIdx: number): { dec: number[];
 		})
 		.map((v) => v.idx);
 
-	const inc = [...dec].reverse();
-	return { dec, inc };
+	return { dec };
 }
 
-/** Compute sort indices for a string sortable column (alphabetical) */
-function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: number[]; inc: number[] } {
+/** Compute sort indices for a string sortable column (dec only — inc derived at runtime) */
+function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: number[] } {
 	type IndexedStr = { idx: number; val: string };
 	const indexed: IndexedStr[] = [];
 
@@ -298,18 +329,17 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 		indexed.push({ idx: i, val: typeof raw === 'string' ? raw.toLowerCase() : '' });
 	}
 
-	// Ascending alphabetical (A→Z), empties last
-	const inc = indexed
+	// Descending alphabetical (Z→A), empties last
+	const dec = indexed
 		.sort((a, b) => {
 			if (!a.val && !b.val) return 0;
 			if (!a.val) return 1;
 			if (!b.val) return -1;
-			return a.val.localeCompare(b.val);
+			return b.val.localeCompare(a.val);
 		})
 		.map((v) => v.idx);
 
-	const dec = [...inc].reverse();
-	return { dec, inc };
+	return { dec };
 }
 
 /** Build opts[] — filter definitions for each column */
@@ -515,14 +545,27 @@ export async function buildTorchDb(): Promise<{
 	}
 	if (blogCount > 0) console.log(`  Classified ${blogCount} non-product pages (excluded from main view)`);
 
+	// Filter garbage brands — Amazon listing artifacts with lumen values parsed as brand
+	let garbageBrandCount = 0;
+	for (const entry of allEntries) {
+		if (entry.type.includes('accessory') || entry.type.includes('blog')) continue;
+		if (GARBAGE_BRAND_RE.test(entry.brand)) {
+			entry.type = ['accessory'];
+			updateEntryType(entry.id, ['accessory']);
+			garbageBrandCount++;
+		}
+	}
+	if (garbageBrandCount > 0) console.log(`  Filtered ${garbageBrandCount} garbage-brand entries (LUMENS LIGHT HOUSE)`);
+
 	// Filter out removed entries — they're dedup artifacts that serve no purpose in the JSON
 	// Keep accessories/blogs — they're filterable via type column
 	const entries = allEntries.filter(e => !e.type.includes('removed'));
 
 	// Build brand-level manufacturer URL lookup — if ANY entry for a brand has a mfg URL, all entries inherit it
+	// Uses normalized brand names so merged variants share the lookup
 	const brandHasMfgUrl = new Set<string>();
 	for (const entry of entries) {
-		if (hasMfgUrl(entry)) brandHasMfgUrl.add(entry.brand);
+		if (hasMfgUrl(entry)) brandHasMfgUrl.add(normalizeBrandAtBuild(entry.brand));
 	}
 	// Known manufacturer brands — sold at enthusiast retailers (jlhawaii808, nealsgadgets, illumn)
 	// These all have manufacturer websites with spec sheets
@@ -536,8 +579,8 @@ export async function buildTorchDb(): Promise<{
 	]);
 	for (const b of KNOWN_MFG_BRANDS) brandHasMfgUrl.add(b);
 	console.log(`  ${brandHasMfgUrl.size} brands have manufacturer URLs (${entries.length - [...entries].filter(e => brandHasMfgUrl.has(e.brand)).length} entries from brands without)`);
-	// Patch hasMfgUrl to use brand-level lookup
-	const brandMfgLookup = (e: FlashlightEntry): boolean => brandHasMfgUrl.has(e.brand);
+	// Patch hasMfgUrl to use brand-level lookup (normalized brand)
+	const brandMfgLookup = (e: FlashlightEntry): boolean => brandHasMfgUrl.has(normalizeBrandAtBuild(e.brand));
 
 	// Load sprite metadata if available (written by scrape-images.ts)
 	const spriteMetaPath = resolve(import.meta.dir, '../../pipeline-data/sprite-metadata.json');

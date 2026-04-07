@@ -84,7 +84,7 @@
 		// Unwrap Svelte 5 proxies — postMessage requires plain objects
 		const sort = { column: urlState.sort.column, direction: urlState.sort.direction };
 		const result = await workerClient.filter(
-			JSON.parse(JSON.stringify(serialized)),
+			structuredClone(serialized),
 			sort,
 			urlState.searchQuery || undefined
 		);
