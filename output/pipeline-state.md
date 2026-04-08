@@ -1,24 +1,23 @@
-# Pipeline State — 2026-04-02
+# Pipeline State — 2026-04-07
 
-## Current Status: 17,644 lights in DB — 146 spec issues (verify-specs)
+## Current Status: 17,644 lights in DB (14,013 active) — 12 spec issues (all known legitimate)
 
-### Coverage (17,644 lights)
+### Coverage (14,013 active lights, excludes removed/blog)
 | Field | Missing | % Coverage |
 |-------|---------|------------|
-| color | 1,495 | 91.5% |
-| price_usd | 2,275 | 87.1% |
-| weight_g | 2,806 | 84.1% |
-| features | 2,866 | 83.8% |
-| material | 3,135 | 82.2% |
-| lumens | 3,846 | 78.2% |
-| battery | 4,397 | 75.1% |
-| switch | 4,425 | 74.9% |
-| length_mm | 5,240 | 70.3% |
-| runtime | 5,511 | 68.8% |
-| throw_m | 6,481 | 63.3% |
-| **led** | **6,600** | **62.6%** |
+| color | 1,334 | 90.5% |
+| price_usd | 2,207 | 84.3% |
+| weight_g | 2,490 | 82.2% |
+| features | 2,788 | 80.1% |
+| material | 2,943 | 79.0% |
+| lumens | 3,716 | 73.5% |
+| battery | 4,275 | 69.5% |
+| switch | 4,309 | 69.2% |
+| length_mm | 4,706 | 66.4% |
+| runtime | 5,087 | 63.7% |
+| **led** | **5,874** | **58.1%** |
+| throw_m | 5,961 | 57.5% |
 
-Note: Coverage computed against ALL 17,654 lights in DB.
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 
 ### Continuous Enrichment Pipeline
@@ -40,7 +39,28 @@ Known issues:
 - **Color**: White-background bias — product images on white bg classified as "white" body color
 - **Switch**: Taxonomy mismatch — parametrek uses "dual tail", "ring", "momentary" vs our simpler categories
 
-### Session Gains (4/2 — current)
+### Session Gains (4/7 — current)
+- **Spec verification: 135 → 12 issues** (all 12 known legitimate)
+  - FL1 mismatches: 82 fixed (trust cd, re-derive throw for 80; trust throw, re-derive cd for 2)
+  - Weight/battery mismatches: 49 fixed (32 accessories battery cleared, 17 bogus weights cleared)
+  - Nitecore MT21C: 4 entries merged to 1
+  - Saint Torch 31 length decimal error: 28.5 → 285mm
+- **Brand normalization**: 772 → 733 unique brands, 0 case dupes
+  - ~30 new BRAND_MAP aliases (Coast variants, Fenix, Maglite, Manker, Nightstick, etc.)
+  - `normalizeBrandAtBuild()` with prefix stripping for mapped brands
+  - JSON size: 8.9MB → 7.4MB (-17%, inc sort arrays dropped)
+- **Petzl scraping** (petzl.com, server-rendered Salesforce):
+  - 59 fields updated across Actik, Tikka, Pixa families (lumens, throw, runtime, weight, battery, price)
+  - LED/length/material NOT published by Petzl
+- **Sofirn scraping** (sofirnlight.com via Playwright + flashlightgo.com Shopify JSON API):
+  - 15 throw values recovered (SC33=327, SP36Pro=423, SK1=479, Q8Plus=554, etc.)
+  - Source: Shoplazza rendered DOM text + Shopify `/products/{handle}.json`
+- **Wurkkos scraping** (wurkkos.com + flashlightgo.com):
+  - 11 throw values (TD07=479, TD04=1000, HD50=1000, TS27=845, FC12C=332, etc.)
+  - UeeShop product descriptions + Shopify JSON API fallback
+- **FL1 derivation**: 32 intensity_cd values derived from new throw data
+
+### Session Gains (4/2)
 - **Bogus throw cleanup**: 1,638 throw values ≤10m cleared (star ratings, model numbers, page positions)
   - No real flashlight has ANSI FL1 throw ≤10m
   - Distribution: throw=2 (424), throw=5 (380), throw=1 (190) — parsing artifacts

@@ -1,8 +1,8 @@
 # Torch Project Roadmap
 
-Last updated: 2026-04-05
+Last updated: 2026-04-07
 
-Current state: 17,644 entries in DB, ~14,396 flashlights after build-time accessory filter and dedup. 4,172 entries (29.7%) at full 16/16 completeness. 5 normalizers complete. AI parser and vision pipeline fully converged.
+Current state: 17,644 entries in DB, ~14,393 flashlights after build-time accessory filter and dedup. 733 unique brands (0 case dupes). 5 normalizers complete. AI parser and vision pipeline fully converged. Spec verification: 12 known legitimate issues (was 146).
 
 ---
 
@@ -15,14 +15,13 @@ Current state: 17,644 entries in DB, ~14,396 flashlights after build-time access
 - "LED color:", "switch:" etc rendered with no value when data was null/empty array
 - 3-layer fix: shouldShowDetail() hasValue check, formatValue() empty-array guard, template `{#if formatted.trim()}` guard
 
-### 146 remaining spec verification issues
-- 85 FL1 throw/intensity mismatches — throw and intensity_cd are inconsistent per ANSI FL1 formula `cd = (throw / 2)^2`
-- 49 entries with suspiciously low weight for battery type (e.g., 18650-powered light weighing <50g)
-- 5 entries with throw >5km — 3 are LEP lights (legitimate), 2 are Skylumen custom builds (needs review)
-- 2 entries with weight >5kg — both tripod-mounted lights (legitimate)
-- 1 entry with runtime >5,000h (Armytek Barracuda Pro — encoding artifact in runtime array)
-- 3 remaining duplicate groups (Nextorch Saint Torch 31, Nitecore MT21C, Nitecore TM28 — LED suffix variants)
-- 20 entries with lumens >100k — mostly legitimate (Imalent MS32/SR32) but includes charger/accessory listings that inherit parent product lumens
+### ~~146 remaining spec verification issues~~ RESOLVED → 12 known legitimate
+- ~~85 FL1 throw/intensity mismatches~~ FIXED — 82 re-derived via FL1 formula (trust cd → derive throw for 80, trust throw → derive cd for 2)
+- ~~49 entries with suspiciously low weight for battery type~~ FIXED — 32 accessories battery cleared, 17 bogus weights cleared
+- ~~3 remaining duplicate groups~~ FIXED — MT21C merged (4→1), Saint Torch 31 length fixed (28.5→285mm)
+- 5 entries with throw >5km — 3 LEP lights + 2 Skylumen custom (all legitimate)
+- 2 entries with weight >5kg — tripod-mounted lights (legitimate)
+- 1 entry with runtime >10,000h, 2 entries with lumens >200k, 2 with price >$5000 — all legitimate
 
 ---
 
@@ -30,25 +29,30 @@ Current state: 17,644 entries in DB, ~14,396 flashlights after build-time access
 
 These gaps are structural — the data does not exist on scraped product pages. New sources are required.
 
-### Coverage gaps (17,644 entries)
+### Coverage gaps (14,013 active entries)
 | Field | Missing | Coverage | Notes |
 |-------|---------|----------|-------|
-| LED | 6,600 | 62.6% | Brands like Nightstick, Coast, Pelican, Energizer do not publish LED chip names |
-| throw_m | 6,481 | 63.3% | Many products do not publish throw distance |
-| runtime | 5,511 | 68.8% | Chinese brands (Lumintop, Mateminco, Emisar) lack ANSI runtime data |
-| length_mm | 5,240 | 70.3% | Not typically on product pages, needs review site scraping |
-| switch | 4,425 | 74.9% | Often omitted from product listings |
-| battery | 4,397 | 75.1% | Some brands list only "rechargeable" |
-| lumens | 3,846 | 78.2% | Older/discontinued products |
+| LED | 5,874 | 58.1% | Brands like Nightstick, Coast, Pelican, Energizer do not publish LED chip names |
+| throw_m | 5,961 | 57.5% | Many products do not publish throw distance |
+| runtime | 5,087 | 63.7% | Chinese brands (Lumintop, Mateminco, Emisar) lack ANSI runtime data |
+| length_mm | 4,706 | 66.4% | Not typically on product pages, needs review site scraping |
+| switch | 4,309 | 69.2% | Often omitted from product listings |
+| battery | 4,275 | 69.5% | Some brands list only "rechargeable" |
+| lumens | 3,716 | 73.5% | Older/discontinued products |
+| material | 2,943 | 79.0% | |
+| features | 2,788 | 80.1% | |
+| weight_g | 2,490 | 82.2% | |
+| price_usd | 2,207 | 84.3% | |
+| color | 1,334 | 90.5% | |
 
 ### New data sources needed
 - **Review sites**: zeroair.org, 1lumen.com, candlepowerforums.com for ANSI FL1-tested specs (runtime, throw, lumens measured independently)
 - **BLF/Reddit threads**: community-measured specs for enthusiast brands (Convoy, Emisar, Noctigon)
 
 ### Blocked scrapers
-- **Petzl** (80 entries, 84% valid): Salesforce/Visualforce JS-rendered pages. Needs headless browser via Playwright MCP. Length at 86% is the main gap.
-- **Sofirn**: Shoplazza platform, Cloudflare blocks all requests (bun fetch and curl). Needs headless browser or API workaround.
-- **Wurkkos**: UeeShop platform, Cloudflare JS challenge blocks product pages (collections page works). 48 products scraped but detail pages inaccessible.
+- ~~**Petzl**~~ SCRAPED — petzl.com is server-rendered Salesforce (no Cloudflare). 59 fields updated. LED/length/material NOT published by Petzl.
+- ~~**Sofirn**~~ PARTIALLY SCRAPED — sofirnlight.com accessible via Playwright (Shoplazza, JS-rendered). 15 throw values recovered. Many products still don't publish throw.
+- ~~**Wurkkos**~~ PARTIALLY SCRAPED — wurkkos.com accessible via plain fetch. 11 throw values. flashlightgo.com Shopify JSON API as fallback.
 - **Pelican** (169 entries): Cloudflare blocks bun fetch. Curl workaround via `Bun.spawnSync(['curl', ...])` works but is fragile.
 
 ### Brand-specific gaps
