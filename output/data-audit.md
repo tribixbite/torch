@@ -411,3 +411,38 @@
 
 ### runtime >10,000h
 - **Armytek Barracuda Pro / XHP35 HI White LED / 1500 lumens / 5Ã‚Â°:40Ã‚Â°** (armytek-barracuda-pro-xhp35-hi-white-led-1500-lumens-5-40): 12000h
+
+
+## 7. Spec Verification Flags
+
+12 issues found across 14013 entries.
+
+| Issue | Count |
+|-------|-------|
+| throw >5km | 5 |
+| lumens >200k | 2 |
+| price >$5000 | 2 |
+| weight >5kg | 2 |
+| runtime >10,000h | 1 |
+
+### throw >5km
+- **Acebeam W10 Gen II Ultra-Throw LEP Flashlight - 450 Lumens - Includes 1 x 21700** (acebeam-w10-gen-ii-ultra-throw-lep-flashlight-450-lumens-includes-1-x-21700): 5100m
+- **Acebeam W50 20 Zoomable Lep Flashlight** (acebeam-w50-20-zoomable-lep-flashlight): 5062m
+- **NlightD X1 3000lm 5786m LEP** (nlightd-x1-3000lm-5786m-lep): 5786m
+- **Skylumen Lumintop B01vn Bicycle** (sky-lumen-lumintop-b01vn-bicycle): 6000m
+- **Skylumen ONE-OFF Abandoned Prototype** (sky-lumen-one-off-abandoned-prototype): 5600m
+
+### lumens >200k
+- **Haikelite AK24 230000lm High-Power** (haikelite-ak24-230000lm-high-power): 230000lm
+- **Skylumen HaikeLite HK24 230,000Lumen** (sky-lumen-haikelite-hk24-230-000lumen): 230000lm
+
+### price >$5000
+- **Pelican 9470** (pelican-9470-led): $5244.95
+- **Pelican 9470M** (pelican-9470m-led): $5455.95
+
+### weight >5kg
+- **Core Lighting WL-T006 LED Tripod** (core-lighting-wl-t006-led-tripod): 5816g
+- **NightSearcher TwinStar Connect LED Tripod** (nightsearcher-twinstar-connect-led-tripod): 6000g
+
+### runtime >10,000h
+- **Armytek Barracuda Pro / XHP35 HI White LED / 1500 lumens / 5Ã‚Â°:40Ã‚Â°** (armytek-barracuda-pro-xhp35-hi-white-led-1500-lumens-5-40): 12000h
