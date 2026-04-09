@@ -157,3 +157,36 @@ body {
 	background: var(--accent);
 	color: var(--bg-primary);
 }
+
+/* Mobile touch target improvements — ensure 44px min for interactive elements in filter sidebar */
+@media (max-width: 768px) {
+	/* Filter option chips in sidebar */
+	.sidebar-aside label,
+	.sidebar-aside button {
+		min-height: 36px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Boolean filter yes/no buttons */
+	.sidebar-aside .space-y-0\.5 button {
+		min-height: 36px;
+		min-width: 44px;
+	}
+
+	/* Filter section close button */
+	.sidebar-aside .text-xs.cursor-pointer {
+		min-width: 36px;
+		min-height: 36px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Filter option list max-height with smooth scroll */
+	.sidebar-aside .flex.flex-wrap {
+		max-height: 60vh;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+}

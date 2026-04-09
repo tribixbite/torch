@@ -180,11 +180,52 @@ function buildSearchIndex(): void {
 	});
 }
 
-/** Apply search query to filter indices */
+/** Fuzzy match — allows 1 character skip/mismatch per 4 chars of pattern.
+ *  Returns true if pattern approximately matches anywhere in text. */
+function fuzzyMatch(text: string, pattern: string): boolean {
+	// Exact substring match — fast path
+	if (text.includes(pattern)) return true;
+	// Short patterns must match exactly
+	if (pattern.length < 3) return false;
+	// Allow 1 error per 4 chars
+	const maxErrors = Math.floor(pattern.length / 4);
+	if (maxErrors === 0) return false;
+	// Simple sliding window fuzzy: for each starting position in text,
+	// count mismatches against pattern — O(n*m) but pattern is short
+	const tLen = text.length;
+	const pLen = pattern.length;
+	for (let start = 0; start <= tLen - pLen + maxErrors; start++) {
+		let errors = 0;
+		let ti = start;
+		let pi = 0;
+		while (pi < pLen && ti < tLen && errors <= maxErrors) {
+			if (text[ti] === pattern[pi]) {
+				pi++;
+			} else {
+				errors++;
+			}
+			ti++;
+		}
+		if (pi === pLen && errors <= maxErrors) return true;
+	}
+	return false;
+}
+
+/** Apply search query to filter indices.
+ *  Splits query into words (AND logic), each word can fuzzy-match. */
 function applySearch(indices: number[], query: string): number[] {
 	if (!query) return indices;
-	const q = query.toLowerCase();
-	return indices.filter((i) => searchIndex[i].includes(q));
+	const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+	if (words.length === 0) return indices;
+	// Single word — use fuzzy
+	if (words.length === 1) {
+		return indices.filter((i) => fuzzyMatch(searchIndex[i], words[0]));
+	}
+	// Multi-word — ALL words must match (AND)
+	return indices.filter((i) => {
+		const text = searchIndex[i];
+		return words.every(w => fuzzyMatch(text, w));
+	});
 }
 
 // --- Worker message handler ---

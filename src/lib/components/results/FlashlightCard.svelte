@@ -43,6 +43,36 @@
 	// Avoid list for detail display (same as parametrek.js)
 	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price']);
 
+	// Completeness breakdown — 16 required attributes mapped to column IDs
+	const COMPLETENESS_FIELDS: { id: string; label: string }[] = [
+		{ id: 'model', label: 'model' }, { id: 'brand', label: 'brand' },
+		{ id: 'type', label: 'type' }, { id: 'led', label: 'LED' },
+		{ id: 'battery', label: 'battery' }, { id: 'lumens', label: 'lumens' },
+		{ id: 'throw', label: 'throw' }, { id: 'runtime', label: 'runtime' },
+		{ id: 'switch', label: 'switch' }, { id: 'features', label: 'features' },
+		{ id: 'color', label: 'color' }, { id: 'material', label: 'material' },
+		{ id: 'length', label: 'length' }, { id: 'weight', label: 'weight' },
+		{ id: 'price', label: 'price' }, { id: 'purchase', label: 'purchase' },
+	];
+
+	let completenessCol = $derived(db.head.indexOf('completeness'));
+	let completenessScore = $derived(completenessCol >= 0 ? Number(data[completenessCol]) || 0 : 0);
+
+	/** Check which of the 16 required fields are present/missing */
+	function getCompletenessBreakdown(): { present: string[]; missing: string[] } {
+		const present: string[] = [];
+		const missing: string[] = [];
+		for (const field of COMPLETENESS_FIELDS) {
+			const colIdx = db.head.indexOf(field.id);
+			if (colIdx < 0) { missing.push(field.label); continue; }
+			const val = data[colIdx];
+			const hasData = val !== null && val !== undefined && val !== '' &&
+				!(isArrayLike(val) && (val as unknown[]).length === 0);
+			(hasData ? present : missing).push(field.label);
+		}
+		return { present, missing };
+	}
+
 	/** Should this column's detail row be visible? */
 	function shouldShowDetail(col: ColumnDef): boolean {
 		if (col.cvis === 'never') return false;
@@ -231,6 +261,18 @@
 			{/each}
 		</div>
 
+		<!-- Completeness breakdown (shown when expanded) -->
+		{#if expanded && completenessCol >= 0}
+			{@const breakdown = getCompletenessBreakdown()}
+			<div class="card-completeness">
+				<span class="detail-label">data quality:</span>
+				<span class="completeness-score">{completenessScore}/16</span>
+				{#if breakdown.missing.length > 0}
+					<span class="completeness-missing">missing: {breakdown.missing.join(', ')}</span>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Purchase links -->
 		{#if getPurchaseLinks() || (reviewsCol >= 0 && data[reviewsCol] && !isNaN(Number(data[reviewsCol])) && Number(data[reviewsCol]) > 0)}
 			<div class="card-purchase">
@@ -369,6 +411,25 @@
 
 	.card-reviews {
 		color: var(--text-muted);
+	}
+
+	.card-completeness {
+		margin-top: 0.25rem;
+		font-size: 0.7rem;
+		display: flex;
+		gap: 0.375rem;
+		align-items: baseline;
+		flex-wrap: wrap;
+	}
+
+	.completeness-score {
+		font-weight: 600;
+		color: var(--text-secondary);
+	}
+
+	.completeness-missing {
+		color: var(--text-muted);
+		font-style: italic;
 	}
 
 	/* Mobile: smaller thumb, tighter spacing */

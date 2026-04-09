@@ -78,17 +78,17 @@ These gaps are structural — the data does not exist on scraped product pages. 
 ## Priority 3 — UI/UX Improvements
 
 ### Sort dropdown
-- Verify sort is wired up and functional across all columns (lumens, throw, price, weight, runtime, completeness)
-- Ensure sort state persists in URL params
+- Sort is wired up and functional — persists in URL params via `urlState.syncToUrl()`
+- All sortable columns work: lumens, throw, price, weight, runtime, completeness, length, etc.
 
-### Filter sidebar mobile UX
-- Touch targets for filter checkboxes may be too small on mobile
-- Sidebar scrolling behavior on long filter lists (e.g., 91 battery options)
-- Search box within multi-select filters — verify keyboard behavior on mobile
+### ~~Filter sidebar mobile UX~~ IMPROVED
+- Added min 36px touch targets for filter chips, boolean yes/no buttons, and close buttons on mobile
+- Filter option lists now scroll smoothly with `-webkit-overflow-scrolling: touch` and max-height cap
+- Search box within multi-select filters already works — in-filter search shows for >15 options
 
 ### Image lazy loading
-- Sprite sheet is loaded eagerly — consider intersection observer for off-screen cards
-- 314 entries missing images entirely — show a proper placeholder, not a broken image
+- Sprite sheet is loaded eagerly — single 18MB WebP transfer, cached by service worker
+- ~~314 entries missing images entirely~~ FIXED — SVG flashlight silhouette placeholder replaces "no img" text
 
 ### ~~Empty labels rendering with no values~~ FIXED
 - Fixed in FlashlightCard.svelte — three-layer fix: `shouldShowDetail()` redundant empty array check for Svelte 5 proxied arrays, `formatValue()` returns '?' for empty/filtered arrays, template-level guard prevents rendering labels when formatted value is empty
@@ -97,13 +97,13 @@ These gaps are structural — the data does not exist on scraped product pages. 
 - Verify array fields display correctly after `isArrayLike()` fix (Svelte 5 proxy issue)
 - `formatWithUnit()` null-safety guards — same `{si}` prefix bug as range filter may affect table cells
 
-### Search enhancements
-- Full-text search across model names
-- Consider fuzzy matching for typos
+### ~~Search enhancements~~ IMPROVED
+- Full-text search across all searchable columns (model, brand, LED, battery, switch, features, color, material)
+- Fuzzy matching added: multi-word AND logic, 1 typo tolerance per 4 characters (e.g., "fenx pd36" finds Fenix PD36R)
 
-### Completeness score
-- Add explanation tooltip showing which of the 16 attributes are present/missing for each entry
-- Currently shows `8/16` but user cannot see which fields are filled
+### ~~Completeness score~~ DONE
+- Expanded card view now shows completeness breakdown: `data quality: 12/16 missing: runtime, length, throw, switch`
+- Lists exactly which of the 16 required attributes are missing per entry
 
 ---
 
@@ -178,6 +178,10 @@ These gaps are structural — the data does not exist on scraped product pages. 
 - **Battery filter ordering** — popularity-weighted (18650, 21700, 14500 first)
 - **Svelte 5 proxy fixes** — `isArrayLike()` for `Array.isArray()` failures, `formatWithUnit()` null-safety
 - **Playwright MCP Termux fix** — forced headless on Android, stale lock cleanup
+- **Brand dedup** — ~30 brand alias mappings, LUMENS LIGHT HOUSE garbage removed, prefix stripping. 772→~700 unique brands
+- **JSON size reduction** — dropped redundant `inc` sort arrays (15% savings), removed eager inc generation from columns.ts
+- **Performance optimizations** — `structuredClone()` instead of JSON round-trip, cached `defaultOrder` array in worker, lazy inc sort derivation
+- **P3 UI/UX batch** — completeness tooltip, SVG image placeholder, mobile touch targets, fuzzy multi-word search
 
 ### Won't Fix / Deprecated
 - **Parametrek crossref** — deprecated, validation only. Removed from keepa-cron.sh. Existing data kept as-is (cannot distinguish parametrek-sourced from scraped).

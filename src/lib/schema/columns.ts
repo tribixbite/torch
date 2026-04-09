@@ -91,15 +91,10 @@ export function buildColumns(db: FlashlightDB): ColumnDef[] {
 			}
 		}
 
-		// Generate inverse sort if only dec exists
-		const sortEntry = db.sort[i];
-		let sortData: SortEntry = sortEntry;
-		if (sortEntry && sortEntry.dec && !sortEntry.inc) {
-			sortData = {
-				dec: sortEntry.dec,
-				inc: [...sortEntry.dec].reverse()
-			};
-		}
+		// Sort data — inc arrays are derived lazily in the worker via
+		// `sortData.inc ?? [...sortData.dec].reverse()`, so no need to
+		// pre-compute them here (saves ~14k * 18 array reversals on init)
+		const sortData: SortEntry = db.sort[i];
 
 		return {
 			index: i,
