@@ -215,7 +215,7 @@
 >
 	<!-- Sprite thumbnail -->
 	<div class="card-thumb">
-		<SpriteImage col={picCoords[0]} row={picCoords[1]} spriteUrl={db.sprite} imageUrl={picUrl} />
+		<SpriteImage col={picCoords[0]} row={picCoords[1]} spriteUrl={picIsSprite ? db.sprite : ''} imageUrl={picUrl} />
 	</div>
 
 	<!-- Content -->

@@ -20,7 +20,9 @@
 	let weightCol = $derived(db.head.indexOf('weight'));
 	let batteryCol = $derived(db.head.indexOf('battery'));
 
-	let pic = $derived(picCol >= 0 ? data[picCol] as [number, number] : [0, 0]);
+	let picRaw = $derived(picCol >= 0 ? data[picCol] : null);
+	let picIsSprite = $derived(picRaw != null && typeof picRaw === 'object' && (picRaw as any).length === 2);
+	let pic = $derived(picIsSprite ? [Number((picRaw as any)[0]), Number((picRaw as any)[1])] as [number, number] : [0, 0] as [number, number]);
 	let isStarred = $derived(starredState.isStarred(index));
 
 	/** Proxy-safe array check — Svelte 5 $state proxied arrays fail Array.isArray() */
@@ -38,7 +40,7 @@
 	class="result-item flex items-center gap-2 px-2 py-1 border-b text-xs"
 	style="border-color: var(--border);"
 >
-	<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={db.sprite} size={40} />
+	<SpriteImage col={pic[0]} row={pic[1]} spriteUrl={picIsSprite ? db.sprite : ''} size={40} />
 	<span class="w-[120px] truncate font-medium" style="color: var(--text-primary);">
 		{data[modelCol] ?? ''}
 	</span>
