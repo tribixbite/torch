@@ -2,7 +2,7 @@
  * Build step: converts SQLite data → FlashlightDB JSON format for the SPA.
  * Produces flashlights.now.json compatible with the existing frontend.
  */
-import { getAllFlashlights, updateEntryType } from '../store/db.js';
+import { getAllFlashlights, updateEntryType, getDb } from '../store/db.js';
 import type { FlashlightEntry } from '../schema/canonical.js';
 import { normalizeLedArray } from '../normalization/led-normalizer.js';
 import { normalizeBatteryArray } from '../normalization/battery-normalizer.js';
@@ -12,6 +12,139 @@ import { normalizeFeatureArray } from '../normalization/features-normalizer.js';
 import { normalizeBrandName, isMappedBrand } from '../store/brand-aliases.js';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
+
+/** Price statistics extracted from Keepa price history */
+interface PriceStats {
+	drop_pct: number;      // 0-100 integer — percentage below 90-day median
+	at_low: boolean;       // within 5% of all-time minimum
+	avg_price: number;     // 90-day median (outlier-resistant baseline)
+	sparkline: string;     // pre-computed SVG path "M0,18 L2,15 ..."
+}
+
+/**
+ * Load price history from raw_spec_text, compute stats + sparkline SVG paths.
+ * Retailer preference: Amazon > Amazon 3P New (Buy Box preferred if available).
+ */
+function loadPriceData(): Map<string, PriceStats> {
+	const db = getDb();
+	const rows = db.prepare(
+		`SELECT flashlight_id, text_content FROM raw_spec_text WHERE category='price_history'`
+	).all() as { flashlight_id: string; text_content: string }[];
+
+	const result = new Map<string, PriceStats>();
+	const now = Date.now();
+	const MS_90D = 90 * 24 * 60 * 60 * 1000;
+
+	for (const row of rows) {
+		let parsed: Record<string, [number, number][]>;
+		try {
+			parsed = JSON.parse(row.text_content);
+		} catch {
+			continue;
+		}
+
+		// Merge retailer series — prefer Amazon (Buy Box) over 3P
+		const series = parsed['Amazon'] ?? parsed['Amazon Buy Box'] ?? parsed['Amazon 3P New'];
+		if (!series || series.length === 0) continue;
+
+		// Sort by timestamp ascending
+		const sorted = [...series].sort((a, b) => a[0] - b[0]);
+
+		// Extract prices
+		const allPrices = sorted.map(p => p[1]).filter(p => p > 0);
+		if (allPrices.length === 0) continue;
+
+		const currentPrice = sorted[sorted.length - 1][1];
+		if (currentPrice <= 0) continue;
+
+		const minPrice = Math.min(...allPrices);
+		const maxPrice = Math.max(...allPrices);
+
+		// 90-day median — filter to last 90 days, compute median
+		const cutoff90 = now - MS_90D;
+		const recent = sorted.filter(p => p[0] >= cutoff90 && p[1] > 0).map(p => p[1]);
+		let median90: number;
+		if (recent.length >= 3) {
+			const sortedRecent = [...recent].sort((a, b) => a - b);
+			const mid = Math.floor(sortedRecent.length / 2);
+			median90 = sortedRecent.length % 2 === 0
+				? (sortedRecent[mid - 1] + sortedRecent[mid]) / 2
+				: sortedRecent[mid];
+		} else {
+			// Fallback: use all-time median if <3 recent data points
+			const sortedAll = [...allPrices].sort((a, b) => a - b);
+			const mid = Math.floor(sortedAll.length / 2);
+			median90 = sortedAll.length % 2 === 0
+				? (sortedAll[mid - 1] + sortedAll[mid]) / 2
+				: sortedAll[mid];
+		}
+
+		// Price drop percentage (0 if current >= median)
+		const dropPct = currentPrice < median90
+			? Math.round((median90 - currentPrice) / median90 * 100)
+			: 0;
+
+		// At historical low: within 5% of all-time min
+		const atLow = currentPrice <= minPrice * 1.05;
+
+		// Downsample to 24 buckets (last 12 months, ~15-day intervals) for sparkline
+		const MS_12M = 365 * 24 * 60 * 60 * 1000;
+		const bucketCount = 24;
+		const bucketWidth = MS_12M / bucketCount;
+		const startTime = now - MS_12M;
+
+		const bucketPrices: number[] = [];
+		for (let b = 0; b < bucketCount; b++) {
+			const bucketEnd = startTime + (b + 1) * bucketWidth;
+			// Find last known price before this bucket's end
+			let lastPrice = NaN;
+			for (let i = sorted.length - 1; i >= 0; i--) {
+				if (sorted[i][0] <= bucketEnd && sorted[i][1] > 0) {
+					lastPrice = sorted[i][1];
+					break;
+				}
+			}
+			bucketPrices.push(lastPrice);
+		}
+
+		// Forward-fill NaN gaps, then backfill leading NaNs
+		for (let i = 1; i < bucketPrices.length; i++) {
+			if (isNaN(bucketPrices[i])) bucketPrices[i] = bucketPrices[i - 1];
+		}
+		for (let i = bucketPrices.length - 2; i >= 0; i--) {
+			if (isNaN(bucketPrices[i])) bucketPrices[i] = bucketPrices[i + 1];
+		}
+
+		// Skip if still no valid prices
+		if (bucketPrices.every(p => isNaN(p))) continue;
+
+		// Generate SVG path (viewBox 0 0 50 20)
+		const pMin = Math.min(...bucketPrices.filter(p => !isNaN(p)));
+		const pMax = Math.max(...bucketPrices.filter(p => !isNaN(p)));
+		const pRange = pMax - pMin || 1; // Avoid division by zero for flat lines
+		const xScale = 50 / (bucketCount - 1);
+		const yPadding = 2; // 2px top/bottom padding
+		const yRange = 20 - 2 * yPadding;
+
+		const points: string[] = [];
+		for (let i = 0; i < bucketPrices.length; i++) {
+			if (isNaN(bucketPrices[i])) continue;
+			const x = (i * xScale).toFixed(1);
+			// Invert Y — lower price = higher on chart
+			const y = (yPadding + yRange - ((bucketPrices[i] - pMin) / pRange) * yRange).toFixed(1);
+			points.push(`${i === 0 ? 'M' : 'L'}${x},${y}`);
+		}
+
+		result.set(row.flashlight_id, {
+			drop_pct: dropPct,
+			at_low: atLow,
+			avg_price: Math.round(median90 * 100) / 100,
+			sparkline: points.join(' '),
+		});
+	}
+
+	return result;
+}
 
 /** Garbage brand pattern — Amazon listing artifacts with lumen values parsed as brand */
 const GARBAGE_BRAND_RE = /lumens?\s*light\s*house/i;
@@ -270,6 +403,15 @@ const COLUMNS: ColumnMeta[] = [
 		extract: (e) => e.purchase_urls.length > 0 ? e.purchase_urls : [] },
 	{ id: 'price', display: 'price', unit: '${}', cvis: 'always', link: 'price', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.price_usd ?? '' },
+	// Price history columns — populated from loadPriceData() Map, extract is placeholder
+	{ id: 'price_drop', display: 'deal', unit: '{}%&nbsp;off', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
+		extract: (_e) => '' },
+	{ id: 'at_low', display: 'lowest&nbsp;price', unit: '', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: false,
+		extract: (_e) => [] },
+	{ id: 'price_avg', display: 'avg&nbsp;price', unit: '${}', cvis: 'never', link: 'price', srch: false, mode: ['any'], sortable: true,
+		extract: (_e) => '' },
+	{ id: '_sparkline', display: '_sparkline', unit: '', cvis: 'never', link: 'price', srch: false, mode: ['any'], sortable: false,
+		extract: (_e) => '' },
 ];
 
 /** Collect all unique option values for a multi/boolean filter column */
@@ -344,7 +486,7 @@ function computeStringSortIndices(data: unknown[][], colIdx: number): { dec: num
 
 /** Build opts[] — filter definitions for each column */
 function buildOpts(data: unknown[][]): (unknown[] | null)[] {
-	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'has_mfg_url']);
+	const MULTI_COLS = new Set(['type', 'blink', 'levels', 'led_color', 'switch', 'color', 'material', 'has_mfg_url', 'at_low']);
 	// Mega-multi: columns with many options that benefit from grouped display
 	const MEGA_MULTI_COLS = new Set(['brand', 'led', 'trueled', 'led_options', 'battery', 'environment']);
 	const BOOLEAN_COLS = new Set(['features']);
@@ -362,6 +504,8 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		body_size: { type: 'log-range' },
 		weight: { type: 'log-range' },
 		price: { type: 'log-range' },
+		price_drop: { type: 'range' },
+		price_avg: { type: 'log-range' },
 		efficacy: { type: 'range' },
 		beam_angle: { type: 'range' },
 		year: { type: 'range' },
@@ -620,10 +764,18 @@ export async function buildTorchDb(): Promise<{
 		console.log('  No sprite metadata found — using image URLs for _pic');
 	}
 
+	// Load price history data (Keepa)
+	const priceData = loadPriceData();
+	console.log(`  ${priceData.size} entries have price history data`);
+
 	// Build data array — each row is column-count elements in column order
 	const data: unknown[][] = [];
 	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
 	const mfgColIdx = COLUMNS.findIndex((c) => c.id === 'has_mfg_url');
+	const priceDropColIdx = COLUMNS.findIndex((c) => c.id === 'price_drop');
+	const atLowColIdx = COLUMNS.findIndex((c) => c.id === 'at_low');
+	const priceAvgColIdx = COLUMNS.findIndex((c) => c.id === 'price_avg');
+	const sparklineColIdx = COLUMNS.findIndex((c) => c.id === '_sparkline');
 
 	let spriteHits = 0;
 	for (let rowIdx = 0; rowIdx < entries.length; rowIdx++) {
@@ -654,6 +806,14 @@ export async function buildTorchDb(): Promise<{
 		// Override has_mfg_url with brand-level lookup
 		if (mfgColIdx >= 0) {
 			row[mfgColIdx] = brandMfgLookup(entry) ? ['yes'] : ['no'];
+		}
+		// Populate price history columns from Keepa data
+		const pStats = priceData.get(entry.id);
+		if (pStats) {
+			if (priceDropColIdx >= 0) row[priceDropColIdx] = pStats.drop_pct > 0 ? pStats.drop_pct : '';
+			if (atLowColIdx >= 0) row[atLowColIdx] = pStats.at_low ? ['yes'] : [];
+			if (priceAvgColIdx >= 0) row[priceAvgColIdx] = pStats.avg_price;
+			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}
 		data.push(row);
 	}

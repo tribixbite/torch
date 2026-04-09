@@ -3,6 +3,7 @@
 	import { urlState } from '$lib/state/url-state.svelte.js';
 	import { starredState } from '$lib/state/starred.svelte.js';
 	import SpriteImage from './SpriteImage.svelte';
+	import PriceSparkline from './PriceSparkline.svelte';
 	import { smartFixed } from '$lib/schema/si-prefix.js';
 
 	/** Proxy-safe array check — Svelte 5 $state proxied arrays fail Array.isArray() */
@@ -40,8 +41,16 @@
 	let picUrl = $derived(!picIsSprite && typeof picRaw === 'string' && picRaw ? picRaw : '');
 	let isStarred = $derived(starredState.isStarred(index));
 
+	// Price history columns
+	let sparklineCol = $derived(db.head.indexOf('_sparkline'));
+	let priceDropCol = $derived(db.head.indexOf('price_drop'));
+	let atLowCol = $derived(db.head.indexOf('at_low'));
+	let sparklinePath = $derived(sparklineCol >= 0 ? String(data[sparklineCol] ?? '') : '');
+	let priceDrop = $derived(priceDropCol >= 0 ? Number(data[priceDropCol]) || 0 : 0);
+	let isAtLow = $derived(atLowCol >= 0 && isArrayLike(data[atLowCol]) && (data[atLowCol] as string[]).includes('yes'));
+
 	// Avoid list for detail display (same as parametrek.js)
-	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price']);
+	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'price_drop', 'at_low', 'price_avg', '_sparkline']);
 
 	// Completeness breakdown — 16 required attributes mapped to column IDs
 	const COMPLETENESS_FIELDS: { id: string; label: string }[] = [
@@ -242,7 +251,18 @@
 				{isStarred ? '★' : '☆'}
 			</button>
 			{#if getPrice()}
-				<span class="card-price">{getPrice()}</span>
+				<span class="card-price">
+					{#if sparklinePath}
+						<PriceSparkline path={sparklinePath} atLow={isAtLow} />
+					{/if}
+					{getPrice()}
+					{#if priceDrop > 0}
+						<span class="price-drop">{priceDrop}% off</span>
+					{/if}
+					{#if isAtLow}
+						<span class="price-low">LOW</span>
+					{/if}
+				</span>
 			{/if}
 		</div>
 
@@ -382,6 +402,25 @@
 		color: var(--text-primary);
 		white-space: nowrap;
 		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.price-drop {
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--deal-green, #4ade80);
+		background: rgba(74, 222, 128, 0.12);
+		padding: 0.05rem 0.3rem;
+		border-radius: 0.25rem;
+	}
+
+	.price-low {
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--deal-green, #4ade80);
+		letter-spacing: 0.04em;
 	}
 
 	.card-details {

@@ -66,4 +66,7 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 # Propagate within-brand fields (throw, length, etc.)
 "$BUN" run scripts/model-crossref.ts >> "$LOGFILE" 2>&1 || true
 
+# Generate deals feed from price history
+"$BUN" --smol run scripts/deals-feed.ts >> "$LOGFILE" 2>&1 || true
+
 echo "$(date): Enrichment done" >> "$LOGFILE"

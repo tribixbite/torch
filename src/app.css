@@ -18,6 +18,7 @@
 	--danger: #ef4444;
 	--success: #22c55e;
 	--star: #eab308;
+	--deal-green: #4ade80;
 }
 
 [data-theme="light"] {
@@ -37,6 +38,7 @@
 	--danger: #dc2626;
 	--success: #16a34a;
 	--star: #ca8a04;
+	--deal-green: #16a34a;
 }
 
 /* Base styles */
