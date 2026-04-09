@@ -449,12 +449,9 @@ function extractLed(text: string): string[] {
 // ===== MAIN =====
 const stats = { runtime: 0, throw_m: 0, length: 0, weight: 0, lumens: 0, material: 0, switch_t: 0, led: 0, total: 0 };
 
-// Get ALL entries missing at least one of these fields
-const entries = db.prepare(`
-  SELECT f.id, f.brand, f.model,
-    f.runtime_hours, f.throw_m, f.length_mm, f.weight_g, f.lumens,
-    f.battery, f.material, f.switch, f.led,
-    r.text_content
+// Get IDs first, then fetch text in batches to avoid OOM on large DBs
+const entryIds = db.prepare(`
+  SELECT f.id
   FROM flashlights f
   JOIN raw_spec_text r ON r.flashlight_id = f.id
   WHERE json_extract(f.type,'$[0]') NOT IN ('accessory','blog','not_flashlight')
@@ -469,9 +466,20 @@ const entries = db.prepare(`
     OR (f.led IS NULL OR f.led = '[]')
   )
   AND r.text_content IS NOT NULL AND length(r.text_content) > 20
-`).all() as any[];
+`).all() as { id: string }[];
 
-console.log(`Processing ${entries.length} entries with missing fields...`);
+console.log(`Processing ${entryIds.length} entries with missing fields...`);
+
+// Fetch single entry with text — truncate to 10K chars to limit memory
+const fetchEntry = db.prepare(`
+  SELECT f.id, f.brand, f.model,
+    f.runtime_hours, f.throw_m, f.length_mm, f.weight_g, f.lumens,
+    f.battery, f.material, f.switch, f.led,
+    substr(r.text_content, 1, 10000) as text_content
+  FROM flashlights f
+  JOIN raw_spec_text r ON r.flashlight_id = f.id
+  WHERE f.id = ?
+`);
 
 const updateRuntime = db.prepare(`UPDATE flashlights SET runtime_hours = ? WHERE id = ?`);
 const updateThrow = db.prepare(`UPDATE flashlights SET throw_m = ? WHERE id = ?`);
@@ -482,8 +490,12 @@ const updateMaterial = db.prepare(`UPDATE flashlights SET material = ? WHERE id 
 const updateSwitch = db.prepare(`UPDATE flashlights SET switch = ? WHERE id = ?`);
 const updateLed = db.prepare(`UPDATE flashlights SET led = ? WHERE id = ?`);
 
-const tx = db.transaction(() => {
-  for (const entry of entries) {
+// Process in batches of 500 to limit WAL growth and memory usage
+const BATCH_SIZE = 100;
+const processBatch = db.transaction((ids: { id: string }[]) => {
+  for (const { id } of ids) {
+    const entry = fetchEntry.get(id) as any;
+    if (!entry) continue;
     const text = entry.text_content as string;
 
     // Runtime
@@ -581,7 +593,15 @@ const tx = db.transaction(() => {
   }
 });
 
-tx();
+for (let i = 0; i < entryIds.length; i += BATCH_SIZE) {
+  const batch = entryIds.slice(i, i + BATCH_SIZE);
+  processBatch(batch);
+  // Force GC between batches to avoid OOM on memory-constrained Termux
+  if (typeof Bun !== 'undefined') Bun.gc(true);
+  if ((i + BATCH_SIZE) % 2000 === 0 || i + BATCH_SIZE >= entryIds.length) {
+    console.log(`  ${Math.min(i + BATCH_SIZE, entryIds.length)}/${entryIds.length} processed`);
+  }
+}
 
 console.log(`\nResults:`);
 console.log(`  Runtime: +${stats.runtime}`);

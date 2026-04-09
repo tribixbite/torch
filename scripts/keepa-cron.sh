@@ -36,12 +36,6 @@ if ! flock -n 200; then
 fi
 # Lock acquired — will auto-release when script exits (fd 200 closes)
 
-# --- Also check for orphaned long-running Keepa processes ---
-if pgrep -f "cli.ts scrape" >/dev/null 2>&1 || pgrep -f "cli.ts discover" >/dev/null 2>&1; then
-    echo "$(date): Skipping — another Keepa process is running" >> "$LOGFILE"
-    exit 0
-fi
-
 cd "$PROJECT" || exit 1
 
 # --- Source .env for KEEPA_API_KEY ---
@@ -64,6 +58,10 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 
 # parametrek-crossref.ts REMOVED — cannot use parametrek data directly
 # See: scripts/revert-parametrek-data.ts
+
+# Re-extract specs from raw_spec_text (review throw, etc.)
+# --smol reduces memory to avoid OOM on Termux (15K+ entries with text blobs)
+"$BUN" --smol run scripts/extract-missing-fields.ts >> "$LOGFILE" 2>&1 || true
 
 # Propagate within-brand fields (throw, length, etc.)
 "$BUN" run scripts/model-crossref.ts >> "$LOGFILE" 2>&1 || true

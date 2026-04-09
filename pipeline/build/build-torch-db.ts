@@ -557,6 +557,32 @@ export async function buildTorchDb(): Promise<{
 	}
 	if (garbageBrandCount > 0) console.log(`  Filtered ${garbageBrandCount} garbage-brand entries (LUMENS LIGHT HOUSE)`);
 
+	// Filter junk brands — charger sellers, gibberish brands, single-entry no-URL brands
+	const JUNK_BRANDS = new Set([
+		// Category A: charger/adapter sellers (not flashlight manufacturers)
+		'ABLEGRID', 'PKPOWER', 'GUY-TECH', 'KONKIN BOO', 'SLLEA', 'HQRP',
+		'K-MAINS', 'YUSTDA', 'OMNIHIL', 'LEEPRA', 'FITE ON', 'UPBRIGHT',
+		'J-ZMQER', 'ESCO LITE',
+		// Category B: gibberish/spam brands (all-caps, no vowels, random strings)
+		'RXQMXG', 'SKTJDL', 'YJWJMZZ', 'LZJDSG', 'HXCSYC', 'YLXQ-BPRS',
+		'SXZFTYHB', 'TTKXYLSB', 'XCVGBNKL', 'KM581',
+		// Category D: additional gibberish one-offs
+		'RYHTHYHTJUYQSD', 'FJKERWDS', 'FYIOGXG', 'GAZJYUSP', 'ILQMEHV',
+		'IYEYVDKJ', 'PZHANGZVH', 'WLDWEZQI', 'ZXMURNG', 'YTBDDHYUE',
+	]);
+	let junkBrandCount = 0;
+	for (const entry of allEntries) {
+		if (entry.type.includes('accessory') || entry.type.includes('blog')) continue;
+		// Match against uppercase brand (junk brands are typically all-caps)
+		const brandUpper = entry.brand.trim().toUpperCase();
+		if (JUNK_BRANDS.has(brandUpper) || JUNK_BRANDS.has(entry.brand.trim())) {
+			entry.type = ['accessory'];
+			updateEntryType(entry.id, ['accessory']);
+			junkBrandCount++;
+		}
+	}
+	if (junkBrandCount > 0) console.log(`  Filtered ${junkBrandCount} junk-brand entries (chargers, gibberish)`);
+
 	// Filter out removed entries — they're dedup artifacts that serve no purpose in the JSON
 	// Keep accessories/blogs — they're filterable via type column
 	const entries = allEntries.filter(e => !e.type.includes('removed'));
