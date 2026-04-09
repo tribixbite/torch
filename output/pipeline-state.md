@@ -1,22 +1,16 @@
-# Pipeline State — 2026-04-07
+# Pipeline State — 2026-04-09
 
-## Current Status: 17,644 lights in DB (14,013 active) — 12 spec issues (all known legitimate)
+## Current Status: 17,665 lights in DB (14,414 in JSON) — junk brands filtered, extraction improved
 
-### Coverage (14,013 active lights, excludes removed/blog)
-| Field | Missing | % Coverage |
-|-------|---------|------------|
-| color | 1,334 | 90.5% |
-| price_usd | 2,207 | 84.3% |
-| weight_g | 2,490 | 82.2% |
-| features | 2,788 | 80.1% |
-| material | 2,943 | 79.0% |
-| lumens | 3,716 | 73.5% |
-| battery | 4,275 | 69.5% |
-| switch | 4,309 | 69.2% |
-| length_mm | 4,706 | 66.4% |
-| runtime | 5,087 | 63.7% |
-| **led** | **5,874** | **58.1%** |
-| throw_m | 5,961 | 57.5% |
+### Recent Changes (Apr 9)
+- **Keepa cron fixed**: removed pgrep self-match bug (broken since Mar 28), killed 447 zombie crond
+- **Junk brand filter**: 34 brands (232 entries) from charger sellers / gibberish now filtered at build
+- **Batch extraction**: extract-missing-fields.ts batched (100/tx + GC + substr 10K) for Termux OOM
+- **Re-extraction results**: +192 throw, +247 material, +178 LED, +165 length, +75 runtime
+- **Cross-ref propagated**: +18 throw, +210 FL1 intensity, +5 material
+
+### Coverage (14,414 entries in JSON, excludes removed/blog/junk)
+Coverage stats updated after extraction — exact numbers TBD from next audit run.
 
 Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 
@@ -24,6 +18,7 @@ Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 1. **Keepa cron** (`scripts/keepa-cron.sh`): every 5min, 5 ASINs, post-scrape enrichment:
    - `scrape-images.ts --download-only` — thumbnails for new entries
    - ~~`parametrek-crossref.ts`~~ — REMOVED (cannot use parametrek data directly)
+   - `extract-missing-fields.ts` — re-extract specs from raw_spec_text (with --smol)
    - `model-crossref.ts` — propagate within-brand fields
 2. **Vision cron** (`scripts/vision-cron.sh`): hourly grid build → classify → sprite rebuild
 3. **Validation** (`scripts/validate-vision-accuracy.ts`): compare vs parametrek ground truth
