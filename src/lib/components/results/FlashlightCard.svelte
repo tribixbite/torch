@@ -251,20 +251,20 @@
 				{isStarred ? '★' : '☆'}
 			</button>
 			{#if getPrice()}
-				<span class="card-price">
-					{#if sparklinePath}
-						<PriceSparkline path={sparklinePath} atLow={isAtLow} />
-					{/if}
-					{getPrice()}
-					{#if priceDrop > 0}
-						<span class="price-drop">{priceDrop}% off</span>
-					{/if}
-					{#if isAtLow}
-						<span class="price-low">LOW</span>
-					{/if}
-				</span>
+				<span class="card-price">{getPrice()}</span>
+			{/if}
+			{#if priceDrop > 0}
+				<span class="price-drop">{priceDrop}% off</span>
+			{/if}
+			{#if isAtLow}
+				<span class="price-low">LOW</span>
 			{/if}
 		</div>
+		{#if sparklinePath}
+			<div class="card-sparkline-row">
+				<PriceSparkline path={sparklinePath} atLow={isAtLow} />
+			</div>
+		{/if}
 
 		<!-- Detail rows — skip labels with empty formatted values -->
 		<div class="card-details">
@@ -402,9 +402,6 @@
 		color: var(--text-primary);
 		white-space: nowrap;
 		flex-shrink: 0;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
 	}
 
 	.price-drop {
@@ -414,6 +411,7 @@
 		background: rgba(74, 222, 128, 0.12);
 		padding: 0.05rem 0.3rem;
 		border-radius: 0.25rem;
+		flex-shrink: 0;
 	}
 
 	.price-low {
@@ -421,6 +419,11 @@
 		font-weight: 700;
 		color: var(--deal-green, #4ade80);
 		letter-spacing: 0.04em;
+		flex-shrink: 0;
+	}
+
+	.card-sparkline-row {
+		margin-top: 0.125rem;
 	}
 
 	.card-details {
