@@ -45,9 +45,11 @@
 	let sparklineCol = $derived(db.head.indexOf('_sparkline'));
 	let priceDropCol = $derived(db.head.indexOf('price_drop'));
 	let atLowCol = $derived(db.head.indexOf('at_low'));
+	let priceAvgCol = $derived(db.head.indexOf('price_avg'));
 	let sparklinePath = $derived(sparklineCol >= 0 ? String(data[sparklineCol] ?? '') : '');
 	let priceDrop = $derived(priceDropCol >= 0 ? Number(data[priceDropCol]) || 0 : 0);
 	let isAtLow = $derived(atLowCol >= 0 && isArrayLike(data[atLowCol]) && (data[atLowCol] as string[]).includes('yes'));
+	let priceAvg = $derived(priceAvgCol >= 0 ? Number(data[priceAvgCol]) || 0 : 0);
 
 	// Avoid list for detail display (same as parametrek.js)
 	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'price_drop', 'at_low', 'price_avg', '_sparkline']);
@@ -260,9 +262,14 @@
 				<span class="price-low">LOW</span>
 			{/if}
 		</div>
-		{#if sparklinePath}
-			<div class="card-sparkline-row">
-				<PriceSparkline path={sparklinePath} atLow={isAtLow} />
+		{#if sparklinePath || priceDrop > 0}
+			<div class="card-price-row">
+				{#if sparklinePath}
+					<PriceSparkline path={sparklinePath} atLow={isAtLow} />
+				{/if}
+				{#if priceDrop > 0}
+					<span class="price-was">${Math.round(priceAvg)}</span>
+				{/if}
 			</div>
 		{/if}
 
@@ -422,8 +429,17 @@
 		flex-shrink: 0;
 	}
 
-	.card-sparkline-row {
+	.card-price-row {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
 		margin-top: 0.125rem;
+	}
+
+	.price-was {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		text-decoration: line-through;
 	}
 
 	.card-details {
