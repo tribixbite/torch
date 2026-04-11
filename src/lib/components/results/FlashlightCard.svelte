@@ -252,6 +252,9 @@
 			>
 				{isStarred ? '★' : '☆'}
 			</button>
+			{#if priceDrop > 0 && priceAvg > 0}
+				<span class="price-was">${Math.round(priceAvg)}</span>
+			{/if}
 			{#if getPrice()}
 				<span class="card-price">{getPrice()}</span>
 			{/if}
@@ -262,14 +265,9 @@
 				<span class="price-low">LOW</span>
 			{/if}
 		</div>
-		{#if sparklinePath || priceDrop > 0}
+		{#if sparklinePath}
 			<div class="card-price-row">
-				{#if sparklinePath}
-					<PriceSparkline path={sparklinePath} atLow={isAtLow} />
-				{/if}
-				{#if priceDrop > 0}
-					<span class="price-was">${Math.round(priceAvg)}</span>
-				{/if}
+				<PriceSparkline path={sparklinePath} atLow={isAtLow} />
 			</div>
 		{/if}
 
@@ -437,8 +435,8 @@
 	}
 
 	.price-was {
-		font-size: 0.7rem;
-		color: var(--text-muted);
+		font-size: 0.75rem;
+		color: var(--text-secondary);
 		text-decoration: line-through;
 	}
 
