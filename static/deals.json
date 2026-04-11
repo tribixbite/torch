@@ -1,5 +1,15 @@
 [
   {
+    "model": "Oclip Rechargeable EDC",
+    "brand": "Olight",
+    "price": 29.99,
+    "was_price": 2999,
+    "drop_pct": 99,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0D4M672KN",
+    "updated": "2026-04-10T20:45:04.088Z"
+  },
+  {
     "model": "Tek Torches LL7465 Coast Cutlery V2 Tek Torch LED Micro Moon",
     "brand": "Coast",
     "price": 2.64,
@@ -190,6 +200,16 @@
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
+    "model": "FB-1 Universal",
+    "brand": "Olight",
+    "price": 8.95,
+    "was_price": 71.94,
+    "drop_pct": 88,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0CFYF1JQC",
+    "updated": "2026-04-10T04:05:05.008Z"
+  },
+  {
     "model": "E12 Flashlight Pocket-Sized bright flashlight 130 Lumens (Fоur Расk)",
     "brand": "Fenix",
     "price": 30,
@@ -208,6 +228,26 @@
     "at_low": true,
     "url": "https://www.amazon.com/dp/B08RDLJ38N",
     "updated": "2026-03-28T03:26:15.156Z"
+  },
+  {
+    "model": "I3T EOS 180 Lumens Dual-Output Slim EDC",
+    "brand": "Olight",
+    "price": 17.99,
+    "was_price": 124.15,
+    "drop_pct": 86,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0DWN9PDPR",
+    "updated": "2026-04-10T23:00:05.097Z"
+  },
+  {
+    "model": "I3T 2 EOS Pocket EDC",
+    "brand": "Olight",
+    "price": 19.99,
+    "was_price": 136.38,
+    "drop_pct": 85,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0F83X3HTZ",
+    "updated": "2026-04-10T22:30:03.567Z"
   },
   {
     "model": "Barracuda Cree XP-L HI White LED Searchlight 1350 lumens 775m Rescue",
@@ -378,6 +418,16 @@
     "at_low": true,
     "url": "https://www.amazon.com/dp/B01N8XF9AI",
     "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "i3E EOS PMMA TIR Lens AAA EDC",
+    "brand": "Olight",
+    "price": 12.99,
+    "was_price": 58.48,
+    "drop_pct": 78,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0DQBBT52M",
+    "updated": "2026-04-10T20:10:04.541Z"
   },
   {
     "model": "PX25 275 lm",
@@ -660,6 +710,26 @@
     "updated": "2026-03-28T16:16:41.604Z"
   },
   {
+    "model": "IMINI 2 EDC Rechargeable Keychain",
+    "brand": "Olight",
+    "price": 13.28,
+    "was_price": 47.98,
+    "drop_pct": 72,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0F7KRXKH5",
+    "updated": "2026-04-10T14:35:02.910Z"
+  },
+  {
+    "model": "i3E EOS PMMA TIR Lens AAA EDC",
+    "brand": "Olight",
+    "price": 12.99,
+    "was_price": 46.73,
+    "drop_pct": 72,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0DQBBT52M",
+    "updated": "2026-04-10T20:10:04.541Z"
+  },
+  {
     "model": "P20A2 MKII",
     "brand": "EagleTac",
     "price": 19.99,
@@ -688,6 +758,26 @@
     "at_low": true,
     "url": "https://www.amazon.com/dp/B002UTXB32",
     "updated": "2026-03-28T05:52:45.659Z"
+  },
+  {
+    "model": "i3E EOS PMMA TIR Lens AAA EDC",
+    "brand": "Olight",
+    "price": 12.99,
+    "was_price": 44.98,
+    "drop_pct": 71,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0DQBBT52M",
+    "updated": "2026-04-10T20:10:04.541Z"
+  },
+  {
+    "model": "i3E EOS PMMA TIR Lens AAA EDC",
+    "brand": "Olight",
+    "price": 12.99,
+    "was_price": 44.94,
+    "drop_pct": 71,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0DQBBT52M",
+    "updated": "2026-04-10T20:10:04.541Z"
   },
   {
     "model": "Flashlights FX-PD35TAC",
@@ -750,6 +840,16 @@
     "updated": "2026-03-28T05:49:06.796Z"
   },
   {
+    "model": "Oclip Rechargeable EDC",
+    "brand": "Olight",
+    "price": 29.99,
+    "was_price": 92.36,
+    "drop_pct": 68,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0D4M672KN",
+    "updated": "2026-04-10T20:45:04.088Z"
+  },
+  {
     "model": "E11 Upgraded 115 Lumens",
     "brand": "Fenix",
     "price": 8.99,
@@ -798,6 +898,16 @@
     "at_low": false,
     "url": "https://www.amazon.com/dp/B08TWQZHRB",
     "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "Oclip Pro EDC",
+    "brand": "Olight",
+    "price": 39.99,
+    "was_price": 118.11,
+    "drop_pct": 66,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0F9YKJ5QF",
+    "updated": "2026-04-11T00:20:04.719Z"
   },
   {
     "model": "New Elf C2 Warm Light 1023 lm LED",
@@ -850,6 +960,26 @@
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
+    "model": "Perun 2 Mini",
+    "brand": "Olight",
+    "price": 58.99,
+    "was_price": 166.45,
+    "drop_pct": 65,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0CNR1ZTJN",
+    "updated": "2026-04-10T23:30:04.872Z"
+  },
+  {
+    "model": "I1R 2 Pro Eos 180 Lumens EDC Rechargeable Keychain",
+    "brand": "Olight",
+    "price": 21.99,
+    "was_price": 62.98,
+    "drop_pct": 65,
+    "at_low": true,
+    "url": "https://www.amazon.com/dp/B0F4WF8VKX",
+    "updated": "2026-04-10T18:35:02.835Z"
+  },
+  {
     "model": "Prime C1 XP-L Warm",
     "brand": "Armytek",
     "price": 45,
@@ -867,136 +997,6 @@
     "drop_pct": 64,
     "at_low": true,
     "url": "https://www.amazon.com/dp/B091MQ82ZM",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "PC10 XM-L",
-    "brand": "JETBeam",
-    "price": 55,
-    "was_price": 151,
-    "drop_pct": 64,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B0068F3VNE",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Mini",
-    "brand": "Maglite",
-    "price": 13.49,
-    "was_price": 37.85,
-    "drop_pct": 64,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0D6X1VLYQ",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Bundle: Nitecore TM16GT",
-    "brand": "Nitecore",
-    "price": 109.95,
-    "was_price": 304,
-    "drop_pct": 64,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B019S1ZL3C",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "21350 S50",
-    "brand": "Coast",
-    "price": 5.14,
-    "was_price": 13.96,
-    "drop_pct": 63,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B019810RKY",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Pistol Light, Gun Rail Light 600Lumens",
-    "brand": "Klarus",
-    "price": 19.99,
-    "was_price": 53.94,
-    "drop_pct": 63,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08KRGZV2G",
-    "updated": "2026-03-28T06:25:14.918Z"
-  },
-  {
-    "model": "Tactical",
-    "brand": "Nextorch",
-    "price": 19.95,
-    "was_price": 54.55,
-    "drop_pct": 63,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07HBKFTRC",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Bundle: Nitecore TM16GT",
-    "brand": "Nitecore",
-    "price": 109.95,
-    "was_price": 299,
-    "drop_pct": 63,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B019S1ZL3C",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Predator v3 Cree XP-E2",
-    "brand": "Armytek",
-    "price": 65,
-    "was_price": 170,
-    "drop_pct": 62,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01L1P8IM4",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "Products HP17 High Performance Hp17 Led Focus",
-    "brand": "Coast",
-    "price": 70,
-    "was_price": 182.12,
-    "drop_pct": 62,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B00WAIW0D0",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "LD12G2BK",
-    "brand": "Fenix",
-    "price": 18.99,
-    "was_price": 49.94,
-    "drop_pct": 62,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00C8757EM",
-    "updated": "2026-03-28T05:51:12.740Z"
-  },
-  {
-    "model": "LD22 G2 2015 Edt 300 Lumens",
-    "brand": "Fenix",
-    "price": 69.99,
-    "was_price": 182.45,
-    "drop_pct": 62,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08JGV1QTT",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "LD12G2BK",
-    "brand": "Fenix",
-    "price": 18.99,
-    "was_price": 50.2,
-    "drop_pct": 62,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00C8757EM",
-    "updated": "2026-03-28T05:51:12.740Z"
-  },
-  {
-    "model": "E35 v3.0 3000 Lumen High Performance EDC",
-    "brand": "Fenix",
-    "price": 36,
-    "was_price": 95.41,
-    "drop_pct": 62,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08HR8HHCK",
     "updated": "2026-04-01T04:33:14.868Z"
   }
 ]

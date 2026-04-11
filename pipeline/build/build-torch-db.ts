@@ -119,27 +119,34 @@ function loadPriceData(): Map<string, PriceStats> {
 		if (bucketPrices.every(p => isNaN(p))) continue;
 
 		// Generate SVG path (viewBox 0 0 50 20)
-		const pMin = Math.min(...bucketPrices.filter(p => !isNaN(p)));
-		const pMax = Math.max(...bucketPrices.filter(p => !isNaN(p)));
-		const pRange = pMax - pMin || 1; // Avoid division by zero for flat lines
-		const xScale = 50 / (bucketCount - 1);
-		const yPadding = 2; // 2px top/bottom padding
-		const yRange = 20 - 2 * yPadding;
+		const validBuckets = bucketPrices.filter(p => !isNaN(p));
+		const pMin = Math.min(...validBuckets);
+		const pMax = Math.max(...validBuckets);
+		const pRange = pMax - pMin;
 
-		const points: string[] = [];
-		for (let i = 0; i < bucketPrices.length; i++) {
-			if (isNaN(bucketPrices[i])) continue;
-			const x = (i * xScale).toFixed(1);
-			// Invert Y — lower price = higher on chart
-			const y = (yPadding + yRange - ((bucketPrices[i] - pMin) / pRange) * yRange).toFixed(1);
-			points.push(`${i === 0 ? 'M' : 'L'}${x},${y}`);
+		// Skip sparkline if price variation < 5% — flat lines are visual noise
+		let sparklinePath = '';
+		if (pRange > 0 && pRange / pMin >= 0.05) {
+			const xScale = 50 / (bucketCount - 1);
+			const yPadding = 2; // 2px top/bottom padding
+			const yRange = 20 - 2 * yPadding;
+
+			const points: string[] = [];
+			for (let i = 0; i < bucketPrices.length; i++) {
+				if (isNaN(bucketPrices[i])) continue;
+				const x = (i * xScale).toFixed(1);
+				// Invert Y — lower price = higher on chart
+				const y = (yPadding + yRange - ((bucketPrices[i] - pMin) / pRange) * yRange).toFixed(1);
+				points.push(`${i === 0 ? 'M' : 'L'}${x},${y}`);
+			}
+			sparklinePath = points.join(' ');
 		}
 
 		result.set(row.flashlight_id, {
 			drop_pct: dropPct,
 			at_low: atLow,
 			avg_price: Math.round(median90 * 100) / 100,
-			sparkline: points.join(' '),
+			sparkline: sparklinePath,
 		});
 	}
 
@@ -404,7 +411,7 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'price', display: 'price', unit: '${}', cvis: 'always', link: 'price', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.price_usd ?? '' },
 	// Price history columns — populated from loadPriceData() Map, extract is placeholder
-	{ id: 'price_drop', display: 'deal', unit: '{}%&nbsp;off', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
+	{ id: 'price_drop', display: 'deal', unit: '{}% off', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
 		extract: (_e) => '' },
 	{ id: 'at_low', display: 'lowest&nbsp;price', unit: '', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => [] },
