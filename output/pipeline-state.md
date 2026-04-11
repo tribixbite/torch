@@ -1,13 +1,15 @@
 # Pipeline State — 2026-04-09
 
-## Current Status: 17,876 lights in DB (14,625 in JSON) — price history + deals feed live
+## Current Status: 18,283 lights in DB (15,034 in JSON) — price history + deals feed live
 
-### Recent Changes (Apr 9)
-- **Price history surfaced**: 4,673 entries with Keepa price data → sparklines, deal scoring, filters
+### Recent Changes (Apr 10)
+- **Price history surfaced**: 5,005 entries with Keepa price data → sparklines, deal scoring, filters
   - 4 new columns: `price_drop` (range 1-97%), `at_low` (multi), `price_avg` (log-range), `_sparkline` (SVG path)
-  - 835 entries showing active price drops, 2,038 at historical lows
-  - PriceSparkline component: 24-point SVG mini-charts (60×24px) in card headers
-  - Deal badges: "X% off" pill + "LOW" indicator for near-historical-minimum prices
+  - 888 entries showing active price drops, 2,144 at historical lows, 1,515 sparklines
+  - Flat sparklines filtered (< 5% price variation) — reduced visual noise
+  - PriceSparkline component: 24-point SVG mini-charts on own row below header
+  - Strikethrough "was" price inline before current price
+  - Deal badges: green "X% off" pill + "LOW" indicator for near-historical-minimum prices
 - **Deals feed**: `scripts/deals-feed.ts` generates `static/deals.json` (top 100 deals by drop %)
   - Added to keepa-cron.sh enrichment pipeline
 - **Keepa cron fixed**: removed pgrep self-match bug (broken since Mar 28), killed 447 zombie crond
