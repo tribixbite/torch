@@ -1,11 +1,18 @@
-# Pipeline State — 2026-04-09
+# Pipeline State — 2026-04-13
 
-## Current Status: 18,283 lights in DB (15,034 in JSON) — price history + deals feed live
+## Current Status: 18,373 lights in DB (15,128 in JSON) — price history + deals feed live
+
+### Recent Changes (Apr 13)
+- **Price mismatch fix**: Deal metrics now computed against actual DB `price_usd`, not stale Keepa last data point
+  - Previously: XP6R showed `~~$43~~ $54.95 17% off` (contradictory — was < current)
+  - Now: Entries where DB price > avg correctly show no deal badge
+  - $0/missing price entries excluded from deal metrics (were showing 85-97% off badges)
+  - 1,263 deals (was 888), 2,200 at historical low, 1,499 sparklines, 5,069 with avg price
+- **Auto-sort by deal %**: Activating the deal filter auto-sorts by price_drop descending (biggest deals first)
 
 ### Recent Changes (Apr 10)
-- **Price history surfaced**: 5,005 entries with Keepa price data → sparklines, deal scoring, filters
+- **Price history surfaced**: 5,074 entries with Keepa price data → sparklines, deal scoring, filters
   - 4 new columns: `price_drop` (range 1-97%), `at_low` (multi), `price_avg` (log-range), `_sparkline` (SVG path)
-  - 888 entries showing active price drops, 2,144 at historical lows, 1,515 sparklines
   - Flat sparklines filtered (< 5% price variation) — reduced visual noise
   - PriceSparkline component: 24-point SVG mini-charts on own row below header
   - Strikethrough "was" price inline before current price
