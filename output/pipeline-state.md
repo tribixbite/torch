@@ -2,6 +2,20 @@
 
 ## Current Status: 18,433 lights in DB (15,186 in JSON) — OOS-filtered deals live
 
+### Recent Changes (Apr 13, round 3)
+- **Keepa tracking API integration**: `pipeline/cli.ts tracking` command
+  - `list` — show active trackings (0 tokens)
+  - `setup [n]` — track top n deal candidates ($10-500, flashlight-type, accessory-filtered)
+  - `notifications` — poll for triggered price alerts (0 tokens)
+  - `clear` — remove all trackings (0 tokens)
+  - Notification polling added to keepa-cron.sh enrichment cycle
+- **KeepaClient expanded**: `addTracking()`, `removeTracking()`, `listTrackings()`, `getNotifications()`, `setWebhook()`, `postRequest()`
+- **Keepa endpoint research completed** (`output/keepa-api-research.md`):
+  - `graph.keepa.com` (free) and `/graphimage` (1 token): BOTH fail for our products — only work for Keepa-tracked products, not API-discovered ones
+  - `/deal` endpoint: works but 5 tokens/page, noisy (non-flashlights mixed in)
+  - `/tracking` add: works for our scraped ASINs, 1 token each. Format: `notificationType: [false,false,false,false,false,true,false,false]`
+  - Conclusion: our own sparklines + deal scoring is the best approach. Tracking useful for top deals.
+
 ### Recent Changes (Apr 13, round 2)
 - **OOS exclusion**: Store Amazon availability from Keepa CSV (-1 = OOS) as `amazon_availability`
   - 5 availability records so far (1 in stock, 4 OOS) — accumulates with each cron run
@@ -42,6 +56,7 @@ Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
    - `extract-missing-fields.ts` — re-extract specs from raw_spec_text (with --smol)
    - `model-crossref.ts` — propagate within-brand fields
    - `deals-feed.ts` — generate deals.json (OOS/sanity/accessory filtered, deduped, top 100)
+   - `tracking notifications` — check Keepa tracking alerts (0 tokens)
 2. **Vision cron** (`scripts/vision-cron.sh`): hourly grid build → classify → sprite rebuild
 3. **Validation** (`scripts/validate-vision-accuracy.ts`): compare vs parametrek ground truth
 
