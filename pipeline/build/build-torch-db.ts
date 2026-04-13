@@ -18,6 +18,7 @@ interface PriceStats {
 	drop_pct: number;      // 0-100 integer — percentage below 90-day median
 	at_low: boolean;       // within 5% of all-time minimum
 	avg_price: number;     // 90-day median (outlier-resistant baseline)
+	min_price: number;     // all-time minimum (for at_low recalculation with DB price)
 	sparkline: string;     // pre-computed SVG path "M0,18 L2,15 ..."
 }
 
@@ -146,6 +147,7 @@ function loadPriceData(): Map<string, PriceStats> {
 			drop_pct: dropPct,
 			at_low: atLow,
 			avg_price: Math.round(median90 * 100) / 100,
+			min_price: minPrice,
 			sparkline: sparklinePath,
 		});
 	}
@@ -815,10 +817,25 @@ export async function buildTorchDb(): Promise<{
 			row[mfgColIdx] = brandMfgLookup(entry) ? ['yes'] : ['no'];
 		}
 		// Populate price history columns from Keepa data
+		// Use the actual DB price (what the card displays) for deal calculations,
+		// NOT the last Keepa data point which may be stale
 		const pStats = priceData.get(entry.id);
 		if (pStats) {
-			if (priceDropColIdx >= 0) row[priceDropColIdx] = pStats.drop_pct > 0 ? pStats.drop_pct : '';
-			if (atLowColIdx >= 0) row[atLowColIdx] = pStats.at_low ? ['yes'] : [];
+			const dbPrice = entry.price_usd;
+			if (dbPrice && dbPrice > 0) {
+				// Recalculate drop_pct against median using the actual displayed price
+				const dropPct = dbPrice < pStats.avg_price
+					? Math.round((pStats.avg_price - dbPrice) / pStats.avg_price * 100)
+					: 0;
+				// Recalculate at_low using the actual displayed price
+				const atLow = dbPrice <= pStats.min_price * 1.05;
+				if (priceDropColIdx >= 0) row[priceDropColIdx] = dropPct > 0 ? dropPct : '';
+				if (atLowColIdx >= 0) row[atLowColIdx] = atLow ? ['yes'] : [];
+			} else {
+				// No DB price — fall back to Keepa-derived values
+				if (priceDropColIdx >= 0) row[priceDropColIdx] = pStats.drop_pct > 0 ? pStats.drop_pct : '';
+				if (atLowColIdx >= 0) row[atLowColIdx] = pStats.at_low ? ['yes'] : [];
+			}
 			if (priceAvgColIdx >= 0) row[priceAvgColIdx] = pStats.avg_price;
 			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}

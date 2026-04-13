@@ -113,6 +113,10 @@ class UrlState {
 		} else {
 			this.filters.set(colIndex, { type: 'range', min, max, minActive, maxActive, showUnknown });
 		}
+		// Auto-sort by deal percentage descending when deal filter is activated
+		if (this.sort.column === -1 && this.columns[colIndex]?.id === 'price_drop') {
+			this.sort = { column: colIndex, direction: 'dec' };
+		}
 		this.filters = new Map(this.filters);
 		this.syncToUrl();
 	}
