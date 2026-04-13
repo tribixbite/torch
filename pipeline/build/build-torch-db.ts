@@ -15,15 +15,13 @@ import { existsSync } from 'fs';
 
 /** Price statistics extracted from Keepa price history */
 interface PriceStats {
-	drop_pct: number;      // 0-100 integer — percentage below 90-day median
-	at_low: boolean;       // within 5% of all-time minimum
-	avg_price: number;     // 90-day median (outlier-resistant baseline)
-	min_price: number;     // all-time minimum (for at_low recalculation with DB price)
+	min_price: number;     // all-time Amazon low
 	sparkline: string;     // pre-computed SVG path "M0,18 L2,15 ..."
 }
 
 /**
- * Load price history from raw_spec_text, compute stats + sparkline SVG paths.
+ * Load price history from raw_spec_text, extract all-time low + sparkline SVG.
+ * Deal = current price <= historical Amazon low. Simple.
  * Retailer preference: Amazon > Amazon 3P New (Buy Box preferred if available).
  */
 function loadPriceData(): Map<string, PriceStats> {
@@ -34,7 +32,6 @@ function loadPriceData(): Map<string, PriceStats> {
 
 	const result = new Map<string, PriceStats>();
 	const now = Date.now();
-	const MS_90D = 90 * 24 * 60 * 60 * 1000;
 
 	for (const row of rows) {
 		let parsed: Record<string, [number, number][]>;
@@ -51,42 +48,11 @@ function loadPriceData(): Map<string, PriceStats> {
 		// Sort by timestamp ascending
 		const sorted = [...series].sort((a, b) => a[0] - b[0]);
 
-		// Extract prices
+		// Extract positive prices
 		const allPrices = sorted.map(p => p[1]).filter(p => p > 0);
 		if (allPrices.length === 0) continue;
 
-		const currentPrice = sorted[sorted.length - 1][1];
-		if (currentPrice <= 0) continue;
-
 		const minPrice = Math.min(...allPrices);
-		const maxPrice = Math.max(...allPrices);
-
-		// 90-day median — filter to last 90 days, compute median
-		const cutoff90 = now - MS_90D;
-		const recent = sorted.filter(p => p[0] >= cutoff90 && p[1] > 0).map(p => p[1]);
-		let median90: number;
-		if (recent.length >= 3) {
-			const sortedRecent = [...recent].sort((a, b) => a - b);
-			const mid = Math.floor(sortedRecent.length / 2);
-			median90 = sortedRecent.length % 2 === 0
-				? (sortedRecent[mid - 1] + sortedRecent[mid]) / 2
-				: sortedRecent[mid];
-		} else {
-			// Fallback: use all-time median if <3 recent data points
-			const sortedAll = [...allPrices].sort((a, b) => a - b);
-			const mid = Math.floor(sortedAll.length / 2);
-			median90 = sortedAll.length % 2 === 0
-				? (sortedAll[mid - 1] + sortedAll[mid]) / 2
-				: sortedAll[mid];
-		}
-
-		// Price drop percentage (0 if current >= median)
-		const dropPct = currentPrice < median90
-			? Math.round((median90 - currentPrice) / median90 * 100)
-			: 0;
-
-		// At historical low: within 5% of all-time min
-		const atLow = currentPrice <= minPrice * 1.05;
 
 		// Downsample to 24 buckets (last 12 months, ~15-day intervals) for sparkline
 		const MS_12M = 365 * 24 * 60 * 60 * 1000;
@@ -144,9 +110,6 @@ function loadPriceData(): Map<string, PriceStats> {
 		}
 
 		result.set(row.flashlight_id, {
-			drop_pct: dropPct,
-			at_low: atLow,
-			avg_price: Math.round(median90 * 100) / 100,
 			min_price: minPrice,
 			sparkline: sparklinePath,
 		});
@@ -413,12 +376,9 @@ const COLUMNS: ColumnMeta[] = [
 	{ id: 'price', display: 'price', unit: '${}', cvis: 'always', link: 'price', srch: false, mode: ['any'], sortable: true,
 		extract: (e) => e.price_usd ?? '' },
 	// Price history columns — populated from loadPriceData() Map, extract is placeholder
-	{ id: 'price_drop', display: 'deal', unit: '{}% off', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
-		extract: (_e) => '' },
-	{ id: 'at_low', display: 'lowest&nbsp;price', unit: '', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: false,
+	// Deal = current price <= historical Amazon low (simple boolean)
+	{ id: 'at_low', display: 'deal', unit: '', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => [] },
-	{ id: 'price_avg', display: 'avg&nbsp;price', unit: '${}', cvis: 'never', link: 'price', srch: false, mode: ['any'], sortable: true,
-		extract: (_e) => '' },
 	{ id: '_sparkline', display: '_sparkline', unit: '', cvis: 'never', link: 'price', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => '' },
 ];
@@ -513,8 +473,6 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		body_size: { type: 'log-range' },
 		weight: { type: 'log-range' },
 		price: { type: 'log-range' },
-		price_drop: { type: 'range' },
-		price_avg: { type: 'log-range' },
 		efficacy: { type: 'range' },
 		beam_angle: { type: 'range' },
 		year: { type: 'range' },
@@ -781,9 +739,7 @@ export async function buildTorchDb(): Promise<{
 	const data: unknown[][] = [];
 	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
 	const mfgColIdx = COLUMNS.findIndex((c) => c.id === 'has_mfg_url');
-	const priceDropColIdx = COLUMNS.findIndex((c) => c.id === 'price_drop');
 	const atLowColIdx = COLUMNS.findIndex((c) => c.id === 'at_low');
-	const priceAvgColIdx = COLUMNS.findIndex((c) => c.id === 'price_avg');
 	const sparklineColIdx = COLUMNS.findIndex((c) => c.id === '_sparkline');
 
 	let spriteHits = 0;
@@ -817,26 +773,13 @@ export async function buildTorchDb(): Promise<{
 			row[mfgColIdx] = brandMfgLookup(entry) ? ['yes'] : ['no'];
 		}
 		// Populate price history columns from Keepa data
-		// Use the actual DB price (what the card displays) for deal calculations,
-		// NOT the last Keepa data point which may be stale.
-		// Only compute deal metrics when we have a valid displayed price — showing
-		// "X% off" without a visible price makes no sense.
+		// Deal = current price <= historical Amazon low
 		const pStats = priceData.get(entry.id);
 		if (pStats) {
 			const dbPrice = entry.price_usd;
-			if (dbPrice && dbPrice > 0) {
-				// Recalculate drop_pct against median using the actual displayed price
-				const dropPct = dbPrice < pStats.avg_price
-					? Math.round((pStats.avg_price - dbPrice) / pStats.avg_price * 100)
-					: 0;
-				// Recalculate at_low using the actual displayed price
-				const atLow = dbPrice <= pStats.min_price * 1.05;
-				if (priceDropColIdx >= 0) row[priceDropColIdx] = dropPct > 0 ? dropPct : '';
-				if (atLowColIdx >= 0) row[atLowColIdx] = atLow ? ['yes'] : [];
+			if (dbPrice && dbPrice > 0 && atLowColIdx >= 0) {
+				row[atLowColIdx] = dbPrice <= pStats.min_price ? ['yes'] : [];
 			}
-			// No DB price ($0 or missing) → leave deal columns empty (no deal badges)
-			// Still populate avg_price and sparkline for data completeness
-			if (priceAvgColIdx >= 0) row[priceAvgColIdx] = pStats.avg_price;
 			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}
 		data.push(row);

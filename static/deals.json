@@ -1,1002 +1,802 @@
 [
   {
-    "model": "Oclip Rechargeable EDC",
-    "brand": "Olight",
-    "price": 29.99,
-    "was_price": 2999,
-    "drop_pct": 99,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0CJFVTTQ5",
-    "updated": "2026-04-13T02:45:07.339Z"
+    "model": "Hard Case Compatible for OLIGHT Arkfeld Pro Rechargeable EDC Flat",
+    "brand": "FitSand",
+    "price": 0.99,
+    "amazon_low": 0.99,
+    "url": "https://www.amazon.com/dp/B0FCT2ZXFW",
+    "updated": "2026-04-13T12:00:03.375Z"
   },
   {
     "model": "Tek Torches LL7465 Coast Cutlery V2 Tek Torch LED Micro Moon",
     "brand": "Coast",
     "price": 2.64,
-    "was_price": 80.47,
-    "drop_pct": 97,
-    "at_low": true,
+    "amazon_low": 80.47,
     "url": "https://www.amazon.com/dp/B0001O3D7M",
     "updated": "2026-03-28T07:05:12.191Z"
   },
   {
-    "model": "MS18 100000 Lumens",
-    "brand": "Imalent",
-    "price": 21.99,
-    "was_price": 669.95,
-    "drop_pct": 97,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07RSRXDLX",
-    "updated": "2026-03-28T03:26:11.327Z"
-  },
-  {
-    "model": "MS18 100000 Lumens",
-    "brand": "Imalent",
-    "price": 21.99,
-    "was_price": 669.95,
-    "drop_pct": 97,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07RSRXDLX",
-    "updated": "2026-03-28T03:26:11.327Z"
-  },
-  {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 368.95,
-    "drop_pct": 96,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 368.95,
-    "drop_pct": 96,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "Dobermann Cree XP-E2 RED TURBO 200 LED Lumens 212 Meters 10 YEARS WARRANTY Tactical Hunting Military",
-    "brand": "Armytek",
-    "price": 7.99,
-    "was_price": 164,
-    "drop_pct": 95,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01KI47ZLO",
-    "updated": "2026-03-28T03:43:09.670Z"
+    "model": "Global 5V AC Adapter Replacement for Nitecore MH10 MH12 MH20 MH20GT MH27 MH27UV MH 10 MH 12 MH 20 MH 27 HC90 LED USB",
+    "brand": "BestCH",
+    "price": 3.29,
+    "amazon_low": 3.29,
+    "url": "https://www.amazon.com/dp/B09VGHBPFH",
+    "updated": "2026-04-01T04:33:14.868Z"
   },
   {
     "model": "E Series 1000 lm AA",
     "brand": "Fenix",
     "price": 3.96,
-    "was_price": 64.95,
-    "drop_pct": 94,
-    "at_low": true,
+    "amazon_low": 54.49,
     "url": "https://www.amazon.com/dp/B00NPJKI8C",
     "updated": "2026-03-28T05:49:56.387Z"
   },
   {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 199.95,
-    "drop_pct": 94,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 209.95,
-    "drop_pct": 94,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "Flashlights TK47UE",
-    "brand": "Fenix",
-    "price": 12.95,
-    "was_price": 150.92,
-    "drop_pct": 91,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01N5VGOUX",
-    "updated": "2026-03-28T05:49:02.919Z"
-  },
-  {
-    "model": "Flashlight Hunting 2000 LUMENS/P30I Hunting Kit",
-    "brand": "Nitecore",
-    "price": 16.99,
-    "was_price": 189.95,
-    "drop_pct": 91,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09FLB6HNL",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "MAG-Lite XL200-S3016 XL200",
-    "brand": "Maglite",
-    "price": 35,
-    "was_price": 354.31,
-    "drop_pct": 90,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01LCMM4ZI",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "MR90 Super Bright MAX 50000 Lumens",
-    "brand": "Imalent",
-    "price": 39.99,
-    "was_price": 359.95,
-    "drop_pct": 89,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0B2RSGPRS",
-    "updated": "2026-03-28T03:26:27.337Z"
-  },
-  {
-    "model": "NEB10 Tactical Excursion Bag",
-    "brand": "Nitecore",
-    "price": 6.83,
-    "was_price": 59.95,
-    "drop_pct": 89,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B072LLW53P",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 109.95,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "LED Lenser K2 Keychain",
-    "brand": "Ledlenser",
-    "price": 8.39,
-    "was_price": 69.62,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00YR0BZ1C",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "LED Lenser K2 Keychain",
-    "brand": "Ledlenser",
-    "price": 8.39,
-    "was_price": 69.78,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00YR0BZ1C",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "NEB10 Tactical Excursion Bag",
-    "brand": "Nitecore",
-    "price": 6.83,
-    "was_price": 54.95,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B072LLW53P",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "MT2C LED Portable",
-    "brand": "Nitecore",
-    "price": 4.89,
-    "was_price": 39.95,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00MQOYJ7S",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "FB-1 Universal",
-    "brand": "Olight",
-    "price": 8.95,
-    "was_price": 71.94,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09FQ3TVV9",
-    "updated": "2026-04-13T07:40:03.659Z"
-  },
-  {
-    "model": "IMINI 2 EDC Rechargeable Keychain",
-    "brand": "Olight",
-    "price": 13.28,
-    "was_price": 113.73,
-    "drop_pct": 88,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0DNMNS7NZ",
-    "updated": "2026-04-13T06:50:02.957Z"
-  },
-  {
-    "model": "E12 Flashlight Pocket-Sized bright flashlight 130 Lumens (Fоur Расk)",
-    "brand": "Fenix",
-    "price": 30,
-    "was_price": 233.85,
-    "drop_pct": 87,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B089WCN438",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "MS12 Mini-C",
-    "brand": "Imalent",
-    "price": 12.98,
-    "was_price": 89.95,
-    "drop_pct": 86,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08RDLJ38N",
-    "updated": "2026-03-28T03:26:15.156Z"
-  },
-  {
-    "model": "I3T EOS 180 Lumens Dual-Output Slim EDC",
-    "brand": "Olight",
-    "price": 17.99,
-    "was_price": 124.15,
-    "drop_pct": 86,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9F2CKV4",
-    "updated": "2026-04-13T06:10:02.365Z"
-  },
-  {
-    "model": "I3T EOS 180 Lumens Dual-Output Slim EDC",
-    "brand": "Olight",
-    "price": 17.99,
-    "was_price": 133.18,
-    "drop_pct": 86,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9F2CKV4",
-    "updated": "2026-04-13T06:10:02.365Z"
-  },
-  {
-    "model": "I3T 2 EOS Pocket EDC",
-    "brand": "Olight",
-    "price": 19.99,
-    "was_price": 136.38,
-    "drop_pct": 85,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F8424R34",
-    "updated": "2026-04-13T08:10:03.519Z"
-  },
-  {
-    "model": "Barracuda Cree XP-L HI White LED Searchlight 1350 lumens 775m Rescue",
-    "brand": "Armytek",
-    "price": 22.89,
-    "was_price": 142.74,
-    "drop_pct": 84,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01KHW7EZ4",
-    "updated": "2026-03-28T03:43:17.551Z"
-  },
-  {
-    "model": "Mini AA",
-    "brand": "Maglite",
-    "price": 9.99,
-    "was_price": 62.25,
-    "drop_pct": 84,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08DM4LS7B",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Combo MH12 V2 CREE XP-L2 V6",
-    "brand": "Nitecore",
-    "price": 18.99,
-    "was_price": 117.95,
-    "drop_pct": 84,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0979CV4PC",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "COMBO: Nitecore P20i USB-C Rechargeable",
-    "brand": "Nitecore",
-    "price": 20.97,
-    "was_price": 127.95,
-    "drop_pct": 84,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09DYY4ZKP",
-    "updated": "2026-03-28T16:14:12.584Z"
-  },
-  {
-    "model": "I3T 2 EOS Pocket EDC",
-    "brand": "Olight",
-    "price": 19.99,
-    "was_price": 125.95,
-    "drop_pct": 84,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F8424R34",
-    "updated": "2026-04-13T08:10:03.519Z"
-  },
-  {
-    "model": "New Dobermann Pro White Light 1500 lm LED",
-    "brand": "Armytek",
-    "price": 15.79,
-    "was_price": 92.5,
-    "drop_pct": 83,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09F9BT4VP",
-    "updated": "2026-03-28T03:43:13.609Z"
-  },
-  {
-    "model": "HP7R 300 lm Rechargeable Focusing",
+    "model": "® G5 18 Lumen Key Chain",
     "brand": "Coast",
-    "price": 75,
-    "was_price": 443.41,
-    "drop_pct": 83,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01BD4HGM6",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "LR40 12000 Lumen",
-    "brand": "Fenix",
-    "price": 38.99,
-    "was_price": 223.89,
-    "drop_pct": 83,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07W827ZNR",
-    "updated": "2026-03-28T05:51:00.930Z"
-  },
-  {
-    "model": "Heavy-Duty Incandescent 3-Cell D",
-    "brand": "Maglite",
-    "price": 53.99,
-    "was_price": 320.78,
-    "drop_pct": 83,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B00O1E43T0",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "EAX 2000 Lumen CREE XM-L2 T6 LED AA Battery",
-    "brand": "Nitecore",
-    "price": 25.99,
-    "was_price": 150.66,
-    "drop_pct": 83,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00K0AZAM8",
-    "updated": "2026-03-28T16:13:07.172Z"
-  },
-  {
-    "model": "EAX-2000LM AA Battery",
-    "brand": "Nitecore",
-    "price": 23.74,
-    "was_price": 135.3,
-    "drop_pct": 82,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00JPBUZ3C",
-    "updated": "2026-03-28T06:02:42.927Z"
-  },
-  {
-    "model": "LD70 EDC",
-    "brand": "Imalent",
-    "price": 53.95,
-    "was_price": 285.95,
-    "drop_pct": 81,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0CFQVVVN7",
-    "updated": "2026-03-28T03:24:43.260Z"
-  },
-  {
-    "model": "XL100 LED 3-Cell AAA",
-    "brand": "Maglite",
-    "price": 20,
-    "was_price": 107.24,
-    "drop_pct": 81,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B003HL4E7O",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "HP7 360 lm Focusing",
-    "brand": "Coast",
-    "price": 40,
-    "was_price": 197.33,
-    "drop_pct": 80,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01BD4HJEG",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "TK22 V2.0 1600 Lumens LED high Powered Long Throw",
-    "brand": "Fenix",
-    "price": 38,
-    "was_price": 194.5,
-    "drop_pct": 80,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07XXX57CZ",
+    "price": 3.99,
+    "amazon_low": 13.32,
+    "url": "https://www.amazon.com/dp/B087JCNVL8",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
     "model": "® G5 18 Lumen Key Chain",
     "brand": "Coast",
     "price": 3.99,
-    "was_price": 18.75,
-    "drop_pct": 79,
-    "at_low": true,
+    "amazon_low": 4.69,
     "url": "https://www.amazon.com/dp/B087JCNVL8",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "EAX Hammer XM-L2 T6 2000 Lumens Brightest AA",
-    "brand": "Nitecore",
-    "price": 27.88,
-    "was_price": 130.98,
-    "drop_pct": 79,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00JXLFKS4",
-    "updated": "2026-03-28T16:17:08.626Z"
-  },
-  {
-    "model": "HP8407CP 251 Lumens Black Focusing",
+    "model": "® G5 18 Lumen Key Chain",
     "brand": "Coast",
-    "price": 44.99,
-    "was_price": 202.48,
-    "drop_pct": 78,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01N8XF9AI",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "i3E EOS PMMA TIR Lens AAA EDC",
-    "brand": "Olight",
-    "price": 12.99,
-    "was_price": 58.48,
-    "drop_pct": 78,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9WLYJ6M",
-    "updated": "2026-04-13T09:00:05.377Z"
-  },
-  {
-    "model": "PX25 275 lm",
-    "brand": "Coast",
-    "price": 31,
-    "was_price": 134.42,
-    "drop_pct": 77,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01BD4HJAK",
+    "price": 3.99,
+    "amazon_low": 8.8,
+    "url": "https://www.amazon.com/dp/B087JCNVL8",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "MX25L3C XP-G2 3500 Lumen LED Maximum Distance",
-    "brand": "EagleTac",
-    "price": 32.9,
-    "was_price": 140.82,
-    "drop_pct": 77,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00GIW7GV0",
-    "updated": "2026-03-26T10:20:15.540Z"
-  },
-  {
-    "model": "Mini Incandescent",
-    "brand": "Maglite",
-    "price": 9.99,
-    "was_price": 44.14,
-    "drop_pct": 77,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B0G316SK8X",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "760 Lumens 400 Meter Hunting",
-    "brand": "Nextorch",
-    "price": 30.99,
-    "was_price": 134.84,
-    "drop_pct": 77,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07NBGX97Y",
-    "updated": "2026-03-28T06:31:23.858Z"
-  },
-  {
-    "model": "Tiny Monster TM36 1800 lm",
-    "brand": "Nitecore",
-    "price": 89.95,
-    "was_price": 396.09,
-    "drop_pct": 77,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00KOWANJ2",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "TX40 235 lm Tactical",
+    "model": "® G5 18 Lumen Key Chain",
     "brand": "Coast",
-    "price": 45,
-    "was_price": 191.31,
-    "drop_pct": 76,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B01BD4HLPS",
+    "price": 3.99,
+    "amazon_low": 6,
+    "url": "https://www.amazon.com/dp/B087JCNVL8",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "TK40 High Performance Cree",
-    "brand": "Fenix",
-    "price": 27.88,
-    "was_price": 115.82,
-    "drop_pct": 76,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0020XF0JQ",
-    "updated": "2026-03-28T05:50:04.145Z"
+    "model": "® G5 18 Lumen Key Chain",
+    "brand": "Coast",
+    "price": 3.99,
+    "amazon_low": 10,
+    "url": "https://www.amazon.com/dp/B087JCNVL8",
+    "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "Flashlights Fenix E35",
-    "brand": "Fenix",
-    "price": 36,
-    "was_price": 147,
-    "drop_pct": 76,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01KH35XFG",
+    "model": "MT2C LED Portable",
+    "brand": "Nitecore",
+    "price": 4.89,
+    "amazon_low": 35.95,
+    "url": "https://www.amazon.com/dp/B00MQOYJ7S",
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
-    "model": "LD70 EDC",
-    "brand": "Imalent",
-    "price": 53.95,
-    "was_price": 227,
-    "drop_pct": 76,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0CFQVVVN7",
-    "updated": "2026-03-28T03:24:43.260Z"
+    "model": "SR1 Rubber Button Cover for MAGLITE C/D",
+    "brand": "Weltool",
+    "price": 4.99,
+    "amazon_low": 4.99,
+    "url": "https://www.amazon.com/dp/B09MT3YW67",
+    "updated": "2026-03-28T06:43:47.708Z"
   },
   {
-    "model": "NXMTS2AA my Torch S 2AA",
-    "brand": "Nextorch",
-    "price": 9.99,
-    "was_price": 40.81,
-    "drop_pct": 76,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00YOZ4LD4",
-    "updated": "2026-03-28T06:32:36.983Z"
+    "model": "Replacement USB Type C Charging Cable，Supports Fast Charging，Compatible",
+    "brand": "HSEUOPV",
+    "price": 5.09,
+    "amazon_low": 5.09,
+    "url": "https://www.amazon.com/dp/B0FYFRB8HW",
+    "updated": "2026-04-13T10:40:03.006Z"
+  },
+  {
+    "model": "21350 S50",
+    "brand": "Coast",
+    "price": 5.14,
+    "amazon_low": 5.14,
+    "url": "https://www.amazon.com/dp/B019810RKY",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Outdoors Molle 4.6 x 2.0 x 1.4 Inch Protable Travel M5",
+    "brand": "ProWildGear",
+    "price": 5.99,
+    "amazon_low": 10.99,
+    "url": "https://www.amazon.com/dp/B0F9KQPV1V",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Outdoors Molle 4.6 x 2.0 x 1.4 Inch Protable Travel M5",
+    "brand": "ProWildGear",
+    "price": 5.99,
+    "amazon_low": 10.99,
+    "url": "https://www.amazon.com/dp/B0F9KQPV1V",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Outdoors Molle 4.6 x 2.0 x 1.4 Inch Protable Travel M5",
+    "brand": "ProWildGear",
+    "price": 5.99,
+    "amazon_low": 10.99,
+    "url": "https://www.amazon.com/dp/B0F9KQPV1V",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Outdoors Molle 4.6 x 2.0 x 1.4 Inch Protable Travel M5",
+    "brand": "ProWildGear",
+    "price": 5.99,
+    "amazon_low": 5.99,
+    "url": "https://www.amazon.com/dp/B0F9KQPV1V",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Outdoors Molle 4.6 x 2.0 x 1.4 Inch Protable Travel M5",
+    "brand": "ProWildGear",
+    "price": 5.99,
+    "amazon_low": 5.99,
+    "url": "https://www.amazon.com/dp/B0F9KQPV1V",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "NEB10 Tactical Excursion Bag",
+    "brand": "Nitecore",
+    "price": 6.83,
+    "amazon_low": 49.95,
+    "url": "https://www.amazon.com/dp/B072LLW53P",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "NEB10 Tactical Excursion Bag",
+    "brand": "Nitecore",
+    "price": 6.83,
+    "amazon_low": 49.95,
+    "url": "https://www.amazon.com/dp/B072LLW53P",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "MCC S Magnetic Charging Cable Only Compatible",
+    "brand": "TUSITA",
+    "price": 6.9,
+    "amazon_low": 6.9,
+    "url": "https://www.amazon.com/dp/B0BGXN455G",
+    "updated": "2026-04-09T17:10:04.856Z"
+  },
+  {
+    "model": "Pistol Mag Pouch 9mm Magazine Pouches MOLLE Holder,for M1911 92F 9mm .40 Magzines",
+    "brand": "OEBABE",
+    "price": 6.99,
+    "amazon_low": 6.99,
+    "url": "https://www.amazon.com/dp/B0DB1M9R5Q",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Pistol Mag Pouch 9mm Magazine Pouches MOLLE Holder,for M1911 92F 9mm .40 Magzines",
+    "brand": "OEBABE",
+    "price": 6.99,
+    "amazon_low": 6.99,
+    "url": "https://www.amazon.com/dp/B0DB1M9R5Q",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Pistol Mag Pouch 9mm Magazine Pouches MOLLE Holder,for M1911 92F 9mm .40 Magzines",
+    "brand": "OEBABE",
+    "price": 6.99,
+    "amazon_low": 6.99,
+    "url": "https://www.amazon.com/dp/B0DB1M9R5Q",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Pistol Mag Pouch 9mm Magazine Pouches MOLLE Holder,for M1911 92F 9mm .40 Magzines",
+    "brand": "OEBABE",
+    "price": 6.99,
+    "amazon_low": 6.99,
+    "url": "https://www.amazon.com/dp/B0DB1M9R5Q",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Tactical",
+    "brand": "YAPJEB",
+    "price": 6.99,
+    "amazon_low": 7.69,
+    "url": "https://www.amazon.com/dp/B0BQ5KX7TQ",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Rechargeable",
+    "brand": "Tluobiz",
+    "price": 6.99,
+    "amazon_low": 6.99,
+    "url": "https://www.amazon.com/dp/B09Y61CQ6L",
+    "updated": "2026-04-10T05:45:05.183Z"
+  },
+  {
+    "model": "Tactical",
+    "brand": "ZZrszhp",
+    "price": 7.59,
+    "amazon_low": 7.59,
+    "url": "https://www.amazon.com/dp/B0F29Y6XDK",
+    "updated": "2026-04-10T19:45:07.173Z"
+  },
+  {
+    "model": "YAKEDA Multitool Pouch Sheath Folding Knife Sheath Pouch for Belt Molle",
+    "brand": "YAY YAKEDA",
+    "price": 7.87,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0CCL6P3NX",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "YAKEDA Multitool Pouch Sheath Folding Knife Sheath Pouch for Belt Molle",
+    "brand": "YAY YAKEDA",
+    "price": 7.87,
+    "amazon_low": 9.19,
+    "url": "https://www.amazon.com/dp/B0CCL6P3NX",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "YAKEDA Multitool Pouch Sheath Folding Knife Sheath Pouch for Belt Molle",
+    "brand": "YAY YAKEDA",
+    "price": 7.87,
+    "amazon_low": 8.65,
+    "url": "https://www.amazon.com/dp/B0CCL6P3NX",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "YAKEDA Multitool Pouch Sheath Folding Knife Sheath Pouch for Belt Molle",
+    "brand": "YAY YAKEDA",
+    "price": 7.87,
+    "amazon_low": 7.99,
+    "url": "https://www.amazon.com/dp/B0CCL6P3NX",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "YAKEDA Multitool Pouch Sheath Folding Knife Sheath Pouch for Belt Molle",
+    "brand": "YAY YAKEDA",
+    "price": 7.87,
+    "amazon_low": 7.87,
+    "url": "https://www.amazon.com/dp/B0CCL6P3NX",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Dobermann Cree XP-E2 RED TURBO 200 LED Lumens 212 Meters 10 YEARS WARRANTY Tactical Hunting Military",
+    "brand": "Armytek",
+    "price": 7.99,
+    "amazon_low": 77,
+    "url": "https://www.amazon.com/dp/B01KI47ZLO",
+    "updated": "2026-03-28T03:43:09.670Z"
+  },
+  {
+    "model": "P13.5S LED Upgrade",
+    "brand": "Ruiandsion",
+    "price": 7.99,
+    "amazon_low": 7.99,
+    "url": "https://www.amazon.com/dp/B09SG1Z652",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "2.4V 0.7A P13.5S Base Krypton",
+    "brand": "Podoy",
+    "price": 7.99,
+    "amazon_low": 7.99,
+    "url": "https://www.amazon.com/dp/B0GJSWSHFM",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "1pc P13.5S",
+    "brand": "Ruiandsion",
+    "price": 7.99,
+    "amazon_low": 7.99,
+    "url": "https://www.amazon.com/dp/B07WMNKBQV",
+    "updated": "2026-03-28T01:28:09.256Z"
   },
   {
     "model": "SENSM Mini",
     "brand": "Nitecore",
     "price": 7.99,
-    "was_price": 32.79,
-    "drop_pct": 76,
-    "at_low": true,
+    "amazon_low": 31.95,
     "url": "https://www.amazon.com/dp/B004QAMOMW",
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
-    "model": "LD70 EDC",
-    "brand": "Imalent",
-    "price": 53.95,
-    "was_price": 215.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0CFQVVVN7",
-    "updated": "2026-03-28T03:24:43.260Z"
+    "model": "SENSM Mini",
+    "brand": "Nitecore",
+    "price": 7.99,
+    "amazon_low": 29.51,
+    "url": "https://www.amazon.com/dp/B004QAMOMW",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "LED Flashlight Torch Bulbs 3V P13.5S PR2 Base",
+    "brand": "Generic",
+    "price": 8.05,
+    "amazon_low": 8.05,
+    "url": "https://www.amazon.com/dp/B0GCN6JXW5",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Stainless Steel Crenulated Strike Bezel for 40mm",
+    "brand": "Nitecore",
+    "price": 8.12,
+    "amazon_low": 19.95,
+    "url": "https://www.amazon.com/dp/B00X3J9LT6",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "LED Lenser K2 Keychain",
+    "brand": "Ledlenser",
+    "price": 8.39,
+    "amazon_low": 14.99,
+    "url": "https://www.amazon.com/dp/B00YR0BZ1C",
+    "updated": "2026-03-28T01:46:04.677Z"
   },
   {
     "model": "Led Lenser Neo Headlight/K2",
     "brand": "Ledlenser",
     "price": 8.39,
-    "was_price": 34.02,
-    "drop_pct": 75,
-    "at_low": true,
+    "amazon_low": 18.02,
     "url": "https://www.amazon.com/dp/B00MUTEJ7Y",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "compatible",
-    "brand": "TorchUpgrades",
-    "price": 13.95,
-    "was_price": 54.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08XT1LV74",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "compatible",
-    "brand": "TorchUpgrades",
-    "price": 13.95,
-    "was_price": 54.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08XT1LV74",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "compatible",
-    "brand": "TorchUpgrades",
-    "price": 13.95,
-    "was_price": 54.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08XT1LV74",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "compatible",
-    "brand": "TorchUpgrades",
-    "price": 13.95,
-    "was_price": 54.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08XT1LV74",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "SENSM Mini",
-    "brand": "Nitecore",
-    "price": 7.99,
-    "was_price": 31.95,
-    "drop_pct": 75,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B004QAMOMW",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Mini AA",
-    "brand": "Maglite",
-    "price": 9.99,
-    "was_price": 38.65,
-    "drop_pct": 74,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08DM4LS7B",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "HP14 629 lm Focusing",
-    "brand": "Coast",
-    "price": 49.99,
-    "was_price": 186.47,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01BD4HJ9Q",
+    "model": "LED Lenser K2 Keychain",
+    "brand": "Ledlenser",
+    "price": 8.39,
+    "amazon_low": 14.99,
+    "url": "https://www.amazon.com/dp/B00YR0BZ1C",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "MX25L2 Turbo SBT-70",
-    "brand": "EagleTac",
-    "price": 124.98,
-    "was_price": 459.9,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01NBC1AOW",
+    "model": "LED Lenser K2 Keychain",
+    "brand": "Ledlenser",
+    "price": 8.39,
+    "amazon_low": 14.99,
+    "url": "https://www.amazon.com/dp/B00YR0BZ1C",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "TK22 TAC 2800 Lumen",
-    "brand": "Fenix",
-    "price": 38,
-    "was_price": 141.21,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0B57GY94T",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Waterproof",
-    "brand": "Fenix",
-    "price": 32.45,
-    "was_price": 120,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B07Z9NY4P9",
-    "updated": "2026-03-28T05:49:15.652Z"
-  },
-  {
-    "model": "TK22 TAC 2800 Lumen LED",
-    "brand": "Fenix",
-    "price": 38,
-    "was_price": 141.21,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0B86W32NS",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "LD22 G2 2015 Edt 300 Lumens",
-    "brand": "Fenix",
-    "price": 69.99,
-    "was_price": 264,
-    "drop_pct": 73,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08JGV1QTT",
+    "model": "Led Lenser Neo Headlight/K2",
+    "brand": "Ledlenser",
+    "price": 8.39,
+    "amazon_low": 20,
+    "url": "https://www.amazon.com/dp/B00MUTEJ7Y",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "Mag-Num Star II 3-Cell C & D Xenon",
-    "brand": "Maglite",
-    "price": 10.53,
-    "was_price": 39.59,
-    "drop_pct": 73,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B00GYAVX6U",
-    "updated": "2026-03-28T01:28:09.256Z"
+    "model": "Flashlight Charging Dock Compatible",
+    "brand": "Xxerciz",
+    "price": 8.59,
+    "amazon_low": 8.59,
+    "url": "https://www.amazon.com/dp/B0FX3N81KM",
+    "updated": "2026-04-09T17:45:03.018Z"
   },
   {
-    "model": "Barracuda Handheld Searchlight Warm White XP-L HI LED 1260 Lumens 752 Meters Long Distance",
-    "brand": "Armytek",
-    "price": 59.95,
-    "was_price": 215,
-    "drop_pct": 72,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01KHUIZKY",
-    "updated": "2026-03-28T03:42:51.739Z"
-  },
-  {
-    "model": "EA8 Caveman 900 Lumen CREE XM-L U2 LED Compact AA Battery",
-    "brand": "Nitecore",
-    "price": 24.99,
-    "was_price": 89.95,
-    "drop_pct": 72,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00C6EFSDW",
-    "updated": "2026-03-28T16:16:41.604Z"
-  },
-  {
-    "model": "IMINI 2 EDC Rechargeable Keychain",
-    "brand": "Olight",
-    "price": 13.28,
-    "was_price": 47.98,
-    "drop_pct": 72,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0DNMNS7NZ",
-    "updated": "2026-04-13T06:50:02.957Z"
-  },
-  {
-    "model": "i3E EOS PMMA TIR Lens AAA EDC",
-    "brand": "Olight",
-    "price": 12.99,
-    "was_price": 46.73,
-    "drop_pct": 72,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9WLYJ6M",
-    "updated": "2026-04-13T09:00:05.377Z"
-  },
-  {
-    "model": "P20A2 MKII",
-    "brand": "EagleTac",
-    "price": 19.99,
-    "was_price": 68.3,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B005OLNDNG",
-    "updated": "2026-03-28T03:48:26.602Z"
-  },
-  {
-    "model": "P20A2 MKII XM-L2",
-    "brand": "EagleTac",
-    "price": 19.99,
-    "was_price": 69,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00CQCATHO",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "TK12 R5 280 Lumen Cree XP-G LED (R5)",
-    "brand": "Fenix",
-    "price": 21.99,
-    "was_price": 76.95,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B002UTXB32",
-    "updated": "2026-03-28T05:52:45.659Z"
-  },
-  {
-    "model": "i3E EOS PMMA TIR Lens AAA EDC",
-    "brand": "Olight",
-    "price": 12.99,
-    "was_price": 44.98,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9WLYJ6M",
-    "updated": "2026-04-13T09:00:05.377Z"
-  },
-  {
-    "model": "i3E EOS PMMA TIR Lens AAA EDC",
-    "brand": "Olight",
-    "price": 12.99,
-    "was_price": 44.94,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9WLYJ6M",
-    "updated": "2026-04-13T09:00:05.377Z"
+    "model": "AC Adapter for Nitecore Tiny Monster TM26 QuadRay",
+    "brand": "Digipartspower",
+    "price": 8.7,
+    "amazon_low": 8.7,
+    "url": "https://www.amazon.com/dp/B09T32964T",
+    "updated": "2026-04-01T04:33:14.868Z"
   },
   {
     "model": "FB-1 Universal",
     "brand": "Olight",
     "price": 8.95,
-    "was_price": 30.44,
-    "drop_pct": 71,
-    "at_low": true,
+    "amazon_low": 59.44,
     "url": "https://www.amazon.com/dp/B09FQ3TVV9",
     "updated": "2026-04-13T07:40:03.659Z"
   },
   {
-    "model": "i3E EOS PMMA TIR Lens AAA EDC",
+    "model": "FB-1 Universal",
     "brand": "Olight",
-    "price": 12.99,
-    "was_price": 44.28,
-    "drop_pct": 71,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9WLYJ6M",
-    "updated": "2026-04-13T09:00:05.377Z"
+    "price": 8.95,
+    "amazon_low": 26.94,
+    "url": "https://www.amazon.com/dp/B09FQ3TVV9",
+    "updated": "2026-04-13T07:40:03.659Z"
   },
   {
-    "model": "Flashlights FX-PD35TAC",
-    "brand": "Fenix",
-    "price": 80.45,
-    "was_price": 266.52,
-    "drop_pct": 70,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B08668RFZB",
-    "updated": "2026-03-28T05:48:14.705Z"
-  },
-  {
-    "model": "TK12-R2 240 Lumen Tactical",
-    "brand": "Fenix",
-    "price": 21.99,
-    "was_price": 73.95,
-    "drop_pct": 70,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B002YLTQ8A",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Tiara A1 v2 Cree XP-L WARM TURBO 558 LED Lumens 83 Meters 10 YEARS WARRANTY",
-    "brand": "Armytek",
-    "price": 40,
-    "was_price": 128.23,
-    "drop_pct": 69,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B01KY822TO",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "Led Lenser Neo Headlight/K2",
-    "brand": "Ledlenser",
-    "price": 8.39,
-    "was_price": 26.99,
-    "drop_pct": 69,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B00MUTEJ7Y",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "I3T EOS 180 Lumens Dual-Output Slim EDC",
+    "model": "FB-1 Universal",
     "brand": "Olight",
-    "price": 17.99,
-    "was_price": 57.38,
-    "drop_pct": 69,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F9F2CKV4",
-    "updated": "2026-04-13T06:10:02.365Z"
+    "price": 8.95,
+    "amazon_low": 16.9,
+    "url": "https://www.amazon.com/dp/B09FQ3TVV9",
+    "updated": "2026-04-13T07:40:03.659Z"
   },
   {
-    "model": "TK22 TAC 2800 Lumen",
-    "brand": "Fenix",
-    "price": 38,
-    "was_price": 120.45,
-    "drop_pct": 68,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0B57GY94T",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Flashlight, industrial, Black, 4 Modes 280 Max Lumens, 120 Max Runtime HR (WF30RE)",
-    "brand": "Fenix",
-    "price": 32.45,
-    "was_price": 99.95,
-    "drop_pct": 68,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0946X9TPB",
-    "updated": "2026-03-28T05:49:06.796Z"
-  },
-  {
-    "model": "Oclip Rechargeable EDC",
+    "model": "FB-1 Universal",
     "brand": "Olight",
-    "price": 29.99,
-    "was_price": 92.36,
-    "drop_pct": 68,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0CJFVTTQ5",
-    "updated": "2026-04-13T02:45:07.339Z"
+    "price": 8.95,
+    "amazon_low": 19.54,
+    "url": "https://www.amazon.com/dp/B09FQ3TVV9",
+    "updated": "2026-04-13T07:40:03.659Z"
+  },
+  {
+    "model": "Hard Case Compatible for OLIGHT ArkPro Ultra EDC Flat",
+    "brand": "FitSand",
+    "price": 8.98,
+    "amazon_low": 8.98,
+    "url": "https://www.amazon.com/dp/B0GRTYJ3NQ",
+    "updated": "2026-04-10T10:05:03.915Z"
   },
   {
     "model": "E11 Upgraded 115 Lumens",
     "brand": "Fenix",
     "price": 8.99,
-    "was_price": 26.95,
-    "drop_pct": 67,
-    "at_low": true,
+    "amazon_low": 26.95,
     "url": "https://www.amazon.com/dp/B009RJB8SS",
     "updated": "2026-03-28T05:51:20.851Z"
-  },
-  {
-    "model": "LD10 Keychain",
-    "brand": "Imalent",
-    "price": 9.99,
-    "was_price": 29.95,
-    "drop_pct": 67,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09MQK83NT",
-    "updated": "2026-03-28T03:25:59.508Z"
-  },
-  {
-    "model": "LD10 Keychain",
-    "brand": "Imalent",
-    "price": 9.99,
-    "was_price": 29.95,
-    "drop_pct": 67,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B09MQK83NT",
-    "updated": "2026-03-28T03:25:59.508Z"
-  },
-  {
-    "model": "EC20 1100 Lumens",
-    "brand": "Klarus",
-    "price": 13.22,
-    "was_price": 39.95,
-    "drop_pct": 67,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0BJVN4N5X",
-    "updated": "2026-03-28T06:24:58.339Z"
-  },
-  {
-    "model": "New Elf C1 Warm Light 930 lm LED",
-    "brand": "Armytek",
-    "price": 45,
-    "was_price": 134,
-    "drop_pct": 66,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B08TWQZHRB",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Oclip Pro EDC",
-    "brand": "Olight",
-    "price": 39.99,
-    "was_price": 118.11,
-    "drop_pct": 66,
-    "at_low": true,
-    "url": "https://www.amazon.com/dp/B0F8N9T9VN",
-    "updated": "2026-04-13T08:50:04.175Z"
-  },
-  {
-    "model": "New Elf C2 Warm Light 1023 lm LED",
-    "brand": "Armytek",
-    "price": 55,
-    "was_price": 157,
-    "drop_pct": 65,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B08MQGG8CV",
-    "updated": "2026-04-01T04:33:14.868Z"
   },
   {
     "model": "E11 high performance",
     "brand": "Fenix",
     "price": 8.99,
-    "was_price": 25.69,
-    "drop_pct": 65,
-    "at_low": true,
+    "amazon_low": 21.5,
     "url": "https://www.amazon.com/dp/B005GW8UC2",
     "updated": "2026-03-28T05:51:24.776Z"
   },
   {
-    "model": "Led Lenser Neo Headlight/K2",
-    "brand": "Ledlenser",
-    "price": 8.39,
-    "was_price": 23.85,
-    "drop_pct": 65,
-    "at_low": false,
-    "url": "https://www.amazon.com/dp/B00MUTEJ7Y",
-    "updated": "2026-03-28T01:46:04.677Z"
+    "model": "Solitaire LED 1-Cell AAA",
+    "brand": "Maglite",
+    "price": 8.99,
+    "amazon_low": 9.43,
+    "url": "https://www.amazon.com/dp/B017LHSIVC",
+    "updated": "2026-03-26T10:20:15.540Z"
+  },
+  {
+    "model": "Solitaire LED 1-Cell AAA",
+    "brand": "Maglite",
+    "price": 8.99,
+    "amazon_low": 9.43,
+    "url": "https://www.amazon.com/dp/B017LHSIVC",
+    "updated": "2026-03-26T10:20:15.540Z"
+  },
+  {
+    "model": "Solitaire LED 1-Cell AAA",
+    "brand": "Maglite",
+    "price": 8.99,
+    "amazon_low": 9.97,
+    "url": "https://www.amazon.com/dp/B017LHSIVC",
+    "updated": "2026-03-26T10:20:15.540Z"
+  },
+  {
+    "model": "Solitaire LED 1-Cell AAA",
+    "brand": "Maglite",
+    "price": 8.99,
+    "amazon_low": 14.09,
+    "url": "https://www.amazon.com/dp/B017LHSIVC",
+    "updated": "2026-03-26T10:20:15.540Z"
+  },
+  {
+    "model": "LED Conversion Kit for Maglite LED Bulb 3-16 Cell C/D, 3W DC 3-12V",
+    "brand": "Qhopei",
+    "price": 8.99,
+    "amazon_low": 15.99,
+    "url": "https://www.amazon.com/dp/B0FRNP6ZFY",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "LED Conversion Kit for Maglite LED Bulb 3-16 Cell C/D, 3W DC 3-12V",
+    "brand": "Qhopei",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0FRNP6ZFY",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Single Pistol Mag Pouch Top-Open Pouch for 9mm Magazines",
+    "brand": "D.M.GEAR",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0F32H3GW9",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Single Pistol Mag Pouch Top-Open Pouch for 9mm Magazines",
+    "brand": "D.M.GEAR",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0F32H3GW9",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Single Pistol Mag Pouch Top-Open Pouch for 9mm Magazines",
+    "brand": "D.M.GEAR",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0F32H3GW9",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Dr.K3S Pen Light, Yellow Light Source Pocket",
+    "brand": "Nextorch",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0DCHZFZGM",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "Flashlight Pouch Holster Compatible",
+    "brand": "Xxerciz",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0FX4XTQ8N",
+    "updated": "2026-04-10T18:05:04.095Z"
+  },
+  {
+    "model": "Flashlight Pouch Holster Compatible",
+    "brand": "Xxerciz",
+    "price": 8.99,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B0FX4XTQ8N",
+    "updated": "2026-04-10T18:05:04.095Z"
+  },
+  {
+    "model": "WM20 Weapon Mount for M20",
+    "brand": "Olight",
+    "price": 9,
+    "amazon_low": 14.31,
+    "url": "https://www.amazon.com/dp/B004Q854EO",
+    "updated": "2026-04-13T06:40:04.941Z"
+  },
+  {
+    "model": "Car DC Adapter Compatible",
+    "brand": "Saschedross",
+    "price": 9.43,
+    "amazon_low": 9.43,
+    "url": "https://www.amazon.com/dp/B09WZ8561T",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "ZX650 ZITHION-X Li-Ion Rechargeable Battery for The Polysteel 700",
+    "brand": "Coast",
+    "price": 9.5,
+    "amazon_low": 9.5,
+    "url": "https://www.amazon.com/dp/B0BGX3CTQT",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "T0 Pocket Keychain",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 13.8,
+    "url": "https://www.amazon.com/dp/B005PT060K",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "T0 12 Lumens",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 12.46,
+    "url": "https://www.amazon.com/dp/B00LPHVXFI",
+    "updated": "2026-03-28T16:11:17.386Z"
+  },
+  {
+    "model": "T0 12 Lumens",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 13.94,
+    "url": "https://www.amazon.com/dp/B00LPHVXFI",
+    "updated": "2026-03-28T16:11:17.386Z"
+  },
+  {
+    "model": "T0 12 Lumens",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 12.46,
+    "url": "https://www.amazon.com/dp/B00LPHVXFI",
+    "updated": "2026-03-28T16:11:17.386Z"
+  },
+  {
+    "model": "T0 T Series",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 11.99,
+    "url": "https://www.amazon.com/dp/B00U7Y5C1Q",
+    "updated": "2026-03-28T16:14:08.697Z"
+  },
+  {
+    "model": "T0 12 Lumens",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 13.95,
+    "url": "https://www.amazon.com/dp/B00LPHVXFI",
+    "updated": "2026-03-28T16:11:17.386Z"
+  },
+  {
+    "model": "T0 12 lm",
+    "brand": "Nitecore",
+    "price": 9.75,
+    "amazon_low": 11.9,
+    "url": "https://www.amazon.com/dp/B00I3TPIZM",
+    "updated": "2026-03-28T16:16:18.744Z"
+  },
+  {
+    "model": "Keychain",
+    "brand": "Armytek",
+    "price": 9.85,
+    "amazon_low": 19,
+    "url": "https://www.amazon.com/dp/B089SY6NVC",
+    "updated": "2026-03-28T03:42:47.873Z"
+  },
+  {
+    "model": "Keychain",
+    "brand": "Armytek",
+    "price": 9.85,
+    "amazon_low": 19,
+    "url": "https://www.amazon.com/dp/B089SY6NVC",
+    "updated": "2026-03-28T03:42:47.873Z"
+  },
+  {
+    "model": "3.3ft White Micro USB Power Charging Cord Cable for Nitecore HC90 Head Lamp Series",
+    "brand": "PwrON",
+    "price": 9.85,
+    "amazon_low": 9.85,
+    "url": "https://www.amazon.com/dp/B0D53RSLJ2",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "3.3ft White Micro USB Power Charging Cord Cable Compatible",
+    "brand": "Dysead",
+    "price": 9.85,
+    "amazon_low": 9.85,
+    "url": "https://www.amazon.com/dp/B0CPCSFWBN",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "3.3ft White Micro USB Power Charging Cord Cable Compatible",
+    "brand": "Jantoy",
+    "price": 9.85,
+    "amazon_low": 9.85,
+    "url": "https://www.amazon.com/dp/B0CBJ6H9P1",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "360° Rotatable",
+    "brand": "Miriam Song",
+    "price": 9.89,
+    "amazon_low": 9.89,
+    "url": "https://www.amazon.com/dp/B0FSRGVHRH",
+    "updated": "2026-04-10T04:45:06.660Z"
+  },
+  {
+    "model": "Flashlight Charging Cord Type C Charger Cable Compatible",
+    "brand": "Rurararu",
+    "price": 9.9,
+    "amazon_low": 9.9,
+    "url": "https://www.amazon.com/dp/B0CM3BX1SG",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "5ft White Micro USB Power Charging Cord Cable for Nitecore HC90 Head Lamp Series",
+    "brand": "HISPD",
+    "price": 9.98,
+    "amazon_low": 9.98,
+    "url": "https://www.amazon.com/dp/B0B7SJCVH3",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "AOF-L Lens Filter Diffuser for TK22 LD41 E40,E50 RC15",
+    "brand": "Fenix",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B01BSKM594",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "Flashlight Charger, USB C AC Adapter Charger Cable Cord Compatible for Nitecore/astrolux/Fenix/RECHOO",
+    "brand": "Todlinkoc",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0CWYSF857",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Flashlight Accessories Suitable for MS03, MS03W",
+    "brand": "Imalent",
+    "price": 9.99,
+    "amazon_low": 10,
+    "url": "https://www.amazon.com/dp/B09J2MMP67",
+    "updated": "2026-03-28T03:26:57.037Z"
+  },
+  {
+    "model": "LD10 Keychain",
+    "brand": "Imalent",
+    "price": 9.99,
+    "amazon_low": 29,
+    "url": "https://www.amazon.com/dp/B09MQK83NT",
+    "updated": "2026-03-28T03:25:59.508Z"
+  },
+  {
+    "model": "LD10 Keychain",
+    "brand": "Imalent",
+    "price": 9.99,
+    "amazon_low": 29.95,
+    "url": "https://www.amazon.com/dp/B09MQK83NT",
+    "updated": "2026-03-28T03:25:59.508Z"
+  },
+  {
+    "model": "Mini Incandescent",
+    "brand": "Maglite",
+    "price": 9.99,
+    "amazon_low": 10.24,
+    "url": "https://www.amazon.com/dp/B0G316SK8X",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Mini AA",
+    "brand": "Maglite",
+    "price": 9.99,
+    "amazon_low": 14.95,
+    "url": "https://www.amazon.com/dp/B08DM4LS7B",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Mini AA",
+    "brand": "Maglite",
+    "price": 9.99,
+    "amazon_low": 36.46,
+    "url": "https://www.amazon.com/dp/B08DM4LS7B",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Tactical Single Pistol Mag Pouch",
+    "brand": "PAIWPHLI",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0FD9Y8MJ8",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Tactical Single Pistol Mag Pouch",
+    "brand": "PAIWPHLI",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0FD9Y8MJ8",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Tactical Single Pistol Mag Pouch",
+    "brand": "PAIWPHLI",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0FD9Y8MJ8",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "GP Pouch Molle Pouch Tactical Mag Pouch GP Storage Micro Bag General Muti-Use Pouch for Duty Belt",
+    "brand": "TWINFALCONS",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0CYLV95ZT",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Micro GP Pouch Molle Pouch Tactical Mag Pouch GP Storage Mini Bag General Purpose Pouch for Duty Belt",
+    "brand": "TWINFALCONS",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0CYLTS8Z9",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Triple Pistol Magazine Holster Holder",
+    "brand": "OCQOTAT",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0CDLJJL28",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Triple Pistol Magazine Holster Holder",
+    "brand": "OCQOTAT",
+    "price": 9.99,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B0CDLJJL28",
+    "updated": "2026-03-28T01:28:09.256Z"
   }
 ]

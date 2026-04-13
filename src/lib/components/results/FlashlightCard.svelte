@@ -43,16 +43,12 @@
 
 	// Price history columns
 	let sparklineCol = $derived(db.head.indexOf('_sparkline'));
-	let priceDropCol = $derived(db.head.indexOf('price_drop'));
 	let atLowCol = $derived(db.head.indexOf('at_low'));
-	let priceAvgCol = $derived(db.head.indexOf('price_avg'));
 	let sparklinePath = $derived(sparklineCol >= 0 ? String(data[sparklineCol] ?? '') : '');
-	let priceDrop = $derived(priceDropCol >= 0 ? Number(data[priceDropCol]) || 0 : 0);
 	let isAtLow = $derived(atLowCol >= 0 && isArrayLike(data[atLowCol]) && (data[atLowCol] as string[]).includes('yes'));
-	let priceAvg = $derived(priceAvgCol >= 0 ? Number(data[priceAvgCol]) || 0 : 0);
 
 	// Avoid list for detail display (same as parametrek.js)
-	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'price_drop', 'at_low', 'price_avg', '_sparkline']);
+	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'at_low', '_sparkline']);
 
 	// Completeness breakdown — 16 required attributes mapped to column IDs
 	const COMPLETENESS_FIELDS: { id: string; label: string }[] = [
@@ -252,17 +248,11 @@
 			>
 				{isStarred ? '★' : '☆'}
 			</button>
-			{#if priceDrop > 0 && priceAvg > 0}
-				<span class="price-was">${Math.round(priceAvg)}</span>
-			{/if}
 			{#if getPrice()}
 				<span class="card-price">{getPrice()}</span>
 			{/if}
-			{#if priceDrop > 0}
-				<span class="price-drop">{priceDrop}% off</span>
-			{/if}
 			{#if isAtLow}
-				<span class="price-low">LOW</span>
+				<span class="price-low">DEAL</span>
 			{/if}
 		</div>
 		{#if sparklinePath}
@@ -409,16 +399,6 @@
 		flex-shrink: 0;
 	}
 
-	.price-drop {
-		font-size: 0.65rem;
-		font-weight: 600;
-		color: var(--deal-green, #4ade80);
-		background: rgba(74, 222, 128, 0.12);
-		padding: 0.05rem 0.3rem;
-		border-radius: 0.25rem;
-		flex-shrink: 0;
-	}
-
 	.price-low {
 		font-size: 0.6rem;
 		font-weight: 700;
@@ -432,12 +412,6 @@
 		align-items: center;
 		gap: 0.375rem;
 		margin-top: 0.125rem;
-	}
-
-	.price-was {
-		font-size: 0.75rem;
-		color: var(--text-secondary);
-		text-decoration: line-through;
 	}
 
 	.card-details {
