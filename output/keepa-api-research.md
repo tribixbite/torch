@@ -550,6 +550,21 @@ NOT recommended:
 4. **Tracking is viable** — 1 token per ASIN, works for our scraped products. With webhook, could push price alerts. But monitoring ~6800 ASINs = 6800 tokens = ~4.7 days at 1/min.
 5. **Best token strategy**: Continue using `/product` for batch scraping (1 token/ASIN, 100/batch) + tiered refresh of stale deal candidates via cron.
 
+### 9.3b CFC Browser Investigation (2026-04-13)
+
+Loaded `keepa.com/#!product/1-B075SB27ST` in CFC headless browser:
+
+| Finding | Detail |
+|---------|--------|
+| **Charting library** | **Flot** (jQuery canvas charts), NOT Highcharts. 3 canvas pairs (price, sales rank, more data) |
+| **Data transport** | `wss://push.keepa.com/apps/cloud/?app=keepaWebsite&version=3.0` — WebSocket with **Zstandard** compression (fzstd.min.js) |
+| **No REST calls** | Zero XHR/fetch for product data. Everything via WebSocket binary frames |
+| **Session token** | `s=` param in stats/graph URLs, does NOT unlock graph.keepa.com for API-only products |
+| **Bot protection** | Cloudflare Turnstile challenge loaded |
+| **Extraction path** | `$('#graph').data('plot').getData()` returns Flot series arrays — blocked on Android Edge (JS limited to DOM reads) |
+| **Data tab** | AG Grid Enterprise — too heavy for CFC accessibility tree (timeout) |
+| **Conclusion** | WebSocket reverse-engineering required for token-free data. Not practical — Zstandard + custom protocol + Turnstile |
+
 ### 9.4 Practical Recommendations
 
 Given 1/min refill (60/hour, 1440/day):
