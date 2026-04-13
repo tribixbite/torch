@@ -17,6 +17,7 @@ import { existsSync } from 'fs';
 interface PriceStats {
 	min_price: number;     // all-time Amazon low
 	min_90d: number;       // lowest Amazon price in last 90 days
+	last_amazon: number;   // last known Amazon price (for sanity checks)
 	sparkline: string;     // pre-computed SVG path "M0,18 L2,15 ..."
 }
 
@@ -50,9 +51,10 @@ function loadPriceData(): Map<string, PriceStats> {
 		// Sort by timestamp ascending
 		const sorted = [...series].sort((a, b) => a[0] - b[0]);
 
-		// Extract positive prices
+		// Extract positive prices; track last known Amazon price for sanity checks
 		const allPrices = sorted.map(p => p[1]).filter(p => p > 0);
 		if (allPrices.length === 0) continue;
+		const lastAmazon = allPrices[allPrices.length - 1]; // most recent positive price
 
 		const minPrice = Math.min(...allPrices);
 
@@ -119,10 +121,37 @@ function loadPriceData(): Map<string, PriceStats> {
 		result.set(row.flashlight_id, {
 			min_price: minPrice,
 			min_90d: min90d,
+			last_amazon: lastAmazon,
 			sparkline: sparklinePath,
 		});
 	}
 
+	return result;
+}
+
+/**
+ * Load Amazon availability status from raw_spec_text.
+ * Returns Map<flashlightId, boolean> — true = in stock on at least one Amazon channel.
+ * Items not in the map have unknown availability (not yet scraped with OOS detection).
+ */
+function loadAvailability(): Map<string, boolean> {
+	const db = getDb();
+	const rows = db.prepare(
+		`SELECT flashlight_id, text_content FROM raw_spec_text WHERE category='amazon_availability'`
+	).all() as { flashlight_id: string; text_content: string }[];
+
+	const result = new Map<string, boolean>();
+	for (const row of rows) {
+		try {
+			const avail = JSON.parse(row.text_content) as Record<string, boolean>;
+			// In stock if ANY Amazon channel has stock
+			const inStock = Object.values(avail).some(v => v === true);
+			result.set(row.flashlight_id, inStock);
+		} catch {
+			continue;
+		}
+	}
+	console.log(`  Availability data: ${result.size} entries (${[...result.values()].filter(v => v).length} in stock, ${[...result.values()].filter(v => !v).length} OOS)`);
 	return result;
 }
 
@@ -747,9 +776,10 @@ export async function buildTorchDb(): Promise<{
 		console.log('  No sprite metadata found — using image URLs for _pic');
 	}
 
-	// Load price history data (Keepa)
+	// Load price history data (Keepa) and Amazon availability
 	const priceData = loadPriceData();
 	console.log(`  ${priceData.size} entries have price history data`);
+	const availability = loadAvailability();
 
 	// Build data array — each row is column-count elements in column order
 	const data: unknown[][] = [];
@@ -791,11 +821,17 @@ export async function buildTorchDb(): Promise<{
 			row[mfgColIdx] = brandMfgLookup(entry) ? ['yes'] : ['no'];
 		}
 		// Populate price history columns from Keepa data
-		// Deal = current price <= historical Amazon low
+		// Deal = current price <= historical Amazon low, but only if in stock
 		const pStats = priceData.get(entry.id);
 		if (pStats) {
 			const dbPrice = entry.price_usd;
-			if (dbPrice && dbPrice > 0) {
+			// Check Amazon availability — skip deal flagging if OOS
+			const inStock = availability.get(entry.id) !== false; // true or unknown
+			// Price sanity: if DB price is < 30% of last known Amazon price,
+			// it's likely a data error (wrong scrape), not a real deal
+			const priceSane = !pStats.last_amazon || !dbPrice ||
+				dbPrice >= pStats.last_amazon * 0.3;
+			if (dbPrice && dbPrice > 0 && inStock && priceSane) {
 				if (atLowColIdx >= 0) {
 					row[atLowColIdx] = dbPrice <= pStats.min_price ? ['yes'] : [];
 				}
@@ -808,6 +844,7 @@ export async function buildTorchDb(): Promise<{
 					row[pctBelow90dIdx] = Math.round((pStats.min_90d - dbPrice) / pStats.min_90d * 100);
 				}
 			}
+			// Sparkline always shows (historical data viewable regardless of stock)
 			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}
 		data.push(row);

@@ -10,6 +10,7 @@ import {
 	upsertDiscoveredAsin,
 	markAsinScraped,
 	getUnscrapedAsins,
+	getStaleAsins,
 	countDiscoveredAsins,
 	addPrice,
 	addSource,
@@ -210,6 +211,95 @@ function storePriceHistory(flashlightId: string, product: KeepaProduct, amazonUr
 			JSON.stringify(priceHistory),
 		);
 	}
+
+	// Store Amazon availability status (OOS detection)
+	// Last CSV price of -1 means out of stock on that channel
+	const availability: Record<string, boolean> = {};
+	for (const [idx, retailer] of priceSources) {
+		const series = csv[idx];
+		if (!series || series.length < 2) continue;
+		const lastPrice = series[series.length - 1];
+		availability[retailer] = lastPrice > 0; // false = OOS (-1)
+	}
+	if (Object.keys(availability).length > 0) {
+		addRawSpecText(
+			flashlightId,
+			`https://www.amazon.com/dp/${product.asin}`,
+			'amazon_availability',
+			JSON.stringify(availability),
+		);
+	}
+}
+
+/**
+ * Refresh price history + availability for stale deal candidates.
+ * Called after initial scraping is complete. Updates price_history and
+ * amazon_availability for entries that haven't been refreshed recently.
+ * Does NOT re-upsert the flashlight entry — only updates price data.
+ */
+export async function refreshStaleDeals(
+	client: KeepaClient,
+	batchSize = 5,
+): Promise<{ refreshed: number; errors: number }> {
+	const stale = getStaleAsins(batchSize);
+	if (stale.length === 0) {
+		console.log('  No stale ASINs to refresh');
+		return { refreshed: 0, errors: 0 };
+	}
+
+	console.log(`  Refreshing ${stale.length} stale deal candidates ...`);
+	let refreshed = 0;
+	let errors = 0;
+
+	try {
+		const asins = stale.map(s => s.asin);
+		const products = await client.getProducts(asins);
+
+		for (const product of products) {
+			try {
+				const match = stale.find(s => s.asin === product.asin);
+				if (!match) continue;
+
+				// Update price history and availability
+				const amazonUrl = `https://www.amazon.com/dp/${product.asin}`;
+				storePriceHistory(match.flashlight_id, product, amazonUrl);
+
+				// Update price_usd if we get a fresh Amazon price
+				const freshPrice = KeepaClient.extractCurrentPrice(product);
+				if (freshPrice && freshPrice > 0) {
+					addPrice(match.flashlight_id, {
+						retailer: 'Amazon',
+						price: freshPrice,
+						currency: 'USD',
+						url: amazonUrl,
+						affiliate: false,
+						last_checked: new Date().toISOString(),
+					});
+				}
+
+				// Update scraped_at timestamp
+				markAsinScraped(product.asin);
+				refreshed++;
+			} catch (err) {
+				console.error(`    Error refreshing ${product.asin}:`, (err as Error).message);
+				markAsinScraped(product.asin); // Don't retry immediately
+				errors++;
+			}
+		}
+
+		// Mark ASINs not returned by Keepa (removed listings)
+		const returned = new Set(products.map(p => p.asin));
+		for (const s of stale) {
+			if (!returned.has(s.asin)) {
+				markAsinScraped(s.asin);
+			}
+		}
+	} catch (err) {
+		console.error(`    Batch error:`, (err as Error).message);
+		errors += stale.length;
+	}
+
+	return { refreshed, errors };
 }
 
 /**

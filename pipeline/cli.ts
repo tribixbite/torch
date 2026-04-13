@@ -4,7 +4,7 @@
  * Usage: bun ./pipeline/cli.ts <command> [options]
  */
 import { KeepaClient } from './keepa/client.js';
-import { discoverAllBrands, scrapeUnscrapedAsins } from './keepa/scraper.js';
+import { discoverAllBrands, scrapeUnscrapedAsins, refreshStaleDeals } from './keepa/scraper.js';
 import {
 	getDb, closeDb, countFlashlights, countDiscoveredAsins,
 	getBrandStats, searchFlashlights, findDuplicates, getAllFlashlights,
@@ -31,6 +31,9 @@ async function main(): Promise<void> {
 			break;
 		case 'scrape':
 			await cmdScrape();
+			break;
+		case 'refresh':
+			await cmdRefresh();
 			break;
 		case 'build':
 			await cmdBuild();
@@ -162,6 +165,20 @@ async function cmdScrape(): Promise<void> {
 	const result = await scrapeUnscrapedAsins(client, maxBatches, brandArg);
 	console.log(`\nScraping complete: ${result.scraped} scraped, ${result.errors} errors`);
 	console.log(`Total flashlights in DB: ${countFlashlights()}`);
+}
+
+/** Refresh price/availability for stale deal candidates.
+ * Usage: refresh [batch_size] */
+async function cmdRefresh(): Promise<void> {
+	const batchSize = parseInt(process.argv[3] || '5', 10);
+	console.log(`=== Keepa Price Refresh (batch ${batchSize}) ===\n`);
+
+	const client = new KeepaClient();
+	const status = await client.getTokenStatus();
+	console.log(`Tokens: ${status.tokensLeft} available, ${status.refillRate}/min refill\n`);
+
+	const result = await refreshStaleDeals(client, batchSize);
+	console.log(`\nRefresh complete: ${result.refreshed} refreshed, ${result.errors} errors`);
 }
 
 /** Build flashlights.now.json from SQLite */

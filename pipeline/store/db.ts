@@ -474,6 +474,31 @@ export function getUnscrapedAsins(brand?: string, limit = 100): { asin: string; 
 	`).all({ $limit: limit }) as { asin: string; brand: string }[];
 }
 
+/**
+ * Get ASINs that need price/availability refresh — tiered priority:
+ * 1. Deal candidates (have price_history, price_usd > 0) scraped > 3 days ago
+ * 2. Everything else scraped > 14 days ago
+ * Returns ASINs with their flashlight_id for re-scraping.
+ */
+export function getStaleAsins(limit = 5): { asin: string; brand: string; flashlight_id: string }[] {
+	const db = getDb();
+	// Deal candidates: flashlights with price history and a valid price — refresh more often
+	return db.prepare(`
+		SELECT d.asin, d.brand, f.id AS flashlight_id
+		FROM discovered_asins d
+		JOIN flashlights f ON f.asin = d.asin
+		WHERE d.scraped = 1
+		  AND d.scraped_at < datetime('now', '-3 days')
+		  AND f.price_usd > 0
+		  AND EXISTS (
+			SELECT 1 FROM raw_spec_text r
+			WHERE r.flashlight_id = f.id AND r.category = 'price_history'
+		  )
+		ORDER BY d.scraped_at ASC
+		LIMIT $limit
+	`).all({ $limit: limit }) as { asin: string; brand: string; flashlight_id: string }[];
+}
+
 /** Get all flashlights from the database */
 export function getAllFlashlights(): FlashlightEntry[] {
 	const db = getDb();
