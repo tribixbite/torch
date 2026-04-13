@@ -35,6 +35,9 @@ async function main(): Promise<void> {
 		case 'refresh':
 			await cmdRefresh();
 			break;
+		case 'tracking':
+			await cmdTracking();
+			break;
 		case 'build':
 			await cmdBuild();
 			break;
@@ -99,6 +102,7 @@ Pipeline CLI — torch flashlight data aggregation
 Commands:
   discover       Discover ASINs from Keepa for all configured brands
   scrape [n]     Scrape product details for unscraped ASINs (n batches)
+  tracking [sub] Manage Keepa price tracking (list|setup [n]|notifications|clear)
   crawl [brand]  Crawl manufacturer websites for product specs
   shopify [brand] Crawl Shopify stores (JSON API, fast + reliable)
   detail-scrape  Scrape full product pages for missing specs (length, LED, etc.)
@@ -179,6 +183,122 @@ async function cmdRefresh(): Promise<void> {
 
 	const result = await refreshStaleDeals(client, batchSize);
 	console.log(`\nRefresh complete: ${result.refreshed} refreshed, ${result.errors} errors`);
+}
+
+/** Manage Keepa price tracking for deal candidates.
+ * Subcommands:
+ *   list           — show active trackings
+ *   setup [n]      — set up tracking for top n deal candidates (default 20)
+ *   notifications  — poll for triggered price alerts
+ *   clear          — remove all active trackings
+ */
+async function cmdTracking(): Promise<void> {
+	const sub = process.argv[3] ?? 'list';
+	const client = new KeepaClient();
+	const status = await client.getTokenStatus();
+	console.log(`Tokens: ${status.tokensLeft} available, ${status.refillRate}/min refill\n`);
+
+	switch (sub) {
+		case 'list': {
+			const trackings = await client.listTrackings();
+			console.log(`Active trackings: ${trackings.length}`);
+			for (const t of trackings) {
+				console.log(`  ${t.asin} — active: ${t.isActive}`);
+			}
+			break;
+		}
+		case 'setup': {
+			const maxItems = parseInt(process.argv[4] || '20', 10);
+			console.log(`=== Setting up tracking for top ${maxItems} deal candidates ===\n`);
+
+			// Find deal candidates: actual flashlights/headlamps, $10+, have price history
+			// Must have a flashlight-related type (not "unknown" smartwatches etc.)
+			const db = getDb();
+			const candidates = db.prepare(`
+				SELECT d.asin, f.id, f.model, f.brand, f.price_usd
+				FROM discovered_asins d
+				JOIN flashlights f ON f.asin = d.asin
+				WHERE d.scraped = 1
+				  AND f.price_usd >= 10
+				  AND f.price_usd <= 500
+				  AND (f.type LIKE '%flashlight%' OR f.type LIKE '%headlamp%'
+				       OR f.type LIKE '%lantern%' OR f.type LIKE '%penlight%'
+				       OR f.type LIKE '%keychain%' OR f.type LIKE '%dive%'
+				       OR f.type LIKE '%weapon%' OR f.type LIKE '%right-angle%')
+				  AND EXISTS (SELECT 1 FROM raw_spec_text r WHERE r.flashlight_id = f.id AND r.category = 'price_history')
+				ORDER BY f.price_usd DESC
+				LIMIT $limit
+			`).all({ $limit: maxItems * 3 }) as { asin: string; id: string; model: string; brand: string; price_usd: number }[];
+
+			// Filter out accessories by model keywords (same regex as deals-feed.ts)
+			const ACCESSORY_RE = /\b(cases?|holsters?|pouche?s?|adapte?o?rs?|cables?|chargers?|covers?|replacement|battery\s+packs?|filters?|diffusers?|mounts?|brackets?|straps?|sheaths?|lanyards?|clip\s+only|glass\s+lens|o-rings?|tail\s*caps?|bezels?|pocket\s+clips?|remote\s+switch|bulbs?|conversion\s+kit|upgrade|docks?|molle|P13\.5S|krypton|rechargeable\s+batter|li-ion\s+rechargeable|ZITHION|accessories|FB-1\s+Universal)\b/i;
+			const filtered = candidates.filter(c => !ACCESSORY_RE.test(c.model));
+
+			// Skip already-tracked ASINs
+			const existing = await client.listTrackings();
+			const tracked = new Set(existing.map(t => t.asin));
+			const toTrack = filtered.filter(c => !tracked.has(c.asin)).slice(0, maxItems);
+
+			if (toTrack.length === 0) {
+				console.log('No new candidates to track.');
+				break;
+			}
+
+			console.log(`Setting up ${toTrack.length} trackings (${toTrack.length} tokens) ...`);
+			let added = 0;
+			let errors = 0;
+			for (const c of toTrack) {
+				// Threshold: 90% of current price (alert on 10%+ drop)
+				const thresholdCents = Math.round(c.price_usd * 90);
+				try {
+					const ok = await client.addTracking(c.asin, thresholdCents);
+					if (ok) {
+						console.log(`  + ${c.asin} ${c.brand} ${c.model} — threshold $${(thresholdCents / 100).toFixed(2)}`);
+						added++;
+					}
+				} catch (err) {
+					const msg = (err as Error).message;
+					// "productNotKnown" means this ASIN isn't in Keepa's index
+					if (msg.includes('productNotKnown')) {
+						console.log(`  - ${c.asin} ${c.brand} ${c.model} — not in Keepa's index`);
+					} else {
+						console.error(`  ! ${c.asin}: ${msg}`);
+					}
+					errors++;
+				}
+			}
+			console.log(`\nDone: ${added} added, ${errors} errors`);
+			break;
+		}
+		case 'notifications': {
+			const notifications = await client.getNotifications();
+			if (notifications.length === 0) {
+				console.log('No pending notifications.');
+			} else {
+				console.log(`${notifications.length} notifications:`);
+				for (const n of notifications) {
+					console.log(`  ${n.asin} — cause: ${n.cause}, price: $${(n.currentPrice / 100).toFixed(2)}, threshold: $${(n.thresholdValue / 100).toFixed(2)}`);
+				}
+			}
+			break;
+		}
+		case 'clear': {
+			const trackings = await client.listTrackings();
+			if (trackings.length === 0) {
+				console.log('No active trackings to remove.');
+				break;
+			}
+			console.log(`Removing ${trackings.length} trackings ...`);
+			for (const t of trackings) {
+				await client.removeTracking(t.asin);
+				console.log(`  - ${t.asin}`);
+			}
+			console.log('Done.');
+			break;
+		}
+		default:
+			console.log('Usage: pipeline tracking [list|setup [n]|notifications|clear]');
+	}
 }
 
 /** Build flashlights.now.json from SQLite */

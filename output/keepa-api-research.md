@@ -520,21 +520,45 @@ NOT recommended:
 
 ---
 
-## 9. Practical Recommendations for Torch Pipeline
+## 9. Tested Results & Practical Recommendations
 
-Given our constraint of limited Keepa tokens (1/min refill):
+### 9.1 Verified Working (2026-04-13)
 
-1. **Use `graph.keepa.com/pricehistory.png`** for visual price history in the torch UI — completely free, no tokens consumed. Embed as `<img>` tags with ASIN.
+| Endpoint | Works? | Token Cost | Notes |
+|----------|--------|------------|-------|
+| `/token` | YES | 0 | Free balance check |
+| `/product` | YES | 1/ASIN | Batch up to 100. Returns full CSV price history |
+| `/deal` | YES | 5/page | titleSearch="flashlight" returns 150 deals (3P New). Amazon price type returns 0. Noisy — includes cases, fans, watches |
+| `/tracking` add | YES | 1 | Format: `notificationType: [false,false,false,false,false,true,false,false]` (index 5=API). Only works for ASINs in Keepa's product DB (our scraped ASINs qualify) |
+| `/tracking` remove | YES | 0 | GET with `asin` + `mainDomainId` params |
+| `/tracking` list | YES | 0 | Shows active trackings |
 
-2. **Use `/deal` endpoint** strategically to find flashlight deals (category-filtered) — but consumes tokens.
+### 9.2 Verified NOT Working
 
-3. **Use `/tracking` with webhook** to set up price drop alerts for specific flashlights — one-time token cost to set up tracking.
+| Endpoint | Issue |
+|----------|-------|
+| `graph.keepa.com` (free) | Returns "no price history available" for ALL our flashlight ASINs. Only works for products Keepa has independently tracked on their website/extension — not API-only products |
+| `/graphimage` (1 token) | Same result — "no price history". Even though `/product` returns CSV data, graph generation requires Keepa's own tracking history |
+| `/deal` with `priceTypes: [0]` (Amazon) | 0 results for flashlights. Amazon-price drops are rare. `priceTypes: [1]` (3P New) returns 150 |
+| CFC browser on keepa.com | Extension not connected during testing |
 
-4. **Batch product queries** — `/product` supports up to 100 ASINs per request at 1 token per ASIN. Combine lookups.
+### 9.3 Key Insights
 
-5. **Cache aggressively** — graphimage cached 90 min server-side. Product data should be cached locally.
+1. **Graph endpoints are useless for us** — our products are API-discovered only, not website-tracked. Both free and paid graph endpoints require Keepa's own crawl history.
+2. **We already have the best data** — our `/product` API scraping gets the actual CSV price arrays, which we use for sparklines and deal scoring. No external graph needed.
+3. **`/deal` is expensive and noisy** — 5 tokens/page, results mix non-flashlight items, no good category filter. Our own deals-feed.ts is more accurate.
+4. **Tracking is viable** — 1 token per ASIN, works for our scraped products. With webhook, could push price alerts. But monitoring ~6800 ASINs = 6800 tokens = ~4.7 days at 1/min.
+5. **Best token strategy**: Continue using `/product` for batch scraping (1 token/ASIN, 100/batch) + tiered refresh of stale deal candidates via cron.
 
-6. **Use `/token` endpoint** to check balance before expensive queries — costs 0 tokens.
+### 9.4 Practical Recommendations
+
+Given 1/min refill (60/hour, 1440/day):
+
+1. **Keep current pipeline** — our own scraping + deal scoring is the most token-efficient and accurate approach
+2. **Tiered refresh** (already implemented) — prioritize refreshing deal candidates over bulk scraping
+3. **Consider tracking for top 50 deal products** — 50 tokens one-time, get API notifications on price drops
+4. **Skip `/deal` endpoint** — 5 tokens/page, noisy results, not worth the cost
+5. **Skip graph endpoints** — don't work for our products. Our SVG sparklines are better anyway
 
 ---
 

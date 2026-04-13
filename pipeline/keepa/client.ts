@@ -233,6 +233,67 @@ export class KeepaClient {
 		return count > 0 ? count : undefined;
 	}
 
+	// --- Tracking API ---
+
+	/**
+	 * Add price tracking for an ASIN. Cost: 1 token.
+	 * Sets up API notification (index 5) so we can poll for alerts.
+	 * @param asin - product ASIN to track
+	 * @param thresholdCents - target price in cents (e.g. 2000 = $20.00)
+	 * @param csvType - price type to track (0=Amazon, 1=3P New, 18=Buy Box)
+	 * @param ttlHours - time to live in hours (0=never expires)
+	 */
+	async addTracking(asin: string, thresholdCents: number, csvType = 0, ttlHours = 0): Promise<boolean> {
+		await this.ensureTokens(1);
+		const res = await this.postRequest('/tracking', { type: 'add' }, {
+			asin,
+			mainDomainId: this.domain,
+			thresholdValues: [{ thresholdValue: thresholdCents, domain: this.domain, csvType, isDrop: true }],
+			// Index 5 = API notifications (poll via /tracking?type=notification)
+			notificationType: [false, false, false, false, false, true, false, false],
+			ttl: ttlHours,
+			updateInterval: 24,
+		});
+		this.tokensLeft = (res.tokensLeft as number) ?? 0;
+		return !!(res.trackings as unknown[])?.length;
+	}
+
+	/** Remove tracking for an ASIN. Cost: 0 tokens. */
+	async removeTracking(asin: string): Promise<void> {
+		await this.request('/tracking', { type: 'remove', asin, mainDomainId: this.domain });
+	}
+
+	/** List all active trackings. Cost: 0 tokens. */
+	async listTrackings(): Promise<Array<{ asin: string; isActive: boolean; thresholdValues: unknown[] }>> {
+		const res = await this.request('/tracking', { type: 'list' });
+		return (res.trackings ?? []) as Array<{ asin: string; isActive: boolean; thresholdValues: unknown[] }>;
+	}
+
+	/** Get pending tracking notifications. Cost: 0 tokens. */
+	async getNotifications(since?: number): Promise<Array<{
+		asin: string;
+		cause: string;
+		createdAt: number;
+		currentPrice: number;
+		thresholdValue: number;
+	}>> {
+		const params: Record<string, unknown> = { type: 'notification' };
+		if (since) params.since = since;
+		const res = await this.request('/tracking', params);
+		return (res.notifications ?? []) as Array<{
+			asin: string;
+			cause: string;
+			createdAt: number;
+			currentPrice: number;
+			thresholdValue: number;
+		}>;
+	}
+
+	/** Set webhook URL for push notifications. Cost: 0 tokens. */
+	async setWebhook(url: string): Promise<void> {
+		await this.request('/tracking', { type: 'webhook', url });
+	}
+
 	// --- Internal helpers ---
 
 	/** Wait until we have enough tokens */
@@ -261,6 +322,39 @@ export class KeepaClient {
 
 		const res = await fetch(url.toString(), {
 			headers: { 'Accept-Encoding': 'gzip' },
+		});
+
+		if (!res.ok) {
+			throw new Error(`Keepa API error: ${res.status} ${res.statusText}`);
+		}
+
+		const data = await res.json() as Record<string, unknown>;
+
+		if (data.error) {
+			const err = data.error as { message?: string; type?: string };
+			throw new Error(`Keepa API error: ${err.type ?? 'unknown'} — ${err.message ?? ''}`);
+		}
+
+		return data;
+	}
+
+	/** Make a POST request with JSON body to the Keepa API */
+	private async postRequest(endpoint: string, params: Record<string, unknown>, body: unknown): Promise<Record<string, unknown>> {
+		const url = new URL(`${BASE_URL}${endpoint}`);
+		url.searchParams.set('key', this.apiKey);
+		for (const [k, v] of Object.entries(params)) {
+			if (v !== undefined && v !== null) {
+				url.searchParams.set(k, String(v));
+			}
+		}
+
+		const res = await fetch(url.toString(), {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept-Encoding': 'gzip',
+			},
+			body: JSON.stringify(body),
 		});
 
 		if (!res.ok) {

@@ -85,4 +85,7 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 # Generate deals feed from price history
 "$BUN" --smol run scripts/deals-feed.ts >> "$LOGFILE" 2>&1 || true
 
+# Check Keepa tracking notifications (0 tokens, non-fatal)
+"$BUN" run pipeline/cli.ts tracking notifications >> "$LOGFILE" 2>&1 || true
+
 echo "$(date): Enrichment done" >> "$LOGFILE"
