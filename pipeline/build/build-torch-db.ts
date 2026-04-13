@@ -818,7 +818,9 @@ export async function buildTorchDb(): Promise<{
 		}
 		// Populate price history columns from Keepa data
 		// Use the actual DB price (what the card displays) for deal calculations,
-		// NOT the last Keepa data point which may be stale
+		// NOT the last Keepa data point which may be stale.
+		// Only compute deal metrics when we have a valid displayed price — showing
+		// "X% off" without a visible price makes no sense.
 		const pStats = priceData.get(entry.id);
 		if (pStats) {
 			const dbPrice = entry.price_usd;
@@ -831,11 +833,9 @@ export async function buildTorchDb(): Promise<{
 				const atLow = dbPrice <= pStats.min_price * 1.05;
 				if (priceDropColIdx >= 0) row[priceDropColIdx] = dropPct > 0 ? dropPct : '';
 				if (atLowColIdx >= 0) row[atLowColIdx] = atLow ? ['yes'] : [];
-			} else {
-				// No DB price — fall back to Keepa-derived values
-				if (priceDropColIdx >= 0) row[priceDropColIdx] = pStats.drop_pct > 0 ? pStats.drop_pct : '';
-				if (atLowColIdx >= 0) row[atLowColIdx] = pStats.at_low ? ['yes'] : [];
 			}
+			// No DB price ($0 or missing) → leave deal columns empty (no deal badges)
+			// Still populate avg_price and sparkline for data completeness
 			if (priceAvgColIdx >= 0) row[priceAvgColIdx] = pStats.avg_price;
 			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}
