@@ -16,6 +16,7 @@ import { existsSync } from 'fs';
 /** Price statistics extracted from Keepa price history */
 interface PriceStats {
 	min_price: number;     // all-time Amazon low
+	min_90d: number;       // lowest Amazon price in last 90 days
 	sparkline: string;     // pre-computed SVG path "M0,18 L2,15 ..."
 }
 
@@ -32,6 +33,7 @@ function loadPriceData(): Map<string, PriceStats> {
 
 	const result = new Map<string, PriceStats>();
 	const now = Date.now();
+	const MS_90D = 90 * 24 * 60 * 60 * 1000;
 
 	for (const row of rows) {
 		let parsed: Record<string, [number, number][]>;
@@ -53,6 +55,11 @@ function loadPriceData(): Map<string, PriceStats> {
 		if (allPrices.length === 0) continue;
 
 		const minPrice = Math.min(...allPrices);
+
+		// 90-day low
+		const cutoff90 = now - MS_90D;
+		const recent90 = sorted.filter(p => p[0] >= cutoff90 && p[1] > 0).map(p => p[1]);
+		const min90d = recent90.length > 0 ? Math.min(...recent90) : minPrice;
 
 		// Downsample to 24 buckets (last 12 months, ~15-day intervals) for sparkline
 		const MS_12M = 365 * 24 * 60 * 60 * 1000;
@@ -111,6 +118,7 @@ function loadPriceData(): Map<string, PriceStats> {
 
 		result.set(row.flashlight_id, {
 			min_price: minPrice,
+			min_90d: min90d,
 			sparkline: sparklinePath,
 		});
 	}
@@ -379,6 +387,12 @@ const COLUMNS: ColumnMeta[] = [
 	// Deal = current price <= historical Amazon low (simple boolean)
 	{ id: 'at_low', display: 'deal', unit: '', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => [] },
+	// % below all-time Amazon low (positive = below low, 0 = at/above)
+	{ id: 'pct_below_low', display: '% below low', unit: '{}%', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
+		extract: (_e) => '' },
+	// % below 90-day Amazon low (positive = below 90d low, 0 = at/above)
+	{ id: 'pct_below_90d', display: '% below 90d', unit: '{}%', cvis: '', link: 'price', srch: false, mode: ['any'], sortable: true,
+		extract: (_e) => '' },
 	{ id: '_sparkline', display: '_sparkline', unit: '', cvis: 'never', link: 'price', srch: false, mode: ['any'], sortable: false,
 		extract: (_e) => '' },
 ];
@@ -477,6 +491,8 @@ function buildOpts(data: unknown[][]): (unknown[] | null)[] {
 		beam_angle: { type: 'range' },
 		year: { type: 'range' },
 		completeness: { type: 'range' },
+		pct_below_low: { type: 'range' },
+		pct_below_90d: { type: 'range' },
 	};
 
 	// Composite filters group sub-columns under one header
@@ -740,6 +756,8 @@ export async function buildTorchDb(): Promise<{
 	const picColIdx = COLUMNS.findIndex((c) => c.id === '_pic');
 	const mfgColIdx = COLUMNS.findIndex((c) => c.id === 'has_mfg_url');
 	const atLowColIdx = COLUMNS.findIndex((c) => c.id === 'at_low');
+	const pctBelowLowIdx = COLUMNS.findIndex((c) => c.id === 'pct_below_low');
+	const pctBelow90dIdx = COLUMNS.findIndex((c) => c.id === 'pct_below_90d');
 	const sparklineColIdx = COLUMNS.findIndex((c) => c.id === '_sparkline');
 
 	let spriteHits = 0;
@@ -777,8 +795,18 @@ export async function buildTorchDb(): Promise<{
 		const pStats = priceData.get(entry.id);
 		if (pStats) {
 			const dbPrice = entry.price_usd;
-			if (dbPrice && dbPrice > 0 && atLowColIdx >= 0) {
-				row[atLowColIdx] = dbPrice <= pStats.min_price ? ['yes'] : [];
+			if (dbPrice && dbPrice > 0) {
+				if (atLowColIdx >= 0) {
+					row[atLowColIdx] = dbPrice <= pStats.min_price ? ['yes'] : [];
+				}
+				// % below all-time low (positive means current is cheaper)
+				if (pctBelowLowIdx >= 0 && pStats.min_price > 0 && dbPrice < pStats.min_price) {
+					row[pctBelowLowIdx] = Math.round((pStats.min_price - dbPrice) / pStats.min_price * 100);
+				}
+				// % below 90-day low (positive means current is cheaper)
+				if (pctBelow90dIdx >= 0 && pStats.min_90d > 0 && dbPrice < pStats.min_90d) {
+					row[pctBelow90dIdx] = Math.round((pStats.min_90d - dbPrice) / pStats.min_90d * 100);
+				}
 			}
 			if (sparklineColIdx >= 0) row[sparklineColIdx] = pStats.sparkline;
 		}

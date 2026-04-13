@@ -48,7 +48,7 @@
 	let isAtLow = $derived(atLowCol >= 0 && isArrayLike(data[atLowCol]) && (data[atLowCol] as string[]).includes('yes'));
 
 	// Avoid list for detail display (same as parametrek.js)
-	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'at_low', '_sparkline']);
+	const avoidIds = new Set(['model', 'brand', 'info', 'purchase', 'price', 'at_low', 'pct_below_low', 'pct_below_90d', '_sparkline']);
 
 	// Completeness breakdown — 16 required attributes mapped to column IDs
 	const COMPLETENESS_FIELDS: { id: string; label: string }[] = [
