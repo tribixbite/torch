@@ -1,14 +1,18 @@
 # Pipeline State — 2026-04-13
 
-## Current Status: 18,373 lights in DB (15,128 in JSON) — price history + deals feed live
+## Current Status: 18,433 lights in DB (15,186 in JSON) — OOS-filtered deals live
 
-### Recent Changes (Apr 13)
-- **Price mismatch fix**: Deal metrics now computed against actual DB `price_usd`, not stale Keepa last data point
-  - Previously: XP6R showed `~~$43~~ $54.95 17% off` (contradictory — was < current)
-  - Now: Entries where DB price > avg correctly show no deal badge
-  - $0/missing price entries excluded from deal metrics (were showing 85-97% off badges)
-  - 1,263 deals (was 888), 2,200 at historical low, 1,499 sparklines, 5,069 with avg price
-- **Auto-sort by deal %**: Activating the deal filter auto-sorts by price_drop descending (biggest deals first)
+### Recent Changes (Apr 13, round 2)
+- **OOS exclusion**: Store Amazon availability from Keepa CSV (-1 = OOS) as `amazon_availability`
+  - 5 availability records so far (1 in stock, 4 OOS) — accumulates with each cron run
+  - OOS items excluded from deal flags and deals feed
+- **Price sanity filter**: DB price < 30% of last Amazon price → skip deal flagging (catches data errors)
+  - 97 price-insane entries excluded from deals feed
+- **Deals feed cleanup**: keyword-based accessory filter (1,049 caught), URL+core-model dedup (851 dupes)
+- **Tiered refresh**: New `refreshStaleDeals()` re-queries Keepa for deal candidates >3 days stale
+  - `pipeline/cli.ts refresh [batch_size]` — new CLI command
+  - keepa-cron.sh auto-switches to refresh mode when initial scraping complete
+- **Previous (Apr 13)**: simplified deal logic, % below filters, price mismatch fix, $0 exclusion
 
 ### Recent Changes (Apr 10)
 - **Price history surfaced**: 5,074 entries with Keepa price data → sparklines, deal scoring, filters
@@ -32,11 +36,12 @@ Note: parametrek-crossref.ts deprecated — no longer used for enrichment.
 
 ### Continuous Enrichment Pipeline
 1. **Keepa cron** (`scripts/keepa-cron.sh`): every 5min, 5 ASINs, post-scrape enrichment:
+   - Phase 1: scrape unscraped ASINs (if any remain)
+   - Phase 2: refresh stale deal candidates (3+ days old, price_usd > 0)
    - `scrape-images.ts --download-only` — thumbnails for new entries
-   - ~~`parametrek-crossref.ts`~~ — REMOVED (cannot use parametrek data directly)
    - `extract-missing-fields.ts` — re-extract specs from raw_spec_text (with --smol)
    - `model-crossref.ts` — propagate within-brand fields
-   - `deals-feed.ts` — generate deals.json (top 100 deals by price drop %)
+   - `deals-feed.ts` — generate deals.json (OOS/sanity/accessory filtered, deduped, top 100)
 2. **Vision cron** (`scripts/vision-cron.sh`): hourly grid build → classify → sprite rebuild
 3. **Validation** (`scripts/validate-vision-accuracy.ts`): compare vs parametrek ground truth
 
