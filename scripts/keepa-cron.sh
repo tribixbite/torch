@@ -88,8 +88,10 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 # Check Keepa tracking notifications (0 tokens, non-fatal)
 "$BUN" run pipeline/cli.ts tracking notifications >> "$LOGFILE" 2>&1 || true
 
-# Incremental tracking setup — add up to 5 new trackings per cron run (5 tokens max)
-# Uses priority brand ordering, skips already-tracked ASINs
-"$BUN" run pipeline/cli.ts tracking setup 5 >> "$LOGFILE" 2>&1 || true
+# Incremental tracking setup — only when scrape queue is empty (avoids token competition)
+# Scrape costs 11 tokens/batch vs 5 tokens refill/cycle — can't run both sustainably
+if [ "$UNSCRAPED" -eq 0 ] 2>/dev/null; then
+    "$BUN" run pipeline/cli.ts tracking setup 5 >> "$LOGFILE" 2>&1 || true
+fi
 
 echo "$(date): Enrichment done" >> "$LOGFILE"
