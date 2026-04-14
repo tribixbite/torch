@@ -88,4 +88,8 @@ echo "$(date): Enrichment start" >> "$LOGFILE"
 # Check Keepa tracking notifications (0 tokens, non-fatal)
 "$BUN" run pipeline/cli.ts tracking notifications >> "$LOGFILE" 2>&1 || true
 
+# Incremental tracking setup — add up to 5 new trackings per cron run (5 tokens max)
+# Uses priority brand ordering, skips already-tracked ASINs
+"$BUN" run pipeline/cli.ts tracking setup 5 >> "$LOGFILE" 2>&1 || true
+
 echo "$(date): Enrichment done" >> "$LOGFILE"

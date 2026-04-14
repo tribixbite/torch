@@ -360,14 +360,6 @@
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
-    "model": "G45 385 Lumen",
-    "brand": "Coast",
-    "price": 20,
-    "amazon_low": 22.15,
-    "url": "https://www.amazon.com/dp/B07YFB5B11",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "G50 355 Lumen Focusing",
     "brand": "Coast",
     "price": 20,
@@ -640,14 +632,6 @@
     "updated": "2026-04-10T23:20:03.455Z"
   },
   {
-    "model": "PX25 275 lm",
-    "brand": "Coast",
-    "price": 31,
-    "amazon_low": 34.15,
-    "url": "https://www.amazon.com/dp/B01BD4HJAK",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "MINI-1 Titanium Keychain",
     "brand": "JETBeam",
     "price": 31,
@@ -798,5 +782,21 @@
     "amazon_low": 41.95,
     "url": "https://www.amazon.com/dp/B0DSKLZ1P5",
     "updated": "2026-03-28T01:46:04.677Z"
+  },
+  {
+    "model": "D25AAA 395nm UV Keychain",
+    "brand": "EagleTac",
+    "price": 35.9,
+    "amazon_low": 35.9,
+    "url": "https://www.amazon.com/dp/B07N2KJKD5",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "MAG-LITE® ML300L™ LED 2 CELL D",
+    "brand": "Maglite",
+    "price": 35.99,
+    "amazon_low": 36.5,
+    "url": "https://www.amazon.com/dp/B00O47Q3HO",
+    "updated": "2026-04-01T04:33:14.868Z"
   }
 ]

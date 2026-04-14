@@ -211,6 +211,14 @@ async function cmdTracking(): Promise<void> {
 			const maxItems = parseInt(process.argv[4] || '20', 10);
 			console.log(`=== Setting up tracking for top ${maxItems} deal candidates ===\n`);
 
+			// Priority brands from zakreviews.com — tracked first before others
+			const PRIORITY_BRANDS = new Set([
+				'wurkkos', 'skilhunt', 'nitecore', 'rovyvon', 'acebeam', 'fenix',
+				'reylight', 'sofirn', 'eagletac', 'zebralight', 'loop gear',
+				'armytek', 'emisar', 'noctigon', 'convoy', 'wuben',
+				'imalent', 'streamlight', 'olight', 'thrunite', 'lumintop',
+			]);
+
 			// Find deal candidates: actual flashlights/headlamps, $10+, have price history
 			// Must have a flashlight-related type (not "unknown" smartwatches etc.)
 			const db = getDb();
@@ -227,47 +235,68 @@ async function cmdTracking(): Promise<void> {
 				       OR f.type LIKE '%weapon%' OR f.type LIKE '%right-angle%')
 				  AND EXISTS (SELECT 1 FROM raw_spec_text r WHERE r.flashlight_id = f.id AND r.category = 'price_history')
 				ORDER BY f.price_usd DESC
-				LIMIT $limit
-			`).all({ $limit: maxItems * 3 }) as { asin: string; id: string; model: string; brand: string; price_usd: number }[];
+			`).all() as { asin: string; id: string; model: string; brand: string; price_usd: number }[];
 
 			// Filter out accessories by model keywords (same regex as deals-feed.ts)
 			const ACCESSORY_RE = /\b(cases?|holsters?|pouche?s?|adapte?o?rs?|cables?|chargers?|covers?|replacement|battery\s+packs?|filters?|diffusers?|mounts?|brackets?|straps?|sheaths?|lanyards?|clip\s+only|glass\s+lens|o-rings?|tail\s*caps?|bezels?|pocket\s+clips?|remote\s+switch|bulbs?|conversion\s+kit|upgrade|docks?|molle|P13\.5S|krypton|rechargeable\s+batter|li-ion\s+rechargeable|ZITHION|accessories|FB-1\s+Universal)\b/i;
 			const filtered = candidates.filter(c => !ACCESSORY_RE.test(c.model));
 
+			// Sort: priority brands first (by price DESC), then others (by price DESC)
+			const prioritySorted = filtered.sort((a, b) => {
+				const aP = PRIORITY_BRANDS.has(a.brand.toLowerCase()) ? 0 : 1;
+				const bP = PRIORITY_BRANDS.has(b.brand.toLowerCase()) ? 0 : 1;
+				if (aP !== bP) return aP - bP;
+				return b.price_usd - a.price_usd;
+			});
+
 			// Skip already-tracked ASINs
 			const existing = await client.listTrackings();
 			const tracked = new Set(existing.map(t => t.asin));
-			const toTrack = filtered.filter(c => !tracked.has(c.asin)).slice(0, maxItems);
+			const toTrack = prioritySorted.filter(c => !tracked.has(c.asin)).slice(0, maxItems);
+
+			// Report brand breakdown
+			const brandCounts = new Map<string, number>();
+			for (const c of toTrack) {
+				brandCounts.set(c.brand, (brandCounts.get(c.brand) ?? 0) + 1);
+			}
+			const priorityCount = toTrack.filter(c => PRIORITY_BRANDS.has(c.brand.toLowerCase())).length;
+			console.log(`Candidates: ${filtered.length} total, ${toTrack.length} to track (${priorityCount} priority brands)`);
+			console.log(`Brands: ${[...brandCounts.entries()].sort((a, b) => b[1] - a[1]).map(([b, n]) => `${b}(${n})`).join(', ')}\n`);
 
 			if (toTrack.length === 0) {
 				console.log('No new candidates to track.');
 				break;
 			}
 
-			console.log(`Setting up ${toTrack.length} trackings (${toTrack.length} tokens) ...`);
+			const etaMin = Math.ceil(toTrack.length / status.refillRate);
+			console.log(`Setting up ${toTrack.length} trackings (${toTrack.length} tokens, ~${etaMin} min / ${(etaMin / 60).toFixed(1)} hrs) ...`);
+			const startTime = Date.now();
 			let added = 0;
 			let errors = 0;
-			for (const c of toTrack) {
+			for (let i = 0; i < toTrack.length; i++) {
+				const c = toTrack[i];
 				// Threshold: 90% of current price (alert on 10%+ drop)
 				const thresholdCents = Math.round(c.price_usd * 90);
 				try {
 					const ok = await client.addTracking(c.asin, thresholdCents);
 					if (ok) {
-						console.log(`  + ${c.asin} ${c.brand} ${c.model} — threshold $${(thresholdCents / 100).toFixed(2)}`);
+						const elapsed = ((Date.now() - startTime) / 60000).toFixed(1);
+						const pct = ((i + 1) / toTrack.length * 100).toFixed(0);
+						console.log(`  [${i + 1}/${toTrack.length} ${pct}% ${elapsed}m] + ${c.asin} ${c.brand} ${c.model} $${c.price_usd} → alert <$${(thresholdCents / 100).toFixed(2)}`);
 						added++;
 					}
 				} catch (err) {
 					const msg = (err as Error).message;
-					// "productNotKnown" means this ASIN isn't in Keepa's index
 					if (msg.includes('productNotKnown')) {
-						console.log(`  - ${c.asin} ${c.brand} ${c.model} — not in Keepa's index`);
+						console.log(`  [${i + 1}/${toTrack.length}] - ${c.asin} ${c.brand} ${c.model} — not in Keepa index`);
 					} else {
-						console.error(`  ! ${c.asin}: ${msg}`);
+						console.error(`  [${i + 1}/${toTrack.length}] ! ${c.asin}: ${msg}`);
 					}
 					errors++;
 				}
 			}
-			console.log(`\nDone: ${added} added, ${errors} errors`);
+			const totalMin = ((Date.now() - startTime) / 60000).toFixed(1);
+			console.log(`\nDone in ${totalMin} min: ${added} tracked, ${errors} errors`);
 			break;
 		}
 		case 'notifications': {
