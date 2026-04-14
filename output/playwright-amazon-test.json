@@ -1,0 +1,67 @@
+{
+  "test_date": "2026-04-14",
+  "method": "Playwright MCP browser_navigate + browser_evaluate",
+  "delay_between_requests_ms": 2000,
+  "summary": {
+    "total": 5,
+    "succeeded": 5,
+    "blocked": 0,
+    "price_found": 5,
+    "title_found": 5
+  },
+  "results": [
+    {
+      "asin": "B0D8123MXV",
+      "brand": "Wurkkos",
+      "status": "success",
+      "price": "$35.99",
+      "title": "Wurkkos FC11C Led Flashlight Rechargeable 1200 Lumens, 155m Long Beam Distance, IP68 Waterproof Flas",
+      "final_url": "https://www.amazon.com/dp/B0D8123MXV",
+      "notes": "Primary FC11C listing (4000K variant)"
+    },
+    {
+      "asin": "B08JCM95X6",
+      "brand": "Wurkkos",
+      "status": "success",
+      "price": "$35.99",
+      "title": "Wurkkos FC11C Led Flashlight Rechargeable 1200 Lumens, 155m Long Beam Distance, IP68 Waterproof Flas",
+      "final_url": "https://www.amazon.com/dp/B0D8123MXV?th=1",
+      "notes": "Redirected to B0D8123MXV — Amazon treats this as a variant of the same product"
+    },
+    {
+      "asin": "B0D311QCJM",
+      "brand": "Wurkkos",
+      "status": "success",
+      "price": "$35.99",
+      "title": "Wurkkos FC11C Led Flashlight Rechargeable High Lumen 1200, 90 High CRI Small Flashlight, Super Brigh",
+      "final_url": "https://www.amazon.com/dp/B0D311QCJM?th=1",
+      "notes": "FC11C 5000K variant — different title wording but same price"
+    },
+    {
+      "asin": "B005CWQCDU",
+      "brand": "Fenix",
+      "status": "success",
+      "price": "$49.99",
+      "title": "Fenix TK70 2200 Lumens LED Flashlight 4xD Batteries",
+      "final_url": "https://www.amazon.com/dp/B005CWQCDU",
+      "notes": "Discontinued model, still listed with price"
+    },
+    {
+      "asin": "B09HBRF2MH",
+      "brand": "Fenix",
+      "status": "success",
+      "price": "$199.95",
+      "title": "Fenix TK35UE V2.0 TK35 Ultimate Edition (TK35UEV2) 5000 Lumen Flashlight with Lumen Tac Battery Orga",
+      "final_url": "https://www.amazon.com/dp/B09HBRF2MH",
+      "notes": "Third-party bundle with battery organizer"
+    }
+  ],
+  "observations": [
+    "No CAPTCHAs or blocks encountered during this 5-request test",
+    "Amazon variant ASINs (B08JCM95X6) redirect to parent ASIN (B0D8123MXV) with ?th=1 param",
+    "The CSS selector '.a-price .a-offscreen' worked reliably for all 5 pages",
+    "Playwright MCP returns the full page snapshot (~120-145KB) with every evaluate call — this is extremely token-heavy",
+    "Each navigate+evaluate pair consumes ~260KB of raw output (saved to disk, not loaded into context)",
+    "2-second delay between requests was sufficient — no rate limiting observed"
+  ]
+}
