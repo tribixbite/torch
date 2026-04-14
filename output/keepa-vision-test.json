@@ -1,0 +1,100 @@
+{
+  "test_date": "2026-04-13",
+  "method": "CFC browser screenshot -> OpenRouter free vision model",
+  "results": [
+    {
+      "asin": "B0DGSKPL8F",
+      "product": "Wurkkos HD01 UV Flashlight",
+      "model_used": "google/gemma-4-26b-a4b-it-20260403:free",
+      "parsed_data": {
+        "current_price": {
+          "buy_box": "$59.99",
+          "new": "$59.99",
+          "used": "$44.99"
+        },
+        "lowest_price": {
+          "value": "$0.00",
+          "note": "The green price line approaches the $0 axis during mid-February, though specific value is not explicitly labeled."
+        },
+        "highest_price": {
+          "value": "$60.00",
+          "note": "The price line hits the $60 threshold multiple times in January and early February."
+        },
+        "trend": "Highly volatile; sharp declines in mid-February followed by a steady upward recovery through March and April.",
+        "date_range": "Jan 16 to Apr 1 (approximately 3 months)",
+        "price_range_axis": {
+          "min": "$0",
+          "max": "$70"
+        },
+        "price_points": [
+          {
+            "date": "Jan 16",
+            "estimated_price": "$45 - $50"
+          },
+          {
+            "date": "Late Jan",
+            "estimated_price": "$55 - $60"
+          },
+          {
+            "date": "Mid Feb",
+            "estimated_price": "$5 - $10"
+          },
+          {
+            "date": "Mar 1",
+            "estimated_price": "$20 - $25"
+          },
+          {
+            "date": "Apr 1",
+            "estimated_price": "$25 - $30"
+          }
+        ]
+      }
+    },
+    {
+      "asin": "B0D311QCJM",
+      "product": "Wurkkos FC11C Led Flashlight",
+      "model_used": "google/gemma-4-31b-it-20260402:free",
+      "parsed_data": {
+        "current_price": null,
+        "lowest_price": null,
+        "highest_price": null,
+        "trend": "stable",
+        "date_range": {
+          "start": "Feb 1",
+          "end": "Apr 1"
+        },
+        "price_points": [
+          {
+            "label": "List Price",
+            "value": 42.99
+          }
+        ],
+        "additional_extracted_data": {
+          "sales_rank_current": 8093,
+          "category": "Tools & Home Improvement",
+          "subcategory": "Handheld Flashlights",
+          "specific_data_point": {
+            "timestamp": "Sun, Feb 8 14:05",
+            "sales_rank": 21826,
+            "category_rank": "Top 0.04%",
+            "subcategory_rank": "Top 0.23%"
+          }
+        }
+      }
+    }
+  ],
+  "notes": {
+    "screenshot_tool": "mcp__cfc-bridge__computer screenshot",
+    "image_processing": "PIL resize to max 1000px",
+    "vision_models_tried": [
+      "google/gemma-4-31b-it:free (rate-limited for ASIN1, worked for ASIN2)",
+      "google/gemma-4-26b-a4b-it:free (worked for ASIN1, rate-limited for ASIN2)",
+      "google/gemma-3-27b-it:free (rate-limited)",
+      "google/gemma-3-12b-it:free (rate-limited)"
+    ],
+    "quality_assessment": {
+      "ASIN1_B0DGSKPL8F": "Model extracted buy box price ($59.99), trend description, and date range. Price points are estimates from chart reading. The '$0' lowest price is likely a misread of the sales rank overlay or chart artifacts.",
+      "ASIN2_B0D311QCJM": "Model correctly extracted list price ($42.99) and sales rank data (8,093). Price history was not extracted (chart shows sales rank more prominently than price). The model picked up the tooltip data point (Feb 8, rank 21,826)."
+    }
+  }
+}
