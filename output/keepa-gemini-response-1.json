@@ -1,0 +1,39 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\n  \"current_price\": \"Approximately $42\",\n  \"lowest_price\": \"Approximately $12 around late February/early March\",\n  \"highest_price\": \"Approximately $50 around mid March\",\n  \"price_trend\": \"Relatively stable, trending slightly upwards towards the end of the chart\",\n  \"specific_price_points\": [\n    {\"price\": \"$35\", \"date\": \"Late January\"},\n    {\"price\": \"$12\", \"date\": \"Late February/early March\"},\n    {\"price\": \"$50\", \"date\": \"Mid March\"},\n     {\"price\": \"$20\", \"date\": \"Late March\"}\n  ],\n  \"date_range\": \"January 16 to April 1\",\n  \"price_range\": \"$0 to $50\"\n}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.17765204616324612
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1929,
+    "candidatesTokenCount": 189,
+    "totalTokenCount": 2118,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 123
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1806
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 189
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "SqPdadPfFqydqtsPmdXLYA"
+}

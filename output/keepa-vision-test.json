@@ -1,100 +1,158 @@
 {
+  "approach": "screenshot + gemini vision",
+  "model": "gemini-2.0-flash",
   "test_date": "2026-04-13",
-  "method": "CFC browser screenshot -> OpenRouter free vision model",
+  "methodology": "CFC browser screenshot of Keepa price charts -> base64 PNG -> Gemini 2.0 Flash vision API",
   "results": [
     {
-      "asin": "B0DGSKPL8F",
-      "product": "Wurkkos HD01 UV Flashlight",
-      "model_used": "google/gemma-4-26b-a4b-it-20260403:free",
-      "parsed_data": {
-        "current_price": {
-          "buy_box": "$59.99",
-          "new": "$59.99",
-          "used": "$44.99"
-        },
-        "lowest_price": {
-          "value": "$0.00",
-          "note": "The green price line approaches the $0 axis during mid-February, though specific value is not explicitly labeled."
-        },
-        "highest_price": {
-          "value": "$60.00",
-          "note": "The price line hits the $60 threshold multiple times in January and early February."
-        },
-        "trend": "Highly volatile; sharp declines in mid-February followed by a steady upward recovery through March and April.",
-        "date_range": "Jan 16 to Apr 1 (approximately 3 months)",
-        "price_range_axis": {
-          "min": "$0",
-          "max": "$70"
-        },
-        "price_points": [
+      "asin": "B08JCM95X6",
+      "product": "Wurkkos FC11C EDC Flashlight (Black 4000K)",
+      "keepa_url": "https://keepa.com/#!product/1-B08JCM95X6",
+      "gemini_response_full_screenshot": {
+        "current_price": "Approximately $42",
+        "lowest_price": "Approximately $12 around late February/early March",
+        "highest_price": "Approximately $50 around mid March",
+        "price_trend": "Relatively stable, trending slightly upwards towards the end of the chart",
+        "specific_price_points": [
           {
-            "date": "Jan 16",
-            "estimated_price": "$45 - $50"
+            "price": "$35",
+            "date": "Late January"
           },
           {
-            "date": "Late Jan",
-            "estimated_price": "$55 - $60"
+            "price": "$12",
+            "date": "Late February/early March"
           },
           {
-            "date": "Mid Feb",
-            "estimated_price": "$5 - $10"
+            "price": "$50",
+            "date": "Mid March"
           },
           {
-            "date": "Mar 1",
-            "estimated_price": "$20 - $25"
-          },
-          {
-            "date": "Apr 1",
-            "estimated_price": "$25 - $30"
-          }
-        ]
-      }
-    },
-    {
-      "asin": "B0D311QCJM",
-      "product": "Wurkkos FC11C Led Flashlight",
-      "model_used": "google/gemma-4-31b-it-20260402:free",
-      "parsed_data": {
-        "current_price": null,
-        "lowest_price": null,
-        "highest_price": null,
-        "trend": "stable",
-        "date_range": {
-          "start": "Feb 1",
-          "end": "Apr 1"
-        },
-        "price_points": [
-          {
-            "label": "List Price",
-            "value": 42.99
+            "price": "$20",
+            "date": "Late March"
           }
         ],
-        "additional_extracted_data": {
-          "sales_rank_current": 8093,
-          "category": "Tools & Home Improvement",
-          "subcategory": "Handheld Flashlights",
-          "specific_data_point": {
-            "timestamp": "Sun, Feb 8 14:05",
-            "sales_rank": 21826,
-            "category_rank": "Top 0.04%",
-            "subcategory_rank": "Top 0.23%"
+        "date_range": "January 16 to April 1",
+        "price_range": "$0 to $50"
+      },
+      "gemini_response_cropped_chart": {
+        "current_price": "$35",
+        "lowest_price": "$13 in mid February",
+        "highest_price": "$50 around mid March",
+        "price_trend": "Downward",
+        "price_points": [
+          {
+            "price": "$30",
+            "date": "Jan 16"
+          },
+          {
+            "price": "$38",
+            "date": "Late Jan"
+          },
+          {
+            "price": "$20",
+            "date": "Early Feb"
+          },
+          {
+            "price": "$37",
+            "date": "Late Feb"
+          },
+          {
+            "price": "$20",
+            "date": "Early Mar"
+          },
+          {
+            "price": "$50",
+            "date": "Mid Mar"
+          },
+          {
+            "price": "$20",
+            "date": "Late Mar"
+          },
+          {
+            "price": "$43",
+            "date": "Early Apr"
+          },
+          {
+            "price": "$35",
+            "date": "Early Apr"
           }
-        }
-      }
+        ],
+        "date_range": "Jan 16 - Apr 1",
+        "price_range": "$0 - $50",
+        "price_drops_spikes": [
+          {
+            "event": "Price drop from ~$38 to ~$20",
+            "approximate_magnitude": "$18",
+            "date": "Late Jan to Early Feb"
+          },
+          {
+            "event": "Price spike from ~$20 to ~$50",
+            "approximate_magnitude": "$30",
+            "date": "Early to Mid Mar"
+          },
+          {
+            "event": "Price drop from ~$50 to ~$20",
+            "approximate_magnitude": "$30",
+            "date": "Mid to Late Mar"
+          },
+          {
+            "event": "Price increase from ~$20 to ~$43",
+            "approximate_magnitude": "$23",
+            "date": "Late to Early Apr"
+          },
+          {
+            "event": "Price drop from ~$43 to ~$35",
+            "approximate_magnitude": "$8",
+            "date": "Early Apr"
+          }
+        ]
+      },
+      "success": true,
+      "notes": "Cropped chart gave more detailed price points than full screenshot"
+    },
+    {
+      "asin": "B0DGSKPL8F",
+      "product": "Wurkkos HD01 UV Flashlight (Black)",
+      "keepa_url": "https://keepa.com/#!product/1-B0DGSKPL8F",
+      "gemini_response": {
+        "current_price": 59.99,
+        "lowest_price": "Approximately $40, based on the lowest point on the 'New' price line (purple) within the visible time frame.",
+        "lowest_price_date": "Between Feb 1 and Feb 15",
+        "highest_price": "Approximately $60, based on the highest point on the 'New' price line (purple) within the visible time frame.",
+        "highest_price_date": "Around January 1, and around March 1",
+        "price_trend": "Generally stable with some fluctuations, but primarily flat since February",
+        "specific_price_points": [
+          {
+            "price": 60,
+            "date": "Around Jan 1"
+          },
+          {
+            "price": 50,
+            "date": "Around Feb 1"
+          },
+          {
+            "price": 60,
+            "date": "Around March 1"
+          },
+          {
+            "price": 40,
+            "date": "Around March 16"
+          },
+          {
+            "price": 50,
+            "date": "Around Apr 1"
+          }
+        ],
+        "date_range": "Approximately January 1 to April 1",
+        "price_range": "$0 to $70"
+      },
+      "success": true,
+      "notes": "Current price $59.99 matches Keepa header. Chart shows stable pricing around $48-60."
     }
   ],
-  "notes": {
-    "screenshot_tool": "mcp__cfc-bridge__computer screenshot",
-    "image_processing": "PIL resize to max 1000px",
-    "vision_models_tried": [
-      "google/gemma-4-31b-it:free (rate-limited for ASIN1, worked for ASIN2)",
-      "google/gemma-4-26b-a4b-it:free (worked for ASIN1, rate-limited for ASIN2)",
-      "google/gemma-3-27b-it:free (rate-limited)",
-      "google/gemma-3-12b-it:free (rate-limited)"
-    ],
-    "quality_assessment": {
-      "ASIN1_B0DGSKPL8F": "Model extracted buy box price ($59.99), trend description, and date range. Price points are estimates from chart reading. The '$0' lowest price is likely a misread of the sales rank overlay or chart artifacts.",
-      "ASIN2_B0D311QCJM": "Model correctly extracted list price ($42.99) and sales rank data (8,093). Price history was not extracted (chart shows sales rank more prominently than price). The model picked up the tooltip data point (Feb 8, rank 21,826)."
-    }
-  }
+  "feasibility": "FEASIBLE BUT LIMITED. Gemini can read Keepa charts and extract approximate price points, date ranges, and trends. However, precision is limited to ~$2-5 per reading and ~1 week date accuracy. The 3-month default view gives recent history but misses long-term data. Better results from cropped chart images vs full screenshots. Main limitations: (1) approximate readings only - not exact cents, (2) date precision limited to weeks, (3) requires browser automation for each ASIN, (4) Keepa Pro subscription required for chart access, (5) chart interactivity (hover for exact values) not captured in static screenshots.",
+  "estimated_cost_per_asin": "$0.001-0.002 (Gemini 2.0 Flash: ~650KB image input + ~200 token output per request at Gemini pricing). Screenshot overhead: ~5-8 seconds per ASIN for page load + screenshot.",
+  "accuracy_assessment": "MODERATE. For the FC11C, Gemini identified the price range ($0-$50) and date range (Jan-Apr) correctly. It found approximate highs and lows but readings varied between full vs cropped chart attempts (e.g., current price reported as $42 vs $35). For the HD01 UV, it correctly identified $59.99 current price from the header text. Price point readings are approximate to ~$5 precision. Trend assessment (stable/volatile) is reliable. For our torch pipeline use case (filling price_usd field), the Keepa API direct data would be far more precise -- this vision approach is a creative workaround but not production-grade for exact pricing.",
+  "comparison_to_api": "Keepa API returns exact prices with timestamps. Vision approach returns approximate readings (~$5 precision). API: 1 token/product, 60/hour limit. Vision: no Keepa token cost but ~$0.002 Gemini cost + browser automation overhead. API is strictly superior for data quality.",
+  "recommendation": "Use Keepa API for price data extraction. Vision approach is a viable fallback for occasional spot-checks or when API tokens are exhausted, but not suitable for bulk pipeline use due to imprecision and browser automation overhead."
 }

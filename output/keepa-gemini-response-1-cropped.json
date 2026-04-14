@@ -1,0 +1,39 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\n  \"current_price\": \"$35\",\n  \"lowest_price\": \"$13 in mid February\",\n  \"highest_price\": \"$50 around mid March\",\n  \"price_trend\": \"Downward\",\n  \"price_points\": [\n    {\"price\": \"$30\", \"date\": \"Jan 16\"},\n    {\"price\": \"$38\", \"date\": \"Late Jan\"},\n    {\"price\": \"$20\", \"date\": \"Early Feb\"},\n    {\"price\": \"$37\", \"date\": \"Late Feb\"},\n    {\"price\": \"$20\", \"date\": \"Early Mar\"},\n    {\"price\": \"$50\", \"date\": \"Mid Mar\"},\n    {\"price\": \"$20\", \"date\": \"Late Mar\"},\n    {\"price\": \"$43\", \"date\": \"Early Apr\"},\n    {\"price\": \"$35\", \"date\": \"Early Apr\"}\n  ],\n  \"date_range\": \"Jan 16 - Apr 1\",\n  \"price_range\": \"$0 - $50\",\n  \"price_drops_spikes\": [\n    {\"event\": \"Price drop from ~$38 to ~$20\", \"approximate_magnitude\": \"$18\", \"date\": \"Late Jan to Early Feb\"},\n    {\"event\": \"Price spike from ~$20 to ~$50\", \"approximate_magnitude\": \"$30\", \"date\": \"Early to Mid Mar\"},\n    {\"event\": \"Price drop from ~$50 to ~$20\", \"approximate_magnitude\": \"$30\", \"date\": \"Mid to Late Mar\"},\n    {\"event\": \"Price increase from ~$20 to ~$43\", \"approximate_magnitude\": \"$23\", \"date\": \"Late to Early Apr\"},\n    {\"event\": \"Price drop from ~$43 to ~$35\", \"approximate_magnitude\": \"$8\", \"date\": \"Early Apr\"}\n  ]\n}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.11846263021298895
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1957,
+    "candidatesTokenCount": 437,
+    "totalTokenCount": 2394,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 151
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1806
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 437
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "WqPdac3LCr6lmtkPgbmbSA"
+}

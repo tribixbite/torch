@@ -1,0 +1,39 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\n  \"current_price\": 59.99,\n  \"lowest_price\": \"Approximately $40, based on the lowest point on the 'New' price line (purple) within the visible time frame.\",\n  \"lowest_price_date\": \"Between Feb 1 and Feb 15\",\n  \"highest_price\": \"Approximately $60, based on the highest point on the 'New' price line (purple) within the visible time frame.\",\n  \"highest_price_date\": \"Around January 1, and around March 1\",\n  \"price_trend\": \"Generally stable with some fluctuations, but primarily flat since February\",\n  \"specific_price_points\": [\n    {\"price\": 60, \"date\": \"Around Jan 1\"},\n    {\"price\": 50, \"date\": \"Around Feb 1\"},\n    {\"price\": 60, \"date\": \"Around March 1\"},\n    {\"price\": 40, \"date\": \"Around March 16\"},\n    {\"price\": 50, \"date\": \"Around Apr 1\"}\n  ],\n  \"date_range\": \"Approximately January 1 to April 1\",\n  \"price_range\": \"$0 to $70\"\n}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.2674232429557747
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1929,
+    "candidatesTokenCount": 286,
+    "totalTokenCount": 2215,
+    "promptTokensDetails": [
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1806
+      },
+      {
+        "modality": "TEXT",
+        "tokenCount": 123
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 286
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "responseId": "N6fdaerBCbnoz7IPi-q0KA"
+}
