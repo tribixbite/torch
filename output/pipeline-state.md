@@ -2,6 +2,15 @@
 
 ## Current Status: 18,433 lights in DB (15,186 in JSON) — OOS-filtered deals live
 
+### Recent Changes (Apr 13, round 4)
+- **Keepa vision test (Gemini 2.0 Flash)**: Screenshot Keepa charts + parse with Gemini vision API
+  - Tested 2 ASINs: FC11C (B08JCM95X6), HD01 UV (B0DGSKPL8F)
+  - Gemini extracts approximate price points (~$5 precision), trends, date ranges
+  - Cropped chart images yield more detailed price point readings than full screenshots
+  - Cost: ~$0.001-0.002/ASIN (Gemini API) + 5-8s browser overhead
+  - **Verdict**: feasible as fallback, but Keepa API data is strictly superior for exact pricing
+  - Results: `output/keepa-vision-test.json`
+
 ### Recent Changes (Apr 13, round 3)
 - **Keepa tracking API integration**: `pipeline/cli.ts tracking` command
   - `list` — show active trackings (0 tokens)
