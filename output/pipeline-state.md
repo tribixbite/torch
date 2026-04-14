@@ -1,6 +1,15 @@
-# Pipeline State — 2026-04-13
+# Pipeline State — 2026-04-14
 
 ## Current Status: 18,433 lights in DB (15,186 in JSON) — OOS-filtered deals live
+
+### Recent Changes (Apr 14)
+- **Playwright MCP Amazon price scraping test**: 5/5 ASINs succeeded, 0 blocked
+  - Navigated to each `amazon.com/dp/{ASIN}`, extracted price + title via `browser_evaluate`
+  - Prices: Wurkkos FC11C $35.99, Fenix TK70 $49.99, Fenix TK35UE V2.0 $199.95
+  - Observations: `.a-price .a-offscreen` CSS selector reliable, no CAPTCHAs at 2s delay
+  - Variant ASINs redirect to parent with `?th=1` — same price shown
+  - Token overhead: each navigate+evaluate pair returns ~130-145KB snapshot (saved to disk, not context)
+  - Results: `output/playwright-amazon-test.json`
 
 ### Recent Changes (Apr 13, round 4)
 - **Keepa vision test (Gemini 2.0 Flash)**: Screenshot Keepa charts + parse with Gemini vision API
