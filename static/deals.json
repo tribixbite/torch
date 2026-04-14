@@ -1,13 +1,5 @@
 [
   {
-    "model": "® G5 18 Lumen Key Chain",
-    "brand": "Coast",
-    "price": 3.99,
-    "amazon_low": 4.69,
-    "url": "https://www.amazon.com/dp/B087JCNVL8",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "21350 S50",
     "brand": "Coast",
     "price": 5.14,
@@ -70,14 +62,6 @@
     "amazon_low": 13.8,
     "url": "https://www.amazon.com/dp/B005PT060K",
     "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Keychain",
-    "brand": "Armytek",
-    "price": 9.85,
-    "amazon_low": 19,
-    "url": "https://www.amazon.com/dp/B089SY6NVC",
-    "updated": "2026-03-28T03:42:47.873Z"
   },
   {
     "model": "360° Rotatable",
@@ -149,14 +133,6 @@
     "price": 12.39,
     "amazon_low": 12.39,
     "url": "https://www.amazon.com/dp/B0G2YK989Y",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "G25 83 Lumen",
-    "brand": "Coast",
-    "price": 12.99,
-    "amazon_low": 15.27,
-    "url": "https://www.amazon.com/dp/B007ED3KD0",
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
@@ -264,22 +240,6 @@
     "updated": "2026-03-28T06:20:19.501Z"
   },
   {
-    "model": "Black Convoy T5",
-    "brand": "Convoy",
-    "price": 15,
-    "amazon_low": 25.99,
-    "url": "https://www.amazon.com/dp/B0CRR8ZGNF",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "S2+ Cree XML2 U2 1B 940Lm 7135 x 6",
-    "brand": "Convoy",
-    "price": 15,
-    "amazon_low": 22.99,
-    "url": "https://www.amazon.com/dp/B0912CJN1S",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "E05 Stainless Steel CREE XP-E2 85 Lumen LED Keychain",
     "brand": "Fenix",
     "price": 15,
@@ -302,22 +262,6 @@
     "amazon_low": 31.66,
     "url": "https://www.amazon.com/dp/B00097A7NE",
     "updated": "2026-03-28T07:09:13.565Z"
-  },
-  {
-    "model": "Cyan Convoy T3",
-    "brand": "Convoy",
-    "price": 17,
-    "amazon_low": 22.39,
-    "url": "https://www.amazon.com/dp/B0CQX9FRKQ",
-    "updated": "2026-03-28T03:43:40.476Z"
-  },
-  {
-    "model": "S6 Black KW CSLNM1.TG",
-    "brand": "Convoy",
-    "price": 17,
-    "amazon_low": 21.39,
-    "url": "https://www.amazon.com/dp/B0CP91BRQ4",
-    "updated": "2026-03-28T01:46:04.677Z"
   },
   {
     "model": "Open Top Mini Mag AA",
@@ -445,14 +389,6 @@
     "price": 20,
     "amazon_low": 29.55,
     "url": "https://www.amazon.com/dp/B003HL4E7O",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "desert tan/black/silver C8+",
-    "brand": "Convoy",
-    "price": 21,
-    "amazon_low": 24.58,
-    "url": "https://www.amazon.com/dp/B08WPKN74J",
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
@@ -600,14 +536,6 @@
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
-    "model": "S12 LED",
-    "brand": "Convoy",
-    "price": 27,
-    "amazon_low": 36.99,
-    "url": "https://www.amazon.com/dp/B09JVWJ7DV",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "10pcs Convoy L6",
     "brand": "UCZXCW",
     "price": 29.12,
@@ -712,14 +640,6 @@
     "updated": "2026-04-10T23:20:03.455Z"
   },
   {
-    "model": "M21C",
-    "brand": "Convoy",
-    "price": 31,
-    "amazon_low": 40.15,
-    "url": "https://www.amazon.com/dp/B096LWGM53",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
     "model": "PX25 275 lm",
     "brand": "Coast",
     "price": 31,
@@ -776,14 +696,6 @@
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
-    "model": "Flashlight/Battery Bundle Wide Angle Flood Beam",
-    "brand": "Coast",
-    "price": 32.99,
-    "amazon_low": 44.58,
-    "url": "https://www.amazon.com/dp/B07B9YTHKN",
-    "updated": "2026-03-28T07:06:37.278Z"
-  },
-  {
     "model": "TINI 3 600 Lumen EDC Keychain",
     "brand": "Nitecore",
     "price": 33.96,
@@ -798,5 +710,93 @@
     "amazon_low": 33.99,
     "url": "https://www.amazon.com/dp/B0C8V18VPH",
     "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "HL21 Lumens 97",
+    "brand": "Fenix",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B007VD3J52",
+    "updated": "2026-03-28T05:49:33.914Z"
+  },
+  {
+    "model": "LD01 72 Lumen Cree LED Keychain",
+    "brand": "Fenix",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B00OPCS6DW",
+    "updated": "2026-03-26T10:20:15.540Z"
+  },
+  {
+    "model": "E21 R4 Upgraded 170 Lumens",
+    "brand": "Fenix",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B009RJCLTI",
+    "updated": "2026-03-28T05:51:08.708Z"
+  },
+  {
+    "model": "P4 Pen",
+    "brand": "Ledlenser",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B0FN6FVL2F",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Trinity",
+    "brand": "TRINITY SUPPLY",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B0FW9M2HN7",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "TIP3 720-Lumen Rechargeable Keychain",
+    "brand": "Nitecore",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B0GKNVHMMK",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "TIP3- Blue TIP3 Multi Color Temperature Rechargeable Keychain",
+    "brand": "Nitecore",
+    "price": 34.95,
+    "amazon_low": 34.95,
+    "url": "https://www.amazon.com/dp/B0GMFY89FV",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "BUNDLE: EagleTac P200A2 CREE XM-L2 Cool White U2",
+    "brand": "EagleTac",
+    "price": 35,
+    "amazon_low": 44.99,
+    "url": "https://www.amazon.com/dp/B00THOUAQE",
+    "updated": "2026-03-28T01:46:04.677Z"
+  },
+  {
+    "model": "® Xl50® 3-Cell Aaa",
+    "brand": "Maglite",
+    "price": 35,
+    "amazon_low": 49.8,
+    "url": "https://www.amazon.com/dp/B07D6RR7DB",
+    "updated": "2026-03-28T01:46:04.677Z"
+  },
+  {
+    "model": "XL200",
+    "brand": "Maglite",
+    "price": 35,
+    "amazon_low": 41.47,
+    "url": "https://www.amazon.com/dp/B00PVTG8CO",
+    "updated": "2026-03-28T01:46:04.677Z"
+  },
+  {
+    "model": "MT1A Pro 800 Lumen EDC Compact",
+    "brand": "Nitecore",
+    "price": 35,
+    "amazon_low": 41.95,
+    "url": "https://www.amazon.com/dp/B0DSKLZ1P5",
+    "updated": "2026-03-28T01:46:04.677Z"
   }
 ]
