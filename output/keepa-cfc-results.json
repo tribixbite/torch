@@ -1,0 +1,80 @@
+{
+  "experiment": "Keepa CFC Browser Price History Extraction",
+  "date": "2026-04-13",
+  "duration_minutes": 10,
+  "result": "FAILED - Cannot extract price history data from Keepa via CFC browser",
+
+  "findings": {
+    "cfc_browser": {
+      "page_loads": true,
+      "product_title_readable": true,
+      "dom_structure_readable": true,
+      "price_data_accessible": false,
+      "stability": "very_poor",
+      "notes": [
+        "Keepa product pages load successfully in CFC browser on Android Edge",
+        "Product title, sales rank data, and legend labels are readable via get_page_text and read_page",
+        "Price history data is rendered on HTML5 Canvas via Flot.js - not in the DOM text",
+        "Android Edge restricts JS execution to simple DOM property reads - cannot call getBoundingClientRect, complex functions, or access Flot plot objects",
+        "Keepa pages are extremely heavy (WebSocket connections, canvas rendering, large DOM) and cause the CFC bridge to crash within 1-2 interactions",
+        "Bridge disconnects (503 'No extension connected') after ~2-3 heavy operations and takes 60+ seconds to recover",
+        "Screenshots time out consistently on Keepa pages due to large base64 payload",
+        "Variation products (B0BBW2KSP8) show a variation grid instead of price data directly"
+      ]
+    },
+    "keepa_graph_api": {
+      "endpoint": "graph.keepa.com/pricehistory.png",
+      "status": "503 Service Unavailable",
+      "notes": "Returns 503 error image for all tested ASINs - graph endpoint appears permanently broken for these products"
+    },
+    "keepa_data_api": {
+      "endpoint": "api.keepa.com/product",
+      "tokens_available": 0,
+      "refill_rate": "1 token/minute",
+      "token_flow_reduction": 0.063,
+      "notes": "Zero tokens, increasing rate reduction penalty. Would need extended wait time to accumulate enough tokens for 10 queries"
+    },
+    "playwright_mcp": {
+      "status": "blocked_by_cloudflare",
+      "notes": "Keepa serves Cloudflare challenge page to Playwright - headless browser detection"
+    }
+  },
+
+  "partial_data_extracted": {
+    "B08JCM95X6": {
+      "title": "Wurkkos FC11C EDC Flashlight 1200 High Lumen, 90 High CRI Led Flashlight Rechargeable",
+      "reviews": "758 reviews, 4.4 stars",
+      "last_price_change": "9 months ago",
+      "sales_rank": {
+        "tools_home_improvement": {"current": 15154, "90d_avg": 11212, "365d_avg": 21833, "top_pct": "0.04%"},
+        "handheld_flashlights": {"current": 208, "90d_avg": 178, "365d_avg": 293, "top_pct": "0.23%"}
+      },
+      "price_axis_range": "$0-$50",
+      "chart_date_range": "Jan 16 - Apr 1 (3 months)",
+      "current_amazon_price": "$35.99",
+      "source": "CFC browser read_page + get_page_text + Amazon curl"
+    }
+  },
+
+  "amazon_current_prices": {
+    "B0BBW2KSP8": {"price": null, "title": "Parent ASIN - variation selector, no direct price"},
+    "B0D8123MXV": {"price": "$31.95", "title": "Wurkkos FC11C Led Flashlight Rechargeable 1200 Lumens"},
+    "B0DKXVZGCW": {"price": "$35.99", "title": "Wurkkos FC11C LED Flashlights Rechargeable"},
+    "B08JCM95X6": {"price": "$35.99", "title": "Wurkkos FC11C Led Flashlight Rechargeable 1200 Lumens"},
+    "B0D311QCJM": {"price": "$39.99", "title": "Wurkkos FC11C Led Flashlight Rechargeable High Lumen 1200"},
+    "B0DH3CLSDB": {"price": "$35.99", "title": "Wurkkos FC11C LED Flashlights Rechargeable"},
+    "B0DDC2NMLN": {"price": "$35.99", "title": "Wurkkos FC11C Led Flashlight Rechargeable High Lumen 1200"},
+    "B0DMNNBC13": {"price": "$35.99", "title": "Wurkkos FC11C LED Flashlights Rechargeable"},
+    "B0DGSKNN5H": {"price": "$32.99", "title": "Wurkkos HD01 UV Flashlight, Rechargeable EDC Flashlight"},
+    "B0DGSKPL8F": {"price": "$59.99", "title": "Wurkkos HD01 UV Flashlight, Rechargeable EDC Flashlight"}
+  },
+
+  "recommendations": [
+    "Keepa price history extraction via browser automation is NOT viable on Android Edge - the pages are too heavy and crash the CFC bridge",
+    "The Keepa API is the ONLY reliable way to get price history, but requires token management (60 tokens/hour, currently at 0)",
+    "For current prices only, direct Amazon scraping via curl --compressed works but is unreliable (rate-limited after ~10 requests)",
+    "Consider scheduling Keepa API queries at 1/minute during off-peak hours to build price history data gradually",
+    "The graph.keepa.com image endpoint is non-functional (503) and should not be relied upon",
+    "Alternative: use the Keepa browser extension data that's already loaded in the WebSocket - but would need a desktop browser, not mobile Android"
+  ]
+}
