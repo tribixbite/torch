@@ -1,9 +1,12 @@
 /**
  * Scrape current Amazon prices using Playwright.
- * No extensions needed — just loads Amazon product pages and extracts price.
+ * Tracks results in `amazon_price_checks` table so cron and manual batches
+ * share state and never re-scrape the same ASIN.
  *
- * Usage: bun scripts/amazon-price-scraper.ts [ASIN...]
- * Or: bun scripts/amazon-price-scraper.ts --db [limit]  (pull ASINs from DB)
+ * Usage:
+ *   bun scripts/amazon-price-scraper.ts [--db <limit>] [ASIN...]
+ *   bun scripts/amazon-price-scraper.ts --db 50     # 50 from DB queue
+ *   bun scripts/amazon-price-scraper.ts B0DGSKPL8F  # specific ASINs
  */
 import { chromium } from '/data/data/com.termux/files/home/.bun/install/global/node_modules/playwright-core';
 import Database from 'bun:sqlite';
@@ -13,51 +16,74 @@ const USER_DATA = resolve(process.env.HOME!, '.cache/amazon-playwright-profile')
 const DB_PATH = resolve(process.env.HOME!, 'git/torch/pipeline-data/db/torch.sqlite');
 const CRAWL_DELAY = 3000; // ms between pages
 
-interface PriceResult {
-  asin: string;
-  price: number | null;
-  title: string | null;
-  error?: string;
+// Priority brands for queue ordering
+const PRIORITY_BRANDS: Record<string, number> = {
+  Wurkkos: 1, Skilhunt: 2, Sofirn: 3, Nitecore: 4, Fenix: 5, Acebeam: 6,
+  Zebralight: 7, Olight: 8, ThruNite: 9, Streamlight: 10, Armytek: 11,
+  Emisar: 12, Noctigon: 13, Convoy: 14, Wuben: 15, Rovyvon: 16,
+  Lumintop: 17, Imalent: 18,
+};
+
+interface QueueRow { asin: string; brand: string; has_alt_url: number }
+
+/** Ensure tracking table exists */
+function initDb(db: Database): void {
+  db.exec('PRAGMA busy_timeout = 30000');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS amazon_price_checks (
+      asin TEXT PRIMARY KEY,
+      price_cents INTEGER,        -- null = unavailable
+      status TEXT NOT NULL,        -- 'ok', 'unavailable', 'captcha', 'error'
+      title TEXT,
+      checked_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
 }
 
-/** Get ASINs that need pricing from the DB */
-function getAsinsFromDb(limit: number): string[] {
-  const db = new Database(DB_PATH, { readonly: true });
-  // Flashlights with an ASIN but no price, or price is old
-  const rows = db.prepare(`
-    SELECT DISTINCT f.asin FROM flashlights f
+/** Get unchecked ASINs needing prices, ordered by priority brand */
+function getQueue(db: Database, limit: number): QueueRow[] {
+  return db.prepare(`
+    SELECT f.asin, f.brand,
+      CASE WHEN f.purchase_urls LIKE '%,"%' THEN 1 ELSE 0 END as has_alt_url
+    FROM flashlights f
     WHERE f.asin IS NOT NULL AND f.asin != ''
       AND (f.price_usd IS NULL OR f.price_usd = 0 OR f.price_usd = '')
+      AND f.asin NOT IN (SELECT asin FROM amazon_price_checks)
     ORDER BY CASE f.brand
-      WHEN 'Wurkkos' THEN 1 WHEN 'Skilhunt' THEN 2 WHEN 'Sofirn' THEN 3
-      WHEN 'Nitecore' THEN 4 WHEN 'Fenix' THEN 5 WHEN 'Acebeam' THEN 6
-      WHEN 'Zebralight' THEN 7 WHEN 'Olight' THEN 8 WHEN 'ThruNite' THEN 9
-      WHEN 'Streamlight' THEN 10 WHEN 'Armytek' THEN 11 WHEN 'Emisar' THEN 12
-      WHEN 'Noctigon' THEN 13 WHEN 'Convoy' THEN 14 WHEN 'Wuben' THEN 15
-      WHEN 'Rovyvon' THEN 16 WHEN 'Lumintop' THEN 17 WHEN 'Imalent' THEN 18
+      ${Object.entries(PRIORITY_BRANDS).map(([b, n]) => `WHEN '${b}' THEN ${n}`).join(' ')}
       ELSE 99
     END, f.brand
     LIMIT ?
-  `).all(limit) as { asin: string }[];
-  db.close();
-  return rows.map(r => r.asin);
+  `).all(limit) as QueueRow[];
 }
 
 async function main() {
+  const db = new Database(DB_PATH);
+  initDb(db);
+
   let asins: string[];
+  let fromDb = false;
 
   if (process.argv[2] === '--db') {
     const limit = parseInt(process.argv[3] || '20', 10);
-    asins = getAsinsFromDb(limit);
-    console.log(`Loaded ${asins.length} ASINs from DB (limit ${limit})`);
+    const queue = getQueue(db, limit);
+    asins = queue.map(r => r.asin);
+    fromDb = true;
+    console.log(`Queue: ${asins.length} unchecked ASINs (limit ${limit})`);
+    // Show brand breakdown
+    const brands = new Map<string, number>();
+    for (const r of queue) brands.set(r.brand, (brands.get(r.brand) ?? 0) + 1);
+    const sorted = [...brands.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    console.log('Brands:', sorted.map(([b, c]) => `${b}(${c})`).join(', '));
   } else if (process.argv.length > 2) {
     asins = process.argv.slice(2);
   } else {
-    asins = ['B0DGSKPL8F', 'B08JCM95X6', 'B0DH3CLSDB', 'B0D8123MXV', 'B0DKXVZGCW'];
+    asins = ['B0DGSKPL8F', 'B08JCM95X6', 'B0DH3CLSDB'];
   }
 
   if (asins.length === 0) {
-    console.log('No ASINs to process');
+    console.log('No ASINs to process — queue empty');
+    db.close();
     return;
   }
 
@@ -72,7 +98,17 @@ async function main() {
   });
 
   const page = context.pages()[0] || await context.newPage();
-  const results: PriceResult[] = [];
+
+  // Prepared statements for recording results
+  const insertCheck = db.prepare(`
+    INSERT OR REPLACE INTO amazon_price_checks (asin, price_cents, status, title, checked_at)
+    VALUES (?, ?, ?, ?, datetime('now'))
+  `);
+  const updatePrice = db.prepare('UPDATE flashlights SET price_usd = ? WHERE asin = ?');
+
+  let scraped = 0;
+  let priced = 0;
+  let unavailable = 0;
   let consecutiveFailures = 0;
 
   for (let i = 0; i < asins.length; i++) {
@@ -85,11 +121,11 @@ async function main() {
       // Check for CAPTCHA
       const bodyText = await page.evaluate(() => document.body?.innerText?.slice(0, 300) ?? '');
       if (bodyText.toLowerCase().includes('captcha') || bodyText.toLowerCase().includes('robot')) {
-        console.log(`[${i + 1}/${asins.length}] ${asin} — CAPTCHA hit, stopping`);
-        results.push({ asin, price: null, title: null, error: 'CAPTCHA' });
+        console.log(`[${i + 1}/${asins.length}] ${asin} — CAPTCHA`);
+        insertCheck.run(asin, null, 'captcha', null);
         consecutiveFailures++;
         if (consecutiveFailures >= 3) {
-          console.log('3 consecutive failures, aborting');
+          console.log('3 consecutive CAPTCHAs, aborting');
           break;
         }
         continue;
@@ -105,47 +141,57 @@ async function main() {
       });
 
       const priceNum = data.price ? parseFloat(data.price.replace(/[^0-9.]/g, '')) : null;
-      console.log(`[${i + 1}/${asins.length}] ${asin} — $${priceNum ?? 'N/A'} — ${data.title?.slice(0, 60) ?? 'no title'}`);
+      const priceCents = priceNum ? Math.round(priceNum * 100) : null;
 
-      results.push({ asin, price: priceNum, title: data.title });
+      if (priceNum && priceNum > 0) {
+        // Available — update both tracking table and flashlights price
+        insertCheck.run(asin, priceCents, 'ok', data.title);
+        const changes = updatePrice.run(priceNum, asin);
+        const dbNote = (changes as any).changes > 0 ? ' [DB]' : '';
+        console.log(`[${i + 1}/${asins.length}] ${asin} — $${priceNum}${dbNote} — ${data.title?.slice(0, 55) ?? '?'}`);
+        priced++;
+      } else {
+        // Unavailable — record in tracking table, DON'T set price
+        insertCheck.run(asin, null, 'unavailable', data.title);
+        console.log(`[${i + 1}/${asins.length}] ${asin} — UNAVAILABLE — ${data.title?.slice(0, 55) ?? 'no title'}`);
+        unavailable++;
+      }
+
+      scraped++;
       consecutiveFailures = 0;
 
     } catch (err) {
-      console.log(`[${i + 1}/${asins.length}] ${asin} — ERROR: ${(err as Error).message.slice(0, 80)}`);
-      results.push({ asin, price: null, title: null, error: (err as Error).message.slice(0, 200) });
+      const msg = (err as Error).message.slice(0, 100);
+      console.log(`[${i + 1}/${asins.length}] ${asin} — ERROR: ${msg}`);
+      insertCheck.run(asin, null, 'error', msg);
       consecutiveFailures++;
       if (consecutiveFailures >= 3) {
-        console.log('3 consecutive failures, aborting');
+        console.log('3 consecutive errors, aborting');
         break;
       }
     }
 
-    // Delay between requests
     if (i < asins.length - 1) {
       await page.waitForTimeout(CRAWL_DELAY);
     }
   }
 
-  // Update DB with results
-  const succeeded = results.filter(r => r.price !== null && r.price > 0);
-  if (succeeded.length > 0) {
-    const db = new Database(DB_PATH);
-    db.exec('PRAGMA busy_timeout = 30000');
-    const stmt = db.prepare('UPDATE flashlights SET price_usd = ? WHERE asin = ?');
-    const tx = db.transaction(() => {
-      for (const r of succeeded) {
-        const changes = stmt.run(r.price, r.asin);
-        if ((changes as any).changes > 0) {
-          console.log(`  DB updated: ${r.asin} → $${r.price}`);
-        }
-      }
-    });
-    tx();
-    db.close();
-  }
+  // Summary
+  const totalChecked = db.prepare('SELECT COUNT(*) as c FROM amazon_price_checks').get() as any;
+  const totalOk = db.prepare("SELECT COUNT(*) as c FROM amazon_price_checks WHERE status = 'ok'").get() as any;
+  const totalUnavail = db.prepare("SELECT COUNT(*) as c FROM amazon_price_checks WHERE status = 'unavailable'").get() as any;
+  const remaining = db.prepare(`
+    SELECT COUNT(*) as c FROM flashlights
+    WHERE asin IS NOT NULL AND asin != ''
+      AND (price_usd IS NULL OR price_usd = 0 OR price_usd = '')
+      AND asin NOT IN (SELECT asin FROM amazon_price_checks)
+  `).get() as any;
 
-  console.log(`\nDone: ${succeeded.length}/${results.length} prices scraped`);
+  console.log(`\n=== Session: ${priced} priced, ${unavailable} unavailable, ${scraped} total ===`);
+  console.log(`=== All-time: ${totalChecked.c} checked (${totalOk.c} ok, ${totalUnavail.c} unavailable) ===`);
+  console.log(`=== Queue remaining: ${remaining.c} ===`);
 
+  db.close();
   await context.close();
 }
 

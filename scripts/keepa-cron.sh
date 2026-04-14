@@ -94,4 +94,21 @@ if [ "$UNSCRAPED" -eq 0 ] 2>/dev/null; then
     "$BUN" run pipeline/cli.ts tracking setup 5 >> "$LOGFILE" 2>&1 || true
 fi
 
+# Amazon price scraper via Playwright — 10 per cycle, shares state via amazon_price_checks table
+# Only runs if DISPLAY is set (needs Xvfb/VNC for headed Chromium)
+if [ -n "$DISPLAY" ]; then
+    PRICE_QUEUE=$("$BUN" -e "
+import Database from 'bun:sqlite';
+const db = new Database('pipeline-data/db/torch.sqlite', { readonly: true });
+try {
+  const r = db.prepare(\"SELECT COUNT(*) as c FROM flashlights WHERE asin IS NOT NULL AND asin != '' AND (price_usd IS NULL OR price_usd = 0 OR price_usd = '') AND asin NOT IN (SELECT asin FROM amazon_price_checks)\").get();
+  console.log(r.c);
+} catch { console.log(0); }
+" 2>/dev/null | tail -1)
+    if [ "${PRICE_QUEUE:-0}" -gt 0 ] 2>/dev/null; then
+        echo "$(date): Amazon price scrape — $PRICE_QUEUE in queue, scraping 10" >> "$LOGFILE"
+        "$BUN" scripts/amazon-price-scraper.ts --db 10 >> "$LOGFILE" 2>&1 || true
+    fi
+fi
+
 echo "$(date): Enrichment done" >> "$LOGFILE"
