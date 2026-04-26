@@ -151,7 +151,8 @@ function firstImage(csv: string | undefined): string | null {
 async function enrichBatch(asins: string[]): Promise<{ inserted: number; noWeight: number; tokensLeft: number }> {
   await waitForTokens(asins.length * 2); // ~2 tokens per ASIN (product + stats overhead)
 
-  const url = `https://api.keepa.com/product?key=${KEEPA_KEY}&domain=${DOMAIN}&asin=${asins.join(',')}&stats=1&buybox=1`;
+  // stats=180 returns 180-day window WITH current values; stats=1 returns metadata only.
+  const url = `https://api.keepa.com/product?key=${KEEPA_KEY}&domain=${DOMAIN}&asin=${asins.join(',')}&stats=180&buybox=1&rating=1`;
   const r = await fetch(url);
   if (!r.ok) {
     console.error(`product API HTTP ${r.status}: ${await r.text()}`);
@@ -224,13 +225,20 @@ async function enrichBatch(asins: string[]): Promise<{ inserted: number; noWeigh
   return { inserted, noWeight, tokensLeft: data.tokensLeft };
 }
 
-async function enrich(limit: number): Promise<void> {
+async function enrich(limit: number, source: string | null = null): Promise<void> {
+  // Priority: webfetch > playwright-search > keepa-finder. Cleaner sources first.
   const queue = db.prepare(`
     SELECT asin FROM asin_pool
     WHERE enriched_at IS NULL
-    ORDER BY discovered_at ASC
+      AND (? IS NULL OR source = ?)
+    ORDER BY CASE source
+      WHEN 'webfetch' THEN 1
+      WHEN 'playwright-search' THEN 2
+      WHEN 'keepa-finder' THEN 3
+      ELSE 9 END,
+      discovered_at ASC
     LIMIT ?
-  `).all(limit) as { asin: string }[];
+  `).all(source, source, limit) as { asin: string }[];
 
   if (!queue.length) {
     console.log('[enrich] queue empty');
@@ -258,7 +266,8 @@ const cmd = process.argv[2] ?? 'run';
   }
   if (cmd === 'enrich' || cmd === 'run') {
     const n = parseInt(process.argv[3] ?? '20', 10);
-    await enrich(n);
+    const source = process.argv[4] ?? null;
+    await enrich(n, source);
   }
   if (cmd !== 'discover' && cmd !== 'enrich' && cmd !== 'run') {
     console.error(`Unknown command: ${cmd}. Use: discover | enrich [N] | run`);

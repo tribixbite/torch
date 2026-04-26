@@ -98,6 +98,29 @@ async function scrapePdp(page: any, asin: string): Promise<ScrapeResult> {
     return result;
   }
 
+  // Handle the "Continue shopping" interstitial Amazon serves to suspected bots.
+  // The page has a single button — clicking it reissues the request with a fresh anti-bot token.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const interstitial = await page.evaluate(() => {
+      const txt = (document.body?.innerText ?? '').toLowerCase();
+      return /click the button below to continue shopping|continue shopping/.test(txt) && !document.querySelector('#productTitle');
+    });
+    if (!interstitial) break;
+    try {
+      await page.click('button.a-button-text, button[type="submit"], a.a-link-normal', { timeout: 4000 });
+      await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
+    } catch {
+      // try a navigation back to the product URL — clicking sometimes lands on home
+      try { await page.goto(`https://www.amazon.com/dp/${asin}`, { waitUntil: 'domcontentloaded', timeout: 20000 }); } catch {}
+    }
+  }
+
+  try {
+    await page.waitForSelector('#productTitle', { timeout: 8000 });
+  } catch {
+    // downstream check still records as unavailable
+  }
+
   const probe = await page.evaluate(() => ({
     snippet: (document.body?.innerText ?? '').slice(0, 400).toLowerCase(),
     hasTitle: !!document.querySelector('#productTitle'),
@@ -108,7 +131,8 @@ async function scrapePdp(page: any, asin: string): Promise<ScrapeResult> {
   }
   if (!probe.hasTitle) {
     result.status = 'unavailable';
-    result.errorMsg = probe.snippet.slice(0, 120);
+    result.errorMsg = probe.snippet.slice(0, 200);
+    if (process.env.DEBUG) console.log(`    DEBUG ${asin}: ${probe.snippet.slice(0, 200)}`);
     return result;
   }
 
@@ -318,6 +342,14 @@ async function main() {
     const n = parseInt(args[1] ?? '20', 10);
     asins = getPoolBatch(n);
     console.log(`Pulled ${asins.length} ASINs from pool`);
+  } else if (args[0] === '--pool-random') {
+    const n = parseInt(args[1] ?? '20', 10);
+    asins = (db.prepare(`
+      SELECT asin FROM asin_pool
+      WHERE enriched_at IS NULL
+      ORDER BY RANDOM() LIMIT ?
+    `).all(n) as { asin: string }[]).map(r => r.asin);
+    console.log(`Pulled ${asins.length} random ASINs from pool`);
   } else if (args[0] === '--pool-search') {
     // Only enrich ASINs discovered via Amazon search (clean pool)
     const n = parseInt(args[1] ?? '20', 10);
@@ -327,6 +359,15 @@ async function main() {
       ORDER BY discovered_at ASC LIMIT ?
     `).all(n) as { asin: string }[]).map(r => r.asin);
     console.log(`Pulled ${asins.length} search-discovered ASINs from pool`);
+  } else if (args[0] === '--pool-source') {
+    const source = args[1];
+    const n = parseInt(args[2] ?? '20', 10);
+    asins = (db.prepare(`
+      SELECT asin FROM asin_pool
+      WHERE enriched_at IS NULL AND source = ?
+      ORDER BY discovered_at ASC LIMIT ?
+    `).all(source, n) as { asin: string }[]).map(r => r.asin);
+    console.log(`Pulled ${asins.length} ASINs with source='${source}' from pool`);
   } else if (args.length > 0) {
     asins = args;
   } else {

@@ -1,7 +1,22 @@
 {
-  "generatedAt": "2026-04-26T19:11:19.752Z",
-  "count": 18,
+  "generatedAt": "2026-04-26T19:45:47.534Z",
+  "count": 27,
   "cases": [
+    {
+      "variation_asin": "B0CHL5QFTM",
+      "parent_asin": "B0CHL5QFTM",
+      "title": "Thinborne Super Thin Google Pixel 8 Pro Case, [Thinnest 600D Aramid Fiber] [Feels Like No Case] [Minimalist Style with Carbon Fiber Textures] [ Free Screen Protector]",
+      "color_or_pattern": null,
+      "weight_g": 9.9,
+      "weight_raw": "0.35 ounces",
+      "price_usd": 18.39,
+      "stars": 4.6,
+      "review_count": 67,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/61eR1wDhmIL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0CHL5QFTM",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
+    },
     {
       "variation_asin": "B075R7TTD7",
       "parent_asin": "B075R7TTD7",
@@ -16,6 +31,51 @@
       "amazon_url": "https://www.amazon.com/dp/B075R7TTD7",
       "source": "playwright",
       "fetched_at": "2026-04-26 19:02:23"
+    },
+    {
+      "variation_asin": "B0CKXRKWQW",
+      "parent_asin": "B0CKXRKWQW",
+      "title": "Compatible for Google Pixel 8 Pro Case Clear TPU Colorful Bubbles Flower Pattern Marble Design Ultra Thin Silicone Anti-Scratches Shockproof Bumper Protective Cover Cases for Google Pixel 8 Pro 5G (B)",
+      "color_or_pattern": null,
+      "weight_g": 20,
+      "weight_raw": "20 Grams",
+      "price_usd": 16.88,
+      "stars": 5,
+      "review_count": 9,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/81GbD2HZKkL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0CKXRKWQW",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
+    },
+    {
+      "variation_asin": "B0F5BVCY5J",
+      "parent_asin": "B0F5BVCY5J",
+      "title": "Green Flower Aesthetic Abstract Minimalism Floral Pattern,Trendy Soft TPU Full Cover Case for Google Pixel 8 Pro",
+      "color_or_pattern": null,
+      "weight_g": 20.1,
+      "weight_raw": "0.71 Ounces",
+      "price_usd": 14.98,
+      "stars": 3.8,
+      "review_count": 4,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/614Gbx3HbfL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0F5BVCY5J",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
+    },
+    {
+      "variation_asin": "B0F5BX3VMN",
+      "parent_asin": "B0F5BX3VMN",
+      "title": "Watercolor Flower Painting Aesthetic Floral Pattern,Trendy Soft TPU Full Cover Case for Google Pixel 8 Pro",
+      "color_or_pattern": null,
+      "weight_g": 20.1,
+      "weight_raw": "0.71 Ounces",
+      "price_usd": 14.98,
+      "stars": 4.2,
+      "review_count": 11,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/71ZiaSl3gyL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0F5BX3VMN",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
     },
     {
       "variation_asin": "B0CN82424C",
@@ -119,8 +179,53 @@
       "review_count": 10973,
       "thumbnail_url": "https://m.media-amazon.com/images/I/71NCAq8yHmL._AC_SL1200_.jpg",
       "amazon_url": "https://www.amazon.com/dp/B0BZ5VHDNV",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
+    },
+    {
+      "variation_asin": "B0BZ5TMF6G",
+      "parent_asin": "B0BZ5TMF6G",
+      "title": "Spigen for Pixel 8 Pro Case, Liquid Air (2023) [No Magnet Ring] [Military-Grade Protection] - Abyss Green",
+      "color_or_pattern": null,
+      "weight_g": 35,
+      "weight_raw": "35 Grams",
+      "price_usd": 16.99,
+      "stars": 4.7,
+      "review_count": 10973,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/71KzTzzKDhL._AC_SL1200_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0BZ5TMF6G",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
+    },
+    {
+      "variation_asin": "B0CLRPP6FY",
+      "parent_asin": "B0CLRPP6FY",
+      "title": "for Google Pixel 8 Pro Case Marble Silicone Pixel 8 Pro Phone Case Shockproof Glitter Plated Gold Edges Protective Flexible TPU Rubber Skin Bumper Cover Girls Women, Green",
+      "color_or_pattern": null,
+      "weight_g": 36,
+      "weight_raw": "36 Grams",
+      "price_usd": 11.99,
+      "stars": null,
+      "review_count": null,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/51xfbcP1gFL._AC_SL1000_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0CLRPP6FY",
       "source": "playwright",
-      "fetched_at": "2026-04-26 18:54:20"
+      "fetched_at": "2026-04-26 19:37:09"
+    },
+    {
+      "variation_asin": "B0BZ6BZ4Y1",
+      "parent_asin": "B0BZ6BZ4Y1",
+      "title": "Spigen for Pixel 8 Pro Case, Ultra Hybrid[Anti-Yellowing] [No Magnet Ring] - Clear",
+      "color_or_pattern": null,
+      "weight_g": 37.2,
+      "weight_raw": "37.2 Grams",
+      "price_usd": 15.99,
+      "stars": 4.6,
+      "review_count": 7456,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/61CBrlxVNfL._AC_SL1200_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0BZ6BZ4Y1",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
     },
     {
       "variation_asin": "B0CMXNW8HT",
@@ -166,6 +271,21 @@
       "amazon_url": "https://www.amazon.com/dp/B0CG2HFW8Z",
       "source": "playwright",
       "fetched_at": "2026-04-26 18:59:57"
+    },
+    {
+      "variation_asin": "B0CKSX9QWN",
+      "parent_asin": "B0CKSX9QWN",
+      "title": "Carveit Wood Case for Pixel 8 Pro Case [Natural Wood & Black Soft TPU] Shockproof Protective Unique Wooden Cover Compatible with Google Pixel 8 Pro (Lake and Mountain-Walnut)",
+      "color_or_pattern": null,
+      "weight_g": 41.1,
+      "weight_raw": "1.45 Ounces",
+      "price_usd": 25.99,
+      "stars": 4.4,
+      "review_count": 10,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/71d2ZK3pVPL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0CKSX9QWN",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
     },
     {
       "variation_asin": "B0FGDQX2BJ",
@@ -226,6 +346,21 @@
       "amazon_url": "https://www.amazon.com/dp/B0F6TNYSHK",
       "source": "playwright",
       "fetched_at": "2026-04-26 19:04:27"
+    },
+    {
+      "variation_asin": "B0CCDFQYJ7",
+      "parent_asin": "B0CCDFQYJ7",
+      "title": "Btscase for Google Pixel 8 Pro Case (2023), Marble Pattern 3 in 1 Heavy Duty Shockproof Full Body Rugged Hard PC+Soft Silicone Drop Protective Women Girl Cover for Google Pixel 8 Pro, Rose Gold",
+      "color_or_pattern": null,
+      "weight_g": 60,
+      "weight_raw": "60 Grams",
+      "price_usd": 11.99,
+      "stars": 4.4,
+      "review_count": 171,
+      "thumbnail_url": "https://m.media-amazon.com/images/I/71JNNBxN7QL._AC_SL1500_.jpg",
+      "amazon_url": "https://www.amazon.com/dp/B0CCDFQYJ7",
+      "source": "manual",
+      "fetched_at": "2026-04-26 19:24:23"
     },
     {
       "variation_asin": "B0DNST16DP",
