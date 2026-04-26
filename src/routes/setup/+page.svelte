@@ -26,9 +26,10 @@
 	let payload: CasesPayload | null = $state(null);
 	let loadError: string | null = $state(null);
 
-	let maxWeight = $state(30);
-	let minStars = $state(4.4);
+	let maxWeight = $state(50);
+	let minStars = $state(4.0);
 	let minReviews = $state(0);
+	let includeUnrated = $state(true);
 	let search = $state('');
 	let sortKey: 'weight' | 'stars' | 'price' | 'reviews' = $state('weight');
 
@@ -45,15 +46,18 @@
 	const filtered = $derived.by(() => {
 		if (!payload) return [] as CaseRow[];
 		const q = search.trim().toLowerCase();
-		const out = payload.cases.filter(
-			(c) =>
-				c.weight_g <= maxWeight &&
-				(c.stars ?? 0) >= minStars &&
-				(c.review_count ?? 0) >= minReviews &&
-				(q === '' ||
-					c.title.toLowerCase().includes(q) ||
-					(c.color_or_pattern ?? '').toLowerCase().includes(q))
-		);
+		const out = payload.cases.filter((c) => {
+			if (c.weight_g > maxWeight) return false;
+			const hasStars = c.stars != null && c.stars > 0;
+			if (hasStars && c.stars! < minStars) return false;
+			if (!hasStars && !includeUnrated) return false;
+			if ((c.review_count ?? 0) < minReviews) return false;
+			if (q !== '') {
+				const blob = `${c.title} ${c.color_or_pattern ?? ''}`.toLowerCase();
+				if (!blob.includes(q)) return false;
+			}
+			return true;
+		});
 		out.sort((a, b) => {
 			switch (sortKey) {
 				case 'stars':
@@ -121,6 +125,10 @@
 			<span>Min reviews</span>
 			<input type="range" min="0" max="2000" step="50" bind:value={minReviews} />
 			<output>{minReviews}</output>
+		</label>
+		<label class="checkbox">
+			<input type="checkbox" bind:checked={includeUnrated} />
+			<span>Include unrated</span>
 		</label>
 		<label class="search">
 			<span>Search</span>
@@ -219,6 +227,16 @@
 	.filters input[type='range'] {
 		width: 100%;
 		accent-color: var(--accent);
+	}
+	.filters .checkbox {
+		flex-direction: row;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.filters .checkbox input {
+		accent-color: var(--accent);
+		width: 1rem;
+		height: 1rem;
 	}
 	.filters input[type='text'],
 	.filters select {
