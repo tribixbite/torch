@@ -182,12 +182,40 @@ function loadExistingAsinsByModel(): Map<GpuModel, Set<string>> {
 	return out;
 }
 
+function writeSeed(now: number, allProducts: KeepaProduct[]) {
+	const offers: SeedOffer[] = [];
+	const products: SeedProduct[] = [];
+	for (const p of allProducts) {
+		const { offers: po, product } = offersFromProduct(p, now);
+		if (!product) continue;
+		offers.push(...po);
+		products.push(product);
+	}
+	// Preserve any prior seed entries we didn't refresh in this run, so a
+	// token-limited partial run doesn't shrink the deal list.
+	if (existsSync(OUT_PATH)) {
+		try {
+			const old = JSON.parse(readFileSync(OUT_PATH, 'utf8')) as SeedFile;
+			const refreshedAsins = new Set(products.map((p) => p.asin));
+			for (const p of old.products ?? []) if (!refreshedAsins.has(p.asin)) products.push(p);
+			const refreshedOfferAsins = new Set(offers.map((o) => o.asin));
+			for (const o of old.offers ?? []) if (!refreshedOfferAsins.has(o.asin)) offers.push(o);
+		} catch {}
+	}
+	const out: SeedFile = { generated_at: now, offers, products };
+	mkdirSync(resolve(OUT_PATH, '..'), { recursive: true });
+	writeFileSync(OUT_PATH, JSON.stringify(out, null, 2));
+	return { offers, products };
+}
+
 async function main() {
 	const t0 = Date.now();
 	const args = process.argv.slice(2);
 	const modelsArg = args.indexOf('--models');
 	const minArg = args.indexOf('--min-per-model');
 	const noSearch = args.includes('--no-search');
+	const maxWaitArg = args.indexOf('--max-wait-min');
+	const maxWaitMin = maxWaitArg >= 0 ? parseInt(args[maxWaitArg + 1], 10) : 5;
 	const models: GpuModel[] = modelsArg >= 0 ? args[modelsArg + 1].split(',') as GpuModel[] : ['3090', '4090', '5090'];
 	const minPerModel = minArg >= 0 ? parseInt(args[minArg + 1], 10) : 20;
 
@@ -200,20 +228,29 @@ async function main() {
 	for (const set of existingByModel.values()) for (const a of set) allKnownAsins.add(a);
 	console.log(`  existing seed has ${allKnownAsins.size} ASINs across ${existingByModel.size} models`);
 
-	// Phase A: enrich all known ASINs (cheap, but token-gated)
+	// Phase A: enrich all known ASINs (cheap, but token-gated; writes incrementally)
 	const enrichQueue = [...allKnownAsins];
 	const allProducts: KeepaProduct[] = [];
 	for (let i = 0; i < enrichQueue.length; i += PRODUCT_BATCH) {
 		const batch = enrichQueue.slice(i, i + PRODUCT_BATCH);
-		// Need ~1 token per ASIN. If short, wait for refill (1/min).
 		const tok = await getTokens();
 		if (tok < batch.length) {
 			const need = batch.length - tok;
-			const waitMs = (need + 2) * 60_000;
+			const waitMin = Math.ceil(need + 2);
+			if (waitMin > maxWaitMin) {
+				console.log(`  tokens=${tok}, need ${batch.length} → wait ${waitMin}min > maxWaitMin=${maxWaitMin}, stopping early`);
+				break;
+			}
+			const waitMs = waitMin * 60_000;
 			console.log(`  tokens=${tok}, need ${batch.length}, waiting ${(waitMs / 1000).toFixed(0)}s`);
 			await new Promise((r) => setTimeout(r, waitMs));
 		}
-		allProducts.push(...await fetchProducts(batch));
+		const got = await fetchProducts(batch);
+		allProducts.push(...got);
+		// Write seed incrementally so any callers see the freshest data even
+		// if we exit early due to token limits.
+		const { offers: o, products: pr } = writeSeed(Date.now(), allProducts);
+		console.log(`  seed updated: ${pr.length} products, ${o.length} offers`);
 	}
 
 	// Phase B: search for models below the floor (skipped if --no-search or token-poor)
@@ -233,37 +270,10 @@ async function main() {
 		}
 	}
 
-	// Phase C: assemble seed (merge into existing, freshen by overwriting)
-	const now = Date.now();
-	const offers: SeedOffer[] = [];
-	const products: SeedProduct[] = [];
-	let kept = 0, rejected = 0;
-	for (const p of allProducts) {
-		const { offers: po, product } = offersFromProduct(p, now);
-		if (!product) { rejected++; continue; }
-		kept++;
-		offers.push(...po);
-		products.push(product);
-	}
-
-	// If existing seed has products that we didn't re-enrich (e.g. token starve), keep them as-is
-	if (existsSync(OUT_PATH)) {
-		try {
-			const old = JSON.parse(readFileSync(OUT_PATH, 'utf8')) as SeedFile;
-			const refreshedAsins = new Set(products.map((p) => p.asin));
-			for (const p of old.products ?? []) {
-				if (!refreshedAsins.has(p.asin)) products.push(p);
-			}
-			const refreshedOfferAsins = new Set(offers.map((o) => o.asin));
-			for (const o of old.offers ?? []) {
-				if (!refreshedOfferAsins.has(o.asin)) offers.push(o);
-			}
-		} catch {}
-	}
-
-	const out: SeedFile = { generated_at: now, offers, products };
-	mkdirSync(resolve(OUT_PATH, '..'), { recursive: true });
-	writeFileSync(OUT_PATH, JSON.stringify(out, null, 2));
+	// Phase C: final write (Phase A also writes incrementally per batch)
+	const { offers, products } = writeSeed(Date.now(), allProducts);
+	let kept = products.length;
+	let rejected = allProducts.length - products.length;
 
 	const dt = ((Date.now() - t0) / 1000).toFixed(1);
 	const byCond: Record<string, number> = {};
