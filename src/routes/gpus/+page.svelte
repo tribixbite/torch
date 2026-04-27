@@ -12,7 +12,8 @@
 
 	let modelFilter: GpuModel | 'all' = $state('all');
 	let conditionFilter = $state('all');
-	let minDiscountPct = $state(0);
+	// Default well below 0 so above-MSRP listings (most 5090/4090 today) are visible.
+	let minDiscountPct = $state(-300);
 	let minSellerRating = $state(0);
 	let goodDealOnly = $state(false);
 	let sortKey: 'price' | 'discount' | 'rating' | 'last_seen' = $state('discount');
@@ -152,7 +153,7 @@
 		</label>
 		<label>
 			<span>Min % off MSRP</span>
-			<input type="range" min="-50" max="80" step="5" bind:value={minDiscountPct} />
+			<input type="range" min="-300" max="80" step="5" bind:value={minDiscountPct} />
 			<output>{minDiscountPct}%</output>
 		</label>
 		<label>

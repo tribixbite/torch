@@ -66,8 +66,14 @@ async function proxyFetch(rawUrl: string): Promise<Response> {
     });
   }
   const body = await upstream.text();
-  cache.set(rawUrl, { body, status: upstream.status, storedAt: Date.now(), ttlMs: pickTtl(rawUrl) });
-  evictIfFull();
+  // Don't cache obvious bot-detection / soft-error pages or anything Amazon
+  // serves as "Sorry! Something went wrong" — otherwise we'd serve them for
+  // up to 30 min until TTL expires, blocking recovery.
+  const isBotBlock = body.length < 5000 && /Sorry! Something went wrong/i.test(body);
+  if (!isBotBlock && upstream.status < 500) {
+    cache.set(rawUrl, { body, status: upstream.status, storedAt: Date.now(), ttlMs: pickTtl(rawUrl) });
+    evictIfFull();
+  }
   return new Response(body, {
     status: upstream.status,
     headers: { ...corsHeaders, 'content-type': 'text/html; charset=utf-8', 'x-proxy-cache': 'MISS' },
