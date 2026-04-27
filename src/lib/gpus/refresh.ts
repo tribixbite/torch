@@ -22,7 +22,8 @@ export interface RefreshProgress {
 }
 
 const MODELS: GpuModel[] = ['3090', '4090', '5090'];
-const PER_REQUEST_DELAY_MS = 1500;
+const PER_REQUEST_DELAY_MS = 3000;
+const DISCOVERY_DELAY_MS = 8000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -46,7 +47,7 @@ export async function refreshAll(
 					} catch (e) {
 						console.warn(`discover ${model}/${condition} failed`, e);
 					}
-					await sleep(PER_REQUEST_DELAY_MS);
+					await sleep(DISCOVERY_DELAY_MS);
 				}
 				asinsByModel.set(model, seen);
 			}

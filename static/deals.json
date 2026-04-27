@@ -1,5 +1,21 @@
 [
   {
+    "model": "Cree",
+    "brand": "JJ-LITE",
+    "price": 3.97,
+    "amazon_low": 6.98,
+    "url": "https://www.amazon.com/dp/B01CLHLFQ2",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "LED Pen",
+    "brand": "MonsterLite",
+    "price": 4.81,
+    "amazon_low": 8.99,
+    "url": "https://www.amazon.com/dp/B07GNZQZTL",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "21350 S50",
     "brand": "Coast",
     "price": 5.14,
@@ -32,12 +48,36 @@
     "updated": "2026-04-10T19:45:07.173Z"
   },
   {
-    "model": "E11 Upgraded 115 Lumens",
-    "brand": "Fenix",
-    "price": 8.99,
-    "amazon_low": 26.95,
-    "url": "https://www.amazon.com/dp/B009RJB8SS",
-    "updated": "2026-03-28T05:51:20.851Z"
+    "model": "Very Tiny",
+    "brand": "JETBeam",
+    "price": 7.99,
+    "amazon_low": 12.95,
+    "url": "https://www.amazon.com/dp/B01I1N38YC",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "M3A396: Mini 2 AAA",
+    "brand": "Maglite",
+    "price": 7.99,
+    "amazon_low": 8.68,
+    "url": "https://www.amazon.com/dp/B0002F72BS",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "MT06 Multi-Task Series CREE XQ-E R2 Easy-Adjustable 2 Mode High Strength Stainless",
+    "brand": "Nitecore",
+    "price": 7.99,
+    "amazon_low": 22.5,
+    "url": "https://www.amazon.com/dp/B00QRLDL98",
+    "updated": "2026-03-28T13:05:05.452Z"
+  },
+  {
+    "model": "18Volt",
+    "brand": "JESLED",
+    "price": 8.56,
+    "amazon_low": 14.49,
+    "url": "https://www.amazon.com/dp/B07L8DWXJC",
+    "updated": "2026-03-27T20:12:45.128Z"
   },
   {
     "model": "Solitaire LED 1-Cell AAA",
@@ -56,6 +96,14 @@
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
+    "model": "K2 65 Lumen 1-watt Cree XPE Q5 Multi-Mode Compact",
+    "brand": "Nextorch",
+    "price": 8.99,
+    "amazon_low": 24.09,
+    "url": "https://www.amazon.com/dp/B00719OVZ8",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "T0 Pocket Keychain",
     "brand": "Nitecore",
     "price": 9.75,
@@ -72,12 +120,68 @@
     "updated": "2026-04-13T12:40:02.790Z"
   },
   {
+    "model": "Magnetic",
+    "brand": "Generic",
+    "price": 9.9,
+    "amazon_low": 9.99,
+    "url": "https://www.amazon.com/dp/B09VGBPKFH",
+    "updated": "2026-04-09T22:35:05.342Z"
+  },
+  {
+    "model": "H5 Lite LED",
+    "brand": "Everbeam",
+    "price": 9.93,
+    "amazon_low": 12.99,
+    "url": "https://www.amazon.com/dp/B07PKCNRK6",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "AAA Flashlight Presentation Box, Blue",
+    "brand": "Maglite",
+    "price": 9.97,
+    "amazon_low": 10.1,
+    "url": "https://www.amazon.com/dp/B0000VM1U6",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "LD10 Keychain",
     "brand": "Imalent",
     "price": 9.99,
     "amazon_low": 29,
     "url": "https://www.amazon.com/dp/B09MQK83NT",
     "updated": "2026-03-28T03:25:59.508Z"
+  },
+  {
+    "model": "Mag Instrument Inc SJ3ASW6 Maglite LED SPECTRUM Solitaire Red",
+    "brand": "Maglite",
+    "price": 9.99,
+    "amazon_low": 14.08,
+    "url": "https://www.amazon.com/dp/B07HNVYMDQ",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "G2 LED Flap Cap Hands-Free",
+    "brand": "Head-Lite",
+    "price": 9.99,
+    "amazon_low": 19.95,
+    "url": "https://www.amazon.com/dp/B07RYZ5LYK",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "LA10 CRI",
+    "brand": "Nitecore",
+    "price": 9.99,
+    "amazon_low": 29.99,
+    "url": "https://www.amazon.com/dp/B01M2TRRGB",
+    "updated": "2026-03-28T03:35:04.453Z"
+  },
+  {
+    "model": "Tube GL USB Rechargeable Green LED Keychain Flashight Plus LumenTac LED Keychain",
+    "brand": "Nitecore",
+    "price": 9.99,
+    "amazon_low": 11.99,
+    "url": "https://www.amazon.com/dp/B06XDVZJNF",
+    "updated": "2026-03-28T04:45:06.274Z"
   },
   {
     "model": "2 Pack",
@@ -96,14 +200,6 @@
     "updated": "2026-04-09T17:55:03.052Z"
   },
   {
-    "model": "Tube v2.0 High Performance LED USB Rechargeable Keychain",
-    "brand": "Nitecore",
-    "price": 10,
-    "amazon_low": 13.99,
-    "url": "https://www.amazon.com/dp/B08C765SV4",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
     "model": "Headlamp",
     "brand": "Jyterlks",
     "price": 10.99,
@@ -112,12 +208,60 @@
     "updated": "2026-03-27T20:12:45.128Z"
   },
   {
+    "model": "TorchUpgrades Compatible",
+    "brand": "Generic",
+    "price": 10.99,
+    "amazon_low": 16.95,
+    "url": "https://www.amazon.com/dp/B0F4NXQKWW",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "JET-U Max. 135 Lumens 3Modes Mini EDC Keychain",
+    "brand": "JETBeam",
+    "price": 11.89,
+    "amazon_low": 20.27,
+    "url": "https://www.amazon.com/dp/B08624DYR2",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "Small",
     "brand": "Nextorch",
     "price": 11.89,
     "amazon_low": 15.95,
     "url": "https://www.amazon.com/dp/B07BGVY282",
     "updated": "2026-03-28T06:31:06.236Z"
+  },
+  {
+    "model": "HWC Nylon Maglite MINI-MAG COVERED",
+    "brand": "Maglite",
+    "price": 11.99,
+    "amazon_low": 12.99,
+    "url": "https://www.amazon.com/dp/B000XYUSNW",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "2D Cell Barrel/Body Extension Tube for MagLite Incandescent or Xenon",
+    "brand": "JADSOrBoBi",
+    "price": 11.99,
+    "amazon_low": 16.98,
+    "url": "https://www.amazon.com/dp/B0DHKBZ3XT",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Zoom-Lite Telescopic",
+    "brand": "LEDinsider",
+    "price": 11.99,
+    "amazon_low": 19.9,
+    "url": "https://www.amazon.com/dp/B001RUMRGC",
+    "updated": "2026-03-26T23:30:04.359Z"
+  },
+  {
+    "model": "UV Flashlight, NEXTORCH Mini USB Rechargeable 365nm Blacklight Flashlight Keychain 2 in 1 UV Light & White Light Pocket Flashlight Pet Urine Detector Cat Dog Dry Stains Bed Bug Ultraviolet Flashlights",
+    "brand": "Nextorch",
+    "price": 11.99,
+    "amazon_low": 11.99,
+    "url": "https://www.amazon.com/dp/B083TGC1CN",
+    "updated": "2026-03-27T20:12:45.128Z"
   },
   {
     "model": "2AAA Mini Mag Lite",
@@ -133,6 +277,22 @@
     "price": 12.39,
     "amazon_low": 12.39,
     "url": "https://www.amazon.com/dp/B0G2YK989Y",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Disposable LED Life Lite",
+    "brand": "Garrity",
+    "price": 12.89,
+    "amazon_low": 23.7,
+    "url": "https://www.amazon.com/dp/B06XFYRZNB",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "Flex Arm, Scratch-Free Magnetic Grip, Adjustable Length",
+    "brand": "FourSevens",
+    "price": 12.99,
+    "amazon_low": 35,
+    "url": "https://www.amazon.com/dp/B0CHKKCD2M",
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
@@ -208,6 +368,14 @@
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
+    "model": "Flashlight Battery, Compatible",
+    "brand": "Empire",
+    "price": 13.99,
+    "amazon_low": 26.91,
+    "url": "https://www.amazon.com/dp/B01B6SU4EQ",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "Polyamide Clip-On Kydex",
     "brand": "PowerTac",
     "price": 14.94,
@@ -232,20 +400,36 @@
     "updated": "2026-03-28T01:28:09.256Z"
   },
   {
-    "model": "mini Keychain",
-    "brand": "JETBeam",
+    "model": "M2AKY6 Mini 9 Lumen Adjustable Beam",
+    "brand": "Maglite",
     "price": 14.99,
-    "amazon_low": 28.14,
-    "url": "https://www.amazon.com/dp/B019JD0VU2",
-    "updated": "2026-03-28T06:20:19.501Z"
+    "amazon_low": 20.86,
+    "url": "https://www.amazon.com/dp/B002X77844",
+    "updated": "2026-03-28T01:28:09.256Z"
   },
   {
-    "model": "E05 Stainless Steel CREE XP-E2 85 Lumen LED Keychain",
-    "brand": "Fenix",
-    "price": 15,
-    "amazon_low": 25.66,
-    "url": "https://www.amazon.com/dp/B00LGYTET2",
-    "updated": "2026-03-28T01:46:04.677Z"
+    "model": "SP2P017M 2AA Mini Pro",
+    "brand": "Maglite",
+    "price": 14.99,
+    "amazon_low": 18,
+    "url": "https://www.amazon.com/dp/B06XHRP83R",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Mag-Num Star Xenon C-Cell or D-Cell",
+    "brand": "Maglite",
+    "price": 14.99,
+    "amazon_low": 16.99,
+    "url": "https://www.amazon.com/dp/B001TJF1BY",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "M3AFD6: Mini 2 AAA",
+    "brand": "Maglite",
+    "price": 14.99,
+    "amazon_low": 20.03,
+    "url": "https://www.amazon.com/dp/B000WIMDUU",
+    "updated": "2026-03-28T01:28:09.256Z"
   },
   {
     "model": "E01 LED Waterproof Mini Torch",
@@ -256,12 +440,68 @@
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
-    "model": "LED Lenser 7732DUV",
-    "brand": "Coast",
-    "price": 15.19,
-    "amazon_low": 31.66,
-    "url": "https://www.amazon.com/dp/B00097A7NE",
-    "updated": "2026-03-28T07:09:13.565Z"
+    "model": "AY32146: Mag-Lite (D and C Cell)",
+    "brand": "Maglite",
+    "price": 15.61,
+    "amazon_low": 22.26,
+    "url": "https://www.amazon.com/dp/B088229JKM",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "AA RC Programmable MyTorch",
+    "brand": "Nextorch",
+    "price": 15.7,
+    "amazon_low": 39.55,
+    "url": "https://www.amazon.com/dp/B00KAD00CU",
+    "updated": "2026-03-27T09:15:05.517Z"
+  },
+  {
+    "model": "3D Ultra and 2AA Mini Combo",
+    "brand": "Maglite",
+    "price": 16.99,
+    "amazon_low": 48,
+    "url": "https://www.amazon.com/dp/B00CP79BOW",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Minion Holiday Christmas Stocking Stuffer Bundle",
+    "brand": "Despicable Me",
+    "price": 16.99,
+    "amazon_low": 19.99,
+    "url": "https://www.amazon.com/dp/B018DAP85A",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "NCP30",
+    "brand": "Nitecore",
+    "price": 16.99,
+    "amazon_low": 16.99,
+    "url": "https://www.amazon.com/dp/B016DXP4XU",
+    "updated": "2026-04-01T04:33:14.868Z"
+  },
+  {
+    "model": "SP2301H 3-AA Cell Mini",
+    "brand": "Maglite",
+    "price": 17.84,
+    "amazon_low": 20,
+    "url": "https://www.amazon.com/dp/B000PWDDXO",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "LED Headlamp",
+    "brand": "Dark Lite",
+    "price": 17.97,
+    "amazon_low": 23.97,
+    "url": "https://www.amazon.com/dp/B00PX5JIGO",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "ST4D015 4-D Cell",
+    "brand": "Maglite",
+    "price": 17.99,
+    "amazon_low": 48.49,
+    "url": "https://www.amazon.com/dp/B000OC9LI6",
+    "updated": "2026-03-28T01:28:09.256Z"
   },
   {
     "model": "Open Top Mini Mag AA",
@@ -280,6 +520,30 @@
     "updated": "2026-04-13T06:10:02.365Z"
   },
   {
+    "model": "i5T EOS 300 Lumen",
+    "brand": "Olight",
+    "price": 17.99,
+    "amazon_low": 31.95,
+    "url": "https://www.amazon.com/dp/B086BCBRP6",
+    "updated": "2026-04-10T00:20:04.502Z"
+  },
+  {
+    "model": "Tactical",
+    "brand": "LIVANS",
+    "price": 18.5,
+    "amazon_low": 18.5,
+    "url": "https://www.amazon.com/dp/B0DM5HFNP4",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "German Mini Flash Super Power",
+    "brand": "FOTTEPP",
+    "price": 18.88,
+    "amazon_low": 21.21,
+    "url": "https://www.amazon.com/dp/B0CR6C3FJC",
+    "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
     "model": "2Pcs TC4 Titanium Cylindrical Bamboo Knot Paracord Knife Beads,EDC DIY Bracelet Outdoor Tool Backpack",
     "brand": "Generic",
     "price": 18.89,
@@ -288,12 +552,20 @@
     "updated": "2026-03-27T20:12:45.128Z"
   },
   {
-    "model": "LD12G2BK",
-    "brand": "Fenix",
+    "model": "4016519",
+    "brand": "JETBeam",
     "price": 18.99,
-    "amazon_low": 49.93,
-    "url": "https://www.amazon.com/dp/B00C8757EM",
-    "updated": "2026-03-28T05:51:12.740Z"
+    "amazon_low": 25.04,
+    "url": "https://www.amazon.com/dp/B019MHY3MW",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Whitmor NITECORE Tip 2017 CRI 240 Lm Rechargeable Keychain",
+    "brand": "Nitecore",
+    "price": 18.99,
+    "amazon_low": 39.99,
+    "url": "https://www.amazon.com/dp/B01M23NQBD",
+    "updated": "2026-04-01T04:33:14.868Z"
   },
   {
     "model": "Tactical",
@@ -344,12 +616,44 @@
     "updated": "2026-03-28T06:25:14.918Z"
   },
   {
+    "model": "Versa Lite Max Rechargeable",
+    "brand": "Amphipod",
+    "price": 19.99,
+    "amazon_low": 35,
+    "url": "https://www.amazon.com/dp/B07NPT9NR2",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "Motherboard Housing for Moto G6 G7 G8 G9 Play Plus G8 Power Lite Mainboard",
     "brand": "Generic",
     "price": 19.99,
     "amazon_low": 19.99,
     "url": "https://www.amazon.com/dp/B0GDQLTRZQ",
     "updated": "2026-03-27T20:12:45.128Z"
+  },
+  {
+    "model": "0340100 Astro R-LITE Red Light",
+    "brand": "Explore Scientific",
+    "price": 19.99,
+    "amazon_low": 22.9,
+    "url": "https://www.amazon.com/dp/B07CZ2TP7X",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "NXP2AAA Model P2 AAA",
+    "brand": "Nextorch",
+    "price": 19.99,
+    "amazon_low": 31.26,
+    "url": "https://www.amazon.com/dp/B00LC5MRLC",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "AP10 Electric Air Pump",
+    "brand": "Nitecore",
+    "price": 19.99,
+    "amazon_low": 39.06,
+    "url": "https://www.amazon.com/dp/B0C5BCTX95",
+    "updated": "2026-03-28T01:28:09.256Z"
   },
   {
     "model": "RSW2 Pressure Switch -Compatable",
@@ -360,12 +664,12 @@
     "updated": "2026-04-01T04:33:14.868Z"
   },
   {
-    "model": "G50 355 Lumen Focusing",
-    "brand": "Coast",
-    "price": 20,
-    "amazon_low": 25.42,
-    "url": "https://www.amazon.com/dp/B07YFBJ126",
-    "updated": "2026-03-28T01:46:04.677Z"
+    "model": "i3s EOS Cree XP-G2 80LM",
+    "brand": "Olight",
+    "price": 19.99,
+    "amazon_low": 23.95,
+    "url": "https://www.amazon.com/dp/B00F13R7F2",
+    "updated": "2026-04-10T06:15:09.353Z"
   },
   {
     "model": "K4R Keychain Powerful Rechargeable Compact",
@@ -384,6 +688,22 @@
     "updated": "2026-03-28T01:46:04.677Z"
   },
   {
+    "model": "Mini ONE USB Charge Cree XP-G3 500 Lumens 5 Color",
+    "brand": "JETBeam",
+    "price": 20.89,
+    "amazon_low": 30.3,
+    "url": "https://www.amazon.com/dp/B08CRR461J",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "272L MINI MAGLITE PRO SIL, 272-Lumen Mini MAGLITE(R) LED Pro",
+    "brand": "Maglite",
+    "price": 21.99,
+    "amazon_low": 25.21,
+    "url": "https://www.amazon.com/dp/B014LVR5T2",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "I1R 2 Pro Eos 180 Lumens EDC Rechargeable Keychain",
     "brand": "Olight",
     "price": 21.99,
@@ -398,6 +718,14 @@
     "amazon_low": 37.99,
     "url": "https://www.amazon.com/dp/B0G3NCVL8P",
     "updated": "2026-04-10T18:15:04.365Z"
+  },
+  {
+    "model": "Olight i5T EOS Purple 300 Lumen Compact 1x AA EDC",
+    "brand": "Dsadg",
+    "price": 22.49,
+    "amazon_low": 32.95,
+    "url": "https://www.amazon.com/dp/B082PQJPVL",
+    "updated": "2026-04-10T13:35:07.236Z"
   },
   {
     "model": "Lite",
@@ -416,36 +744,12 @@
     "updated": "2026-03-27T20:12:45.128Z"
   },
   {
-    "model": "Mag SJ3A092 LED Solitaire 1AAA",
-    "brand": "Maglite",
-    "price": 23.73,
-    "amazon_low": 23.73,
-    "url": "https://www.amazon.com/dp/B01LCQ03Q6",
-    "updated": "2026-03-27T20:12:45.128Z"
-  },
-  {
-    "model": "OPEBS Fenix TK 20 2 Level Cree",
-    "brand": "Fenix",
-    "price": 23.74,
-    "amazon_low": 49.93,
-    "url": "https://www.amazon.com/dp/B001GAOOIW",
-    "updated": "2026-03-28T05:51:04.749Z"
-  },
-  {
     "model": "TIP 360 Lumen USB Rechargeable Keychain",
     "brand": "Nitecore",
     "price": 23.85,
     "amazon_low": 23.85,
     "url": "https://www.amazon.com/dp/B06XXMCXHY",
     "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "E02R Rechargeable EDC",
-    "brand": "Fenix",
-    "price": 23.95,
-    "amazon_low": 25.15,
-    "url": "https://www.amazon.com/dp/B0FSPMV43D",
-    "updated": "2026-03-28T01:46:04.677Z"
   },
   {
     "model": "Mi10 AL",
@@ -464,339 +768,35 @@
     "updated": "2026-04-09T19:00:04.649Z"
   },
   {
+    "model": "ALG-15",
+    "brand": "Fenix",
+    "price": 24.94,
+    "amazon_low": 25.09,
+    "url": "https://www.amazon.com/dp/B0BS1Q2WNK",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
+    "model": "Bundle: Nitecore NU25 360 Lumen Triple Output",
+    "brand": "HANDIPRO",
+    "price": 24.95,
+    "amazon_low": 36.95,
+    "url": "https://www.amazon.com/dp/B088K7RBR5",
+    "updated": "2026-03-28T11:55:06.714Z"
+  },
+  {
+    "model": "4016674 1080 Lumens USB",
+    "brand": "JETBeam",
+    "price": 24.99,
+    "amazon_low": 46.16,
+    "url": "https://www.amazon.com/dp/B06X3VJ393",
+    "updated": "2026-03-28T01:28:09.256Z"
+  },
+  {
     "model": "WL1 LED",
     "brand": "Klarus",
     "price": 24.99,
     "amazon_low": 29.95,
     "url": "https://www.amazon.com/dp/B08CZ9B4RV",
     "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "ML25LT-S2115: Ml25Lt 2 Cell C",
-    "brand": "Maglite",
-    "price": 24.99,
-    "amazon_low": 33.6,
-    "url": "https://www.amazon.com/dp/B06XT22NDM",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "P2A XP-G R5 Cree",
-    "brand": "Klarus",
-    "price": 25,
-    "amazon_low": 26.93,
-    "url": "https://www.amazon.com/dp/B006GC6NQQ",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "SE-A01",
-    "brand": "JETBeam",
-    "price": 25.5,
-    "amazon_low": 29.99,
-    "url": "https://www.amazon.com/dp/B07RHTJL59",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "19286 LED Dual Color",
-    "brand": "Coast",
-    "price": 25.59,
-    "amazon_low": 25.59,
-    "url": "https://www.amazon.com/dp/B0044UMCOY",
-    "updated": "2026-03-27T20:12:45.128Z"
-  },
-  {
-    "model": "EA4 Pioneer Compact LED 860 Lumen",
-    "brand": "Nitecore",
-    "price": 26,
-    "amazon_low": 43.97,
-    "url": "https://www.amazon.com/dp/B00AEUQGR2",
-    "updated": "2026-03-28T16:12:59.241Z"
-  },
-  {
-    "model": "Tactical",
-    "brand": "Nitecore",
-    "price": 26.94,
-    "amazon_low": 69.95,
-    "url": "https://www.amazon.com/dp/B075PTX72R",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "EP12 Ultra Bright 30W 2000LM Zoomable",
-    "brand": "Klarus",
-    "price": 26.99,
-    "amazon_low": 26.99,
-    "url": "https://www.amazon.com/dp/B0D2XN828B",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "10pcs Convoy L6",
-    "brand": "UCZXCW",
-    "price": 29.12,
-    "amazon_low": 29.12,
-    "url": "https://www.amazon.com/dp/B0GLYWS6MX",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "E03R V2.0 Keychain",
-    "brand": "Fenix",
-    "price": 29.95,
-    "amazon_low": 29.95,
-    "url": "https://www.amazon.com/dp/B0FSQ37DZL",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "HL17R Camping",
-    "brand": "Fenix",
-    "price": 29.95,
-    "amazon_low": 29.95,
-    "url": "https://www.amazon.com/dp/B0FLF8GDKT",
-    "updated": "2026-03-28T05:47:04.648Z"
-  },
-  {
-    "model": "MT22A 260 Lumen LED Compact AA Battery Powered",
-    "brand": "Nitecore",
-    "price": 29.95,
-    "amazon_low": 29.95,
-    "url": "https://www.amazon.com/dp/B071ZTD5DN",
-    "updated": "2026-03-28T04:20:05.184Z"
-  },
-  {
-    "model": "MT06MD 180 Lumen Nichia 219B LED High CRI Professional Medical Penlight",
-    "brand": "Nitecore",
-    "price": 29.95,
-    "amazon_low": 31.95,
-    "url": "https://www.amazon.com/dp/B06XCTG6Q2",
-    "updated": "2026-03-28T16:10:47.106Z"
-  },
-  {
-    "model": "LD Series 960 lm AA",
-    "brand": "Fenix",
-    "price": 29.99,
-    "amazon_low": 64.47,
-    "url": "https://www.amazon.com/dp/B00WTOFC0S",
-    "updated": "2026-03-28T05:54:31.821Z"
-  },
-  {
-    "model": "XT1A 1000 Lumens Rechargeable",
-    "brand": "Klarus",
-    "price": 29.99,
-    "amazon_low": 29.99,
-    "url": "https://www.amazon.com/dp/B00PRZEUJK",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "Oclip Rechargeable EDC",
-    "brand": "Olight",
-    "price": 29.99,
-    "amazon_low": 35.99,
-    "url": "https://www.amazon.com/dp/B0CRHMM47B",
-    "updated": "2026-04-13T12:30:04.924Z"
-  },
-  {
-    "model": "iUltra Rechargeable EDC",
-    "brand": "Olight",
-    "price": 29.99,
-    "amazon_low": 43.98,
-    "url": "https://www.amazon.com/dp/B0G71LM39V",
-    "updated": "2026-04-13T04:30:04.168Z"
-  },
-  {
-    "model": "E12 V2.0 160 Lumens AA Powered LED",
-    "brand": "Fenix",
-    "price": 30,
-    "amazon_low": 30.35,
-    "url": "https://www.amazon.com/dp/B0CWCKCYQ8",
-    "updated": "2026-03-28T05:47:50.348Z"
-  },
-  {
-    "model": "2018 TIP 360 Lumen Rechargeable Keychain",
-    "brand": "Nitecore",
-    "price": 30,
-    "amazon_low": 36.95,
-    "url": "https://www.amazon.com/dp/B07DRQ6S9D",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "3-Cell D Incandescent",
-    "brand": "Maglite",
-    "price": 30.73,
-    "amazon_low": 35,
-    "url": "https://www.amazon.com/dp/B00QXVPRJO",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Holder for Olight Arkfeld Pro Compatible",
-    "brand": "Fignamt",
-    "price": 30.97,
-    "amazon_low": 30.97,
-    "url": "https://www.amazon.com/dp/B0GKPGJB8G",
-    "updated": "2026-04-10T23:20:03.455Z"
-  },
-  {
-    "model": "MINI-1 Titanium Keychain",
-    "brand": "JETBeam",
-    "price": 31,
-    "amazon_low": 34,
-    "url": "https://www.amazon.com/dp/B07576QVNQ",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Flashlight Lite, Zoomable, LED, USB-C Rechargeable, 1000 Lumens, 5 Modes (SOS & Strobe), Tactical & Portable Handheld Flash Light for Camping, Emergencies, Home Use, etc",
-    "brand": "HOTO",
-    "price": 31.99,
-    "amazon_low": 31.99,
-    "url": "https://www.amazon.com/dp/B09VN15WT1",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "10pcs Convoy L6",
-    "brand": "SWVABYI",
-    "price": 32.36,
-    "amazon_low": 32.36,
-    "url": "https://www.amazon.com/dp/B0GM4KBZ87",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Flashlight, industrial, Black, 4 Modes 280 Max Lumens, 120 Max Runtime HR (WF30RE)",
-    "brand": "Fenix",
-    "price": 32.45,
-    "amazon_low": 99.95,
-    "url": "https://www.amazon.com/dp/B0946X9TPB",
-    "updated": "2026-03-28T05:49:06.796Z"
-  },
-  {
-    "model": "Waterproof",
-    "brand": "Fenix",
-    "price": 32.45,
-    "amazon_low": 55.88,
-    "url": "https://www.amazon.com/dp/B07Z9NY4P9",
-    "updated": "2026-03-28T05:49:15.652Z"
-  },
-  {
-    "model": "EagleTac D25AAA XP-G2 Keychain",
-    "brand": "EagleTac",
-    "price": 32.9,
-    "amazon_low": 32.9,
-    "url": "https://www.amazon.com/dp/B07N2LHQ4N",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "TINI 3 600 Lumen EDC Keychain",
-    "brand": "Nitecore",
-    "price": 33.96,
-    "amazon_low": 33.96,
-    "url": "https://www.amazon.com/dp/B0F2PJ4Z2R",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "Battery Compatible",
-    "brand": "Cut-Rate Batteries",
-    "price": 33.99,
-    "amazon_low": 33.99,
-    "url": "https://www.amazon.com/dp/B0C8V18VPH",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "HL21 Lumens 97",
-    "brand": "Fenix",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B007VD3J52",
-    "updated": "2026-03-28T05:49:33.914Z"
-  },
-  {
-    "model": "LD01 72 Lumen Cree LED Keychain",
-    "brand": "Fenix",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B00OPCS6DW",
-    "updated": "2026-03-26T10:20:15.540Z"
-  },
-  {
-    "model": "E21 R4 Upgraded 170 Lumens",
-    "brand": "Fenix",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B009RJCLTI",
-    "updated": "2026-03-28T05:51:08.708Z"
-  },
-  {
-    "model": "P4 Pen",
-    "brand": "Ledlenser",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B0FN6FVL2F",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "Trinity",
-    "brand": "TRINITY SUPPLY",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B0FW9M2HN7",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "TIP3 720-Lumen Rechargeable Keychain",
-    "brand": "Nitecore",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B0GKNVHMMK",
-    "updated": "2026-04-01T04:33:14.868Z"
-  },
-  {
-    "model": "TIP3- Blue TIP3 Multi Color Temperature Rechargeable Keychain",
-    "brand": "Nitecore",
-    "price": 34.95,
-    "amazon_low": 34.95,
-    "url": "https://www.amazon.com/dp/B0GMFY89FV",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "BUNDLE: EagleTac P200A2 CREE XM-L2 Cool White U2",
-    "brand": "EagleTac",
-    "price": 35,
-    "amazon_low": 44.99,
-    "url": "https://www.amazon.com/dp/B00THOUAQE",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "® Xl50® 3-Cell Aaa",
-    "brand": "Maglite",
-    "price": 35,
-    "amazon_low": 49.8,
-    "url": "https://www.amazon.com/dp/B07D6RR7DB",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "XL200",
-    "brand": "Maglite",
-    "price": 35,
-    "amazon_low": 41.47,
-    "url": "https://www.amazon.com/dp/B00PVTG8CO",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "MT1A Pro 800 Lumen EDC Compact",
-    "brand": "Nitecore",
-    "price": 35,
-    "amazon_low": 41.95,
-    "url": "https://www.amazon.com/dp/B0DSKLZ1P5",
-    "updated": "2026-03-28T01:46:04.677Z"
-  },
-  {
-    "model": "D25AAA 395nm UV Keychain",
-    "brand": "EagleTac",
-    "price": 35.9,
-    "amazon_low": 35.9,
-    "url": "https://www.amazon.com/dp/B07N2KJKD5",
-    "updated": "2026-03-28T01:28:09.256Z"
-  },
-  {
-    "model": "MAG-LITE® ML300L™ LED 2 CELL D",
-    "brand": "Maglite",
-    "price": 35.99,
-    "amazon_low": 36.5,
-    "url": "https://www.amazon.com/dp/B00O47Q3HO",
-    "updated": "2026-04-01T04:33:14.868Z"
   }
 ]
