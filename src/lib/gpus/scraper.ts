@@ -50,25 +50,36 @@ export interface DiscoverResult {
 export async function discoverAsins(
 	model: GpuModel,
 	condition: 'used' | 'refurbished' | 'all',
-	opts: ProxyOpts = {}
+	opts: ProxyOpts & { pages?: number } = {}
 ): Promise<DiscoverResult[]> {
 	const q = SEARCH_QUERIES[model];
-	let url = `https://www.amazon.com/s?k=${encodeURIComponent(q)}`;
-	if (condition !== 'all') url += `&rh=p_n_condition_type%3A${CONDITION_FILTERS[condition]}`;
-	const doc = await fetchHtml(url, opts);
-	const results: DiscoverResult[] = [];
-	const items = doc.querySelectorAll('[data-asin][data-component-type="s-search-result"]');
-	items.forEach((el) => {
-		const asin = (el as HTMLElement).dataset.asin;
-		if (!asin || asin.length !== 10) return;
-		const title = (el.querySelector('h2 span') as HTMLElement | null)?.textContent
-			?? (el.querySelector('h2') as HTMLElement | null)?.textContent
-			?? '';
-		const priceText = (el.querySelector('.a-price .a-offscreen') as HTMLElement | null)?.textContent ?? '';
-		const priceHint = parsePriceUsd(priceText);
-		results.push({ asin, titleHint: title.trim().slice(0, 200), priceHint });
-	});
-	return results;
+	const pages = Math.max(1, opts.pages ?? 1);
+	const seen = new Map<string, DiscoverResult>();
+
+	for (let page = 1; page <= pages; page++) {
+		let url = `https://www.amazon.com/s?k=${encodeURIComponent(q)}`;
+		if (condition !== 'all') url += `&rh=p_n_condition_type%3A${CONDITION_FILTERS[condition]}`;
+		if (page > 1) url += `&page=${page}`;
+		let doc: Document;
+		try {
+			doc = await fetchHtml(url, opts);
+		} catch (e) {
+			console.warn(`discover page ${page} failed:`, e);
+			continue;
+		}
+		const items = doc.querySelectorAll('[data-asin][data-component-type="s-search-result"]');
+		items.forEach((el) => {
+			const asin = (el as HTMLElement).dataset.asin;
+			if (!asin || asin.length !== 10 || seen.has(asin)) return;
+			const title = (el.querySelector('h2 span') as HTMLElement | null)?.textContent
+				?? (el.querySelector('h2') as HTMLElement | null)?.textContent
+				?? '';
+			const priceText = (el.querySelector('.a-price .a-offscreen') as HTMLElement | null)?.textContent ?? '';
+			const priceHint = parsePriceUsd(priceText);
+			seen.set(asin, { asin, titleHint: title.trim().slice(0, 200), priceHint });
+		});
+	}
+	return [...seen.values()];
 }
 
 function parsePriceUsd(s: string | null | undefined): number | null {

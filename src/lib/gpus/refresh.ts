@@ -1,7 +1,7 @@
 /**
  * Orchestrates a full /gpus refresh:
- *   1. Discover ASINs for each model + condition family
- *   2. Fetch offers per ASIN (rate-limited)
+ *   1. Discover ASINs for each model + condition family (multi-page)
+ *   2. Fetch offers per ASIN with bounded concurrency (4 in-flight)
  *   3. Persist offers + snapshots into IndexedDB
  *
  * `navigator.locks` ensures only one tab refreshes at a time even if the
@@ -22,8 +22,10 @@ export interface RefreshProgress {
 }
 
 const MODELS: GpuModel[] = ['3090', '4090', '5090'];
-const PER_REQUEST_DELAY_MS = 3000;
-const DISCOVERY_DELAY_MS = 8000;
+const DISCOVERY_PAGES = 3;
+const DISCOVERY_DELAY_MS = 6000;
+const CONCURRENCY = 4;
+const PER_REQUEST_STAGGER_MS = 800;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -42,7 +44,7 @@ export async function refreshAll(
 				const seen = new Set<string>();
 				for (const condition of ['used', 'refurbished'] as const) {
 					try {
-						const found = await discoverAsins(model, condition, { signal });
+						const found = await discoverAsins(model, condition, { signal, pages: DISCOVERY_PAGES });
 						for (const f of found) seen.add(f.asin);
 					} catch (e) {
 						console.warn(`discover ${model}/${condition} failed`, e);
@@ -55,10 +57,25 @@ export async function refreshAll(
 			let asinsDone = 0;
 			const asinsTotal = [...asinsByModel.values()].reduce((s, x) => s + x.size, 0);
 
+			// Flatten queue: [{ model, asin }, ...]
+			const queue: Array<{ model: GpuModel; asin: string }> = [];
 			for (const [model, asins] of asinsByModel) {
-				for (const asin of asins) {
+				for (const asin of asins) queue.push({ model, asin });
+			}
+
+			let cursor = 0;
+			async function worker(workerId: number) {
+				// Stagger initial fetch so all workers don't hit Amazon in the same instant
+				await sleep(workerId * PER_REQUEST_STAGGER_MS);
+				while (true) {
 					if (signal?.aborted) throw new Error('aborted');
-					onProgress({ phase: 'enriching', model, asin, asinsTotal, asinsDone, offersInserted: totalOffers });
+					const idx = cursor++;
+					if (idx >= queue.length) return;
+					const { model, asin } = queue[idx];
+					onProgress({
+						phase: 'enriching', model, asin,
+						asinsTotal, asinsDone, offersInserted: totalOffers,
+					});
 					try {
 						const result = await fetchProductWithOffers(asin, model, { signal });
 						if (result && result.offers.length > 0) {
@@ -71,9 +88,12 @@ export async function refreshAll(
 						console.warn(`fetchProductWithOffers ${asin} failed`, e);
 					}
 					asinsDone++;
-					await sleep(PER_REQUEST_DELAY_MS);
+					// Per-worker stagger between iterations keeps total load steady
+					await sleep(PER_REQUEST_STAGGER_MS * CONCURRENCY);
 				}
 			}
+
+			await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => worker(i)));
 
 			const final: RefreshProgress = { phase: 'done', asinsTotal, asinsDone, offersInserted: totalOffers };
 			onProgress(final);

@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { GpuModel, GpuOffer, GpuProduct } from '$lib/gpus/types';
 	import { CONDITION_LABELS, DEFAULT_MSRP } from '$lib/gpus/types';
-	import { getAllOffers, getAllProducts, getMsrp, setMsrp } from '$lib/gpus/db';
+	import { getAllOffers, getAllProducts, getMsrp, setMsrp, hydrateFromSeed } from '$lib/gpus/db';
 	import { refreshAll, type RefreshProgress } from '$lib/gpus/refresh';
 
 	let offers: GpuOffer[] = $state([]);
@@ -20,7 +20,11 @@
 	let abortCtl: AbortController | null = null;
 
 	onMount(async () => {
+		const hydrated = await hydrateFromSeed().catch(() => null);
 		await reload();
+		if (hydrated) {
+			progress = { phase: 'done', offersInserted: hydrated.inserted, asinsTotal: products.size, asinsDone: products.size };
+		}
 	});
 
 	async function reload() {

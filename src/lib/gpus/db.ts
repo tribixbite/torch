@@ -119,6 +119,28 @@ export async function setMsrp(model: GpuModel, msrp: number): Promise<void> {
 	await done(t);
 }
 
+/**
+ * One-time hydrate from a static seed (e.g. /gpus-seed.json built by the
+ * Playwright seeder). No-op if any offers already exist — IDB is the source
+ * of truth once the user's own scrapes have populated it.
+ */
+export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ inserted: number } | null> {
+	const existing = await getAllOffers();
+	if (existing.length > 0) return null;
+	let res: Response;
+	try { res = await fetch(seedUrl); } catch { return null; }
+	if (!res.ok) return null;
+	const seed = await res.json() as { offers?: GpuOffer[]; products?: GpuProduct[] };
+	if (!seed?.offers?.length) return null;
+	await putOffers(seed.offers);
+	if (seed.products) {
+		const t = await tx(['products'], 'readwrite');
+		for (const p of seed.products) t.objectStore('products').put(p);
+		await done(t);
+	}
+	return { inserted: seed.offers.length };
+}
+
 export async function pruneStaleOffers(maxAgeMs: number): Promise<number> {
 	const cutoff = Date.now() - maxAgeMs;
 	const t = await tx(['offers'], 'readwrite');
