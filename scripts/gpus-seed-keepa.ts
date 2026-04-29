@@ -96,14 +96,32 @@ async function getTokens(): Promise<number> {
 	return d.tokensLeft;
 }
 
+// Keepa can take 60+ seconds for large /product or /search responses.
+// Default fetch timeout in bun is ~5s — too short — so we set our own.
+const FETCH_TIMEOUT_MS = 120_000;
+
+async function keepaFetch(url: string, attempts = 2): Promise<any | null> {
+	for (let i = 0; i < attempts; i++) {
+		try {
+			const r = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+			if (!r.ok) {
+				console.warn(`  HTTP ${r.status} — body: ${(await r.text()).slice(0, 120)}`);
+				if (r.status >= 500 && i < attempts - 1) { await new Promise((x) => setTimeout(x, 5000)); continue; }
+				return null;
+			}
+			return await r.json();
+		} catch (e) {
+			console.warn(`  fetch failed (attempt ${i + 1}/${attempts}): ${(e as Error).message}`);
+			if (i < attempts - 1) await new Promise((x) => setTimeout(x, 5000));
+		}
+	}
+	return null;
+}
+
 async function fetchProducts(asins: string[]): Promise<KeepaProduct[]> {
 	const url = `https://api.keepa.com/product?key=${KEEPA_KEY}&domain=${DOMAIN}&asin=${asins.join(',')}&stats=180&rating=1`;
-	const r = await fetch(url);
-	if (!r.ok) {
-		console.warn(`  /product HTTP ${r.status} — body: ${(await r.text()).slice(0, 120)}`);
-		return [];
-	}
-	const d = await r.json() as { tokensLeft: number; products: KeepaProduct[] };
+	const d = await keepaFetch(url) as { tokensLeft: number; products: KeepaProduct[] } | null;
+	if (!d) return [];
 	console.log(`  /product +${asins.length}: returned ${d.products?.length ?? 0}, tokensLeft=${d.tokensLeft}`);
 	return d.products ?? [];
 }
@@ -111,12 +129,8 @@ async function fetchProducts(asins: string[]): Promise<KeepaProduct[]> {
 async function searchModel(model: GpuModel): Promise<KeepaProduct[]> {
 	const term = encodeURIComponent(SEARCH_TERMS[model]);
 	const url = `https://api.keepa.com/search?key=${KEEPA_KEY}&domain=${DOMAIN}&type=product&term=${term}&page=0&stats=180`;
-	const r = await fetch(url);
-	if (!r.ok) {
-		console.warn(`  /search ${model} HTTP ${r.status}`);
-		return [];
-	}
-	const d = await r.json() as { tokensLeft: number; products?: KeepaProduct[] };
+	const d = await keepaFetch(url) as { tokensLeft: number; products?: KeepaProduct[] } | null;
+	if (!d) return [];
 	console.log(`  /search ${model}: ${d.products?.length ?? 0} products, tokensLeft=${d.tokensLeft}`);
 	return d.products ?? [];
 }
@@ -228,52 +242,62 @@ async function main() {
 	for (const set of existingByModel.values()) for (const a of set) allKnownAsins.add(a);
 	console.log(`  existing seed has ${allKnownAsins.size} ASINs across ${existingByModel.size} models`);
 
-	// Phase A: enrich all known ASINs (cheap, but token-gated; writes incrementally)
+	// Reserve token budget for /search calls this run (each costs ~50). We
+	// rotate across underfilled models so new listings get discovered every
+	// cron run, even if all known ASINs aren't fully refreshed every time.
+	const lowModels = noSearch ? [] : models.filter((m) => (existingByModel.get(m)?.size ?? 0) < minPerModel);
+	const SEARCH_RESERVE = lowModels.length > 0 ? 55 : 0;
+
+	// Phase A: enrich known ASINs (cheap, token-gated, writes incrementally).
 	const enrichQueue = [...allKnownAsins];
 	const allProducts: KeepaProduct[] = [];
 	for (let i = 0; i < enrichQueue.length; i += PRODUCT_BATCH) {
 		const batch = enrichQueue.slice(i, i + PRODUCT_BATCH);
 		const tok = await getTokens();
-		if (tok < batch.length) {
-			const need = batch.length - tok;
-			const waitMin = Math.ceil(need + 2);
-			if (waitMin > maxWaitMin) {
-				console.log(`  tokens=${tok}, need ${batch.length} → wait ${waitMin}min > maxWaitMin=${maxWaitMin}, stopping early`);
-				break;
-			}
-			const waitMs = waitMin * 60_000;
-			console.log(`  tokens=${tok}, need ${batch.length}, waiting ${(waitMs / 1000).toFixed(0)}s`);
-			await new Promise((r) => setTimeout(r, waitMs));
+		const usable = tok - SEARCH_RESERVE;
+		if (usable < batch.length) {
+			console.log(`  tokens=${tok} reserve=${SEARCH_RESERVE} usable=${usable}, batch=${batch.length} → stop enrich, save for search`);
+			break;
 		}
 		const got = await fetchProducts(batch);
 		allProducts.push(...got);
-		// Write seed incrementally so any callers see the freshest data even
-		// if we exit early due to token limits.
 		const { offers: o, products: pr } = writeSeed(Date.now(), allProducts);
 		console.log(`  seed updated: ${pr.length} products, ${o.length} offers`);
 	}
 
-	// Phase B: search for models below the floor (skipped if --no-search or token-poor)
-	if (!noSearch) {
-		for (const m of models) {
-			const have = (existingByModel.get(m)?.size ?? 0);
-			if (have >= minPerModel) continue;
+	// Phase B: search for models below the floor. Cron-friendly rotation —
+	// pick the lowest-populated model first so each run grows the smallest
+	// pool. The seeker writes to gpus-seed.json incrementally too.
+	if (lowModels.length > 0) {
+		const sorted = [...lowModels].sort((a, b) =>
+			(existingByModel.get(a)?.size ?? 0) - (existingByModel.get(b)?.size ?? 0)
+		);
+		const seen = new Set(allProducts.map((p) => p.asin));
+		for (const m of sorted) {
 			const tok = await getTokens();
 			if (tok < 50) {
-				console.warn(`  skip search ${m}: have=${have}<${minPerModel} but only ${tok} tokens`);
+				console.warn(`  skip search ${m}: only ${tok} tokens`);
 				continue;
 			}
 			const found = await searchModel(m);
-			// Merge in (deduped against allProducts)
-			const seen = new Set(allProducts.map((p) => p.asin));
-			for (const p of found) if (!seen.has(p.asin)) allProducts.push(p);
+			let added = 0;
+			for (const p of found) {
+				if (seen.has(p.asin)) continue;
+				allProducts.push(p);
+				seen.add(p.asin);
+				added++;
+			}
+			console.log(`  search ${m}: +${added} new ASINs`);
+			const { offers: o, products: pr } = writeSeed(Date.now(), allProducts);
+			console.log(`  seed updated: ${pr.length} products, ${o.length} offers`);
 		}
 	}
 
 	// Phase C: final write (Phase A also writes incrementally per batch)
 	const { offers, products } = writeSeed(Date.now(), allProducts);
-	let kept = products.length;
-	let rejected = allProducts.length - products.length;
+	const acceptedAsins = new Set(offers.map((o) => o.asin));
+	let kept = allProducts.filter((p) => acceptedAsins.has(p.asin)).length;
+	let rejected = allProducts.length - kept;
 
 	const dt = ((Date.now() - t0) / 1000).toFixed(1);
 	const byCond: Record<string, number> = {};
