@@ -12,6 +12,7 @@
 
 	let modelFilter: GpuModel | 'all' = $state('all');
 	let conditionFilter = $state('all');
+	let hideNew = $state(false);
 	// Default well below 0 so above-MSRP listings (most 5090/4090 today) are visible.
 	let minDiscountPct = $state(-300);
 	let minSellerRating = $state(0);
@@ -65,6 +66,7 @@
 		const out = offers.filter((o) => {
 			if (modelFilter !== 'all' && o.model !== modelFilter) return false;
 			if (conditionFilter !== 'all' && o.condition !== conditionFilter) return false;
+			if (hideNew && o.condition === 'new') return false;
 			if (discountPct(o) < minDiscountPct) return false;
 			if ((o.seller_rating ?? 0) < minSellerRating) return false;
 			if (goodDealOnly && !isGoodDeal(o)) return false;
@@ -160,6 +162,10 @@
 			<span>Min seller ★</span>
 			<input type="range" min="0" max="5" step="0.1" bind:value={minSellerRating} />
 			<output>{minSellerRating.toFixed(1)}</output>
+		</label>
+		<label class="checkbox">
+			<input type="checkbox" bind:checked={hideNew} />
+			<span>Hide "new" condition</span>
 		</label>
 		<label class="checkbox">
 			<input type="checkbox" bind:checked={goodDealOnly} />

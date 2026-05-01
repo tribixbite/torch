@@ -120,17 +120,16 @@ export async function setMsrp(model: GpuModel, msrp: number): Promise<void> {
 }
 
 /**
- * One-time hydrate from a static seed (e.g. /gpus-seed.json built by the
- * Playwright seeder). No-op if any offers already exist — IDB is the source
- * of truth once the user's own scrapes have populated it.
+ * Hydrate from the static seed (e.g. /gpus-seed.json built by the cron
+ * Keepa seeder). Always merges — the seed has fresher per-condition data
+ * than the user's last browser-side refresh, and putOffers is idempotent
+ * on offer_id so this is safe to call on every page load.
  */
-export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ inserted: number } | null> {
-	const existing = await getAllOffers();
-	if (existing.length > 0) return null;
+export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ inserted: number; generatedAt: number | null } | null> {
 	let res: Response;
-	try { res = await fetch(seedUrl); } catch { return null; }
+	try { res = await fetch(seedUrl, { cache: 'no-store' }); } catch { return null; }
 	if (!res.ok) return null;
-	const seed = await res.json() as { offers?: GpuOffer[]; products?: GpuProduct[] };
+	const seed = await res.json() as { offers?: GpuOffer[]; products?: GpuProduct[]; generated_at?: number };
 	if (!seed?.offers?.length) return null;
 	await putOffers(seed.offers);
 	if (seed.products) {
@@ -138,7 +137,7 @@ export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ in
 		for (const p of seed.products) t.objectStore('products').put(p);
 		await done(t);
 	}
-	return { inserted: seed.offers.length };
+	return { inserted: seed.offers.length, generatedAt: seed.generated_at ?? null };
 }
 
 export async function pruneStaleOffers(maxAgeMs: number): Promise<number> {
