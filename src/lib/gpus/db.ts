@@ -121,23 +121,50 @@ export async function setMsrp(model: GpuModel, msrp: number): Promise<void> {
 
 /**
  * Hydrate from the static seed (e.g. /gpus-seed.json built by the cron
- * Keepa seeder). Always merges — the seed has fresher per-condition data
- * than the user's last browser-side refresh, and putOffers is idempotent
- * on offer_id so this is safe to call on every page load.
+ * Keepa seeder). For every ASIN present in the seed, replace ALL of that
+ * ASIN's IDB offers with the fresh seed entries — so listings that sold,
+ * went out of stock, or otherwise dropped from Keepa's current pricing
+ * disappear from the page instead of lingering forever. ASINs not in the
+ * seed (e.g. the user's own browser-side scrapes) are left alone.
  */
-export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ inserted: number; generatedAt: number | null } | null> {
+export async function hydrateFromSeed(seedUrl = '/gpus-seed.json'): Promise<{ inserted: number; deleted: number; generatedAt: number | null } | null> {
 	let res: Response;
 	try { res = await fetch(seedUrl, { cache: 'no-store' }); } catch { return null; }
 	if (!res.ok) return null;
 	const seed = await res.json() as { offers?: GpuOffer[]; products?: GpuProduct[]; generated_at?: number };
 	if (!seed?.offers?.length) return null;
+
+	const seedAsins = new Set(seed.offers.map((o) => o.asin));
+	for (const p of seed.products ?? []) seedAsins.add(p.asin);
+
+	// Drop existing IDB offers for any ASIN the seed covers so stale listings vanish.
+	let deleted = 0;
+	if (seedAsins.size > 0) {
+		const t = await tx(['offers'], 'readwrite');
+		const idx = t.objectStore('offers').index('asin');
+		await new Promise<void>((resolve, reject) => {
+			let pending = seedAsins.size;
+			if (pending === 0) return resolve();
+			for (const asin of seedAsins) {
+				const req = idx.openCursor(IDBKeyRange.only(asin));
+				req.onsuccess = () => {
+					const cur = req.result;
+					if (cur) { cur.delete(); deleted++; cur.continue(); }
+					else if (--pending === 0) resolve();
+				};
+				req.onerror = () => reject(req.error);
+			}
+		});
+		await done(t);
+	}
+
 	await putOffers(seed.offers);
 	if (seed.products) {
 		const t = await tx(['products'], 'readwrite');
 		for (const p of seed.products) t.objectStore('products').put(p);
 		await done(t);
 	}
-	return { inserted: seed.offers.length, generatedAt: seed.generated_at ?? null };
+	return { inserted: seed.offers.length, deleted, generatedAt: seed.generated_at ?? null };
 }
 
 export async function pruneStaleOffers(maxAgeMs: number): Promise<number> {

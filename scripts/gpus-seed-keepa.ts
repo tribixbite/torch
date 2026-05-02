@@ -197,6 +197,11 @@ function loadExistingAsinsByModel(): Map<GpuModel, Set<string>> {
 }
 
 function writeSeed(now: number, allProducts: KeepaProduct[]) {
+	// `enrichedAsins` = every ASIN we got a Keepa response for this run,
+	// even if it produced no offers (no current price for any condition).
+	// We use this — NOT the offer-producing set — to gate carryover so a
+	// listing that just sold out gets dropped on the next refresh.
+	const enrichedAsins = new Set(allProducts.map((p) => p.asin));
 	const offers: SeedOffer[] = [];
 	const products: SeedProduct[] = [];
 	for (const p of allProducts) {
@@ -205,15 +210,14 @@ function writeSeed(now: number, allProducts: KeepaProduct[]) {
 		offers.push(...po);
 		products.push(product);
 	}
-	// Preserve any prior seed entries we didn't refresh in this run, so a
-	// token-limited partial run doesn't shrink the deal list.
+	// Carry forward only entries we did NOT touch this run (token-limited
+	// partial refreshes shouldn't shrink the deal list — but anything we
+	// re-enriched is authoritative and old data must not survive).
 	if (existsSync(OUT_PATH)) {
 		try {
 			const old = JSON.parse(readFileSync(OUT_PATH, 'utf8')) as SeedFile;
-			const refreshedAsins = new Set(products.map((p) => p.asin));
-			for (const p of old.products ?? []) if (!refreshedAsins.has(p.asin)) products.push(p);
-			const refreshedOfferAsins = new Set(offers.map((o) => o.asin));
-			for (const o of old.offers ?? []) if (!refreshedOfferAsins.has(o.asin)) offers.push(o);
+			for (const p of old.products ?? []) if (!enrichedAsins.has(p.asin)) products.push(p);
+			for (const o of old.offers ?? []) if (!enrichedAsins.has(o.asin)) offers.push(o);
 		} catch {}
 	}
 	const out: SeedFile = { generated_at: now, offers, products };
