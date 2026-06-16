@@ -1,6 +1,15 @@
-# Pipeline State — 2026-04-14
+# Pipeline State — 2026-06-16
 
-## Current Status: 18,433 lights in DB (15,186 in JSON) — OOS-filtered deals live
+## Current Status: 18,434 lights in DB (15,186 in JSON) — OOS-filtered deals live
+
+### Recent Changes (Jun 16)
+- **Rewrote `pipeline/PIPELINE.md`** as the canonical data-acquisition spec (full architecture,
+  sources, schema, commands, enrichment, normalization, build, cron, gaps, Termux notes).
+- **Fixed stale "Inference Rules" section** — the old doc described battery→weight/length and
+  LED→lumens guessing that no longer exists in `enrich.ts` (now data-integrity-guarded) and
+  violates `CLAUDE.md`. Replaced with the allowed-vs-forbidden Data Integrity Policy.
+- Flagged that the torch/gpus crons are currently DISABLED in the live crontab (2026-06-05
+  "token investigation") and `vision-cron.sh` has no live entry.
 
 ### Recent Changes (Apr 14)
 - **Playwright MCP Amazon price scraping test**: 5/5 ASINs succeeded, 0 blocked
